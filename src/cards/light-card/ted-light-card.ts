@@ -426,6 +426,17 @@ export class TedLightCard extends LitElement implements LovelaceCard {
       return;
     }
     this._callLight("turn_on", { brightness_pct: pct });
+    this._writeMemoryHelper(pct);
+  }
+
+  /** When using a memory helper, mirror brightness changes back into the helper. */
+  private _writeMemoryHelper(pct: number): void {
+    if (!this.hass || this._config?.memory_mode !== "helper") return;
+    const entity = this._config.memory_entity;
+    if (!entity) return;
+    const domain = entity.split(".")[0];
+    if (domain !== "input_number" && domain !== "number") return;
+    this.hass.callService(domain, "set_value", { entity_id: entity, value: this._clampPct(pct) });
   }
 
   private _callLight(service: "turn_on" | "turn_off", data: Record<string, unknown>): void {

@@ -225,7 +225,7 @@ export class TedLightCardEditor extends LitElement implements LovelaceCardEditor
             select: {
               mode: "dropdown",
               options: [
-                { value: "off", label: "Off (default)" },
+                { value: "off", label: "100% (default)" },
                 { value: "static", label: "Static value" },
                 { value: "helper", label: "Memory helper" },
               ],

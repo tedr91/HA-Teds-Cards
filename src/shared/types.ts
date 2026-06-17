@@ -1,5 +1,8 @@
 import { ActionConfig, HomeAssistant, LovelaceCard, LovelaceCardConfig, LovelaceCardEditor } from "custom-card-helpers";
 
+/** Visual styling mode shared by all cards: `ted-style` = self-contained look; `ha` = follow HA theme. */
+export type TedStyleTheme = "ted-style" | "ha";
+
 /** Common shape every card in this collection extends. */
 export interface BaseCardConfig extends LovelaceCardConfig {
   entity: string;

@@ -9,5 +9,6 @@ import { printVersionBanner } from "./shared/version-banner";
 
 // Cards
 import "./cards/light-card/ted-light-card";
+import "./cards/cover-card/ted-cover-card";
 
 printVersionBanner();

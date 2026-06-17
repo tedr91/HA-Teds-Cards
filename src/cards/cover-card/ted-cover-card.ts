@@ -12,46 +12,63 @@ import {
 import { registerCustomCard } from "../../shared/register-card";
 import { tedStyleTheme } from "../../shared/theme";
 import {
-  LIGHT_CARD_DESCRIPTION,
-  LIGHT_CARD_EDITOR_TYPE,
-  LIGHT_CARD_NAME,
-  LIGHT_CARD_TYPE,
+  COVER_CARD_DESCRIPTION,
+  COVER_CARD_EDITOR_TYPE,
+  COVER_CARD_NAME,
+  COVER_CARD_TYPE,
 } from "./const";
-import type { LightCardConfig, LightAction } from "./types";
+import type { CoverCardConfig, CoverAction } from "./types";
 
 const DOUBLE_CLICK_MS = 250;
 const LONG_PRESS_MS = 500;
-const BRIGHTNESS_STEP = 5;
+const POSITION_STEP = 5;
 
-/** Convert HA brightness (0–255) to the 1–100% scale HA uses for display. */
-function brightnessToPct(brightness?: number): number {
-  if (brightness == null) return 0;
-  return Math.max(Math.round((brightness * 100) / 255), 1);
+// cover supported_features bitmask.
+const FEATURE_SET_POSITION = 4;
+const FEATURE_OPEN_TILT = 16;
+const FEATURE_CLOSE_TILT = 32;
+const FEATURE_SET_TILT_POSITION = 128;
+
+/** Clamp a value to the 0–100 scale and round it. */
+function clampPct(value: number): number {
+  return Math.min(100, Math.max(0, Math.round(value)));
 }
 
-/** Whether a light entity exposes a brightness-capable color mode. */
-function lightSupportsBrightness(stateObj: { attributes: { supported_color_modes?: string[] } }): boolean {
-  const modes = stateObj.attributes.supported_color_modes ?? [];
-  return modes.some((mode) => mode !== "onoff" && mode !== "unknown");
+/** Step a 0–100 value to the next/previous multiple of POSITION_STEP. */
+function stepPct(current: number, delta: number): number {
+  if (delta > 0) return Math.min(100, (Math.floor(current / POSITION_STEP) + 1) * POSITION_STEP);
+  return Math.max(0, (Math.ceil(current / POSITION_STEP) - 1) * POSITION_STEP);
 }
 
-/** Resolve a color (theme accent / light's rgb_color / custom) from config + entity state. */
-function resolveColor(
-  mode: string | undefined,
-  stateObj: { attributes: { rgb_color?: number[] } },
-  custom?: number[],
-): string {
+/** Resolve a color (theme accent / custom) from config. */
+function resolveColor(mode: string | undefined, custom?: number[]): string {
   if (mode === "other" && Array.isArray(custom) && custom.length === 3) {
     return `rgb(${custom[0]}, ${custom[1]}, ${custom[2]})`;
   }
-  if (mode === "light") {
-    const rgb = stateObj.attributes.rgb_color;
-    if (Array.isArray(rgb) && rgb.length === 3) {
-      return `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
-    }
-    return "var(--tlc-on-fg)";
-  }
   return "var(--ted-style-accent)";
+}
+
+/** Default icon for a cover based on its device_class and open/closed state. */
+function defaultCoverIcon(deviceClass: string | undefined, isOpen: boolean): string {
+  switch (deviceClass) {
+    case "garage":
+      return isOpen ? "mdi:garage-open" : "mdi:garage";
+    case "door":
+      return "mdi:door";
+    case "gate":
+      return isOpen ? "mdi:gate-open" : "mdi:gate";
+    case "curtain":
+      return isOpen ? "mdi:curtains" : "mdi:curtains-closed";
+    case "blind":
+    case "shade":
+      return isOpen ? "mdi:blinds-open" : "mdi:blinds";
+    case "window":
+      return isOpen ? "mdi:window-open" : "mdi:window-closed";
+    case "shutter":
+    case "awning":
+    default:
+      return isOpen ? "mdi:window-shutter-open" : "mdi:window-shutter";
+  }
 }
 
 /** Subset of Home Assistant's LovelaceGridOptions for the Sections grid layout. */
@@ -65,28 +82,28 @@ interface GridOptions {
 }
 
 registerCustomCard({
-  type: LIGHT_CARD_TYPE,
-  name: LIGHT_CARD_NAME,
-  description: LIGHT_CARD_DESCRIPTION,
+  type: COVER_CARD_TYPE,
+  name: COVER_CARD_NAME,
+  description: COVER_CARD_DESCRIPTION,
   preview: false,
-  documentationURL: "https://github.com/tedr91/HA-Teds-Cards#light-card",
+  documentationURL: "https://github.com/tedr91/HA-Teds-Cards#cover-card",
 });
 
-@customElement(LIGHT_CARD_TYPE)
-export class TedLightCard extends LitElement implements LovelaceCard {
+@customElement(COVER_CARD_TYPE)
+export class TedCoverCard extends LitElement implements LovelaceCard {
   public static async getConfigElement(): Promise<LovelaceCardEditor> {
-    await import("./ted-light-card-editor");
-    return document.createElement(LIGHT_CARD_EDITOR_TYPE) as LovelaceCardEditor;
+    await import("./ted-cover-card-editor");
+    return document.createElement(COVER_CARD_EDITOR_TYPE) as LovelaceCardEditor;
   }
 
-  public static getStubConfig(hass: HomeAssistant): Omit<LightCardConfig, "type"> {
-    const lights = Object.keys(hass.states).filter((id) => id.startsWith("light."));
-    return { entity: lights[0] ?? "" };
+  public static getStubConfig(hass: HomeAssistant): Omit<CoverCardConfig, "type"> {
+    const covers = Object.keys(hass.states).filter((id) => id.startsWith("cover."));
+    return { entity: covers[0] ?? "" };
   }
 
   @property({ attribute: false }) public hass?: HomeAssistant;
   @property({ attribute: false }) public layout?: string;
-  @state() private _config?: LightCardConfig;
+  @state() private _config?: CoverCardConfig;
 
   private _topClickTimer?: number;
   private _bottomClickTimer?: number;
@@ -94,7 +111,7 @@ export class TedLightCard extends LitElement implements LovelaceCard {
   private _longPressTimer?: number;
   private _longPressFired = false;
 
-  public setConfig(config: LightCardConfig): void {
+  public setConfig(config: CoverCardConfig): void {
     if (!config) {
       throw new Error("Invalid configuration");
     }
@@ -102,8 +119,8 @@ export class TedLightCard extends LitElement implements LovelaceCard {
       throw new Error("You must specify an entity");
     }
     const domain = config.entity.split(".")[0];
-    if (domain !== "light") {
-      throw new Error(`ted-light-card only supports light entities (got '${domain}')`);
+    if (domain !== "cover") {
+      throw new Error(`ted-cover-card only supports cover entities (got '${domain}')`);
     }
     this._config = { ...config };
   }
@@ -159,37 +176,30 @@ export class TedLightCard extends LitElement implements LovelaceCard {
       `;
     }
 
-    const isOn = stateObj.state === "on";
     const isUnavailable = stateObj.state === "unavailable";
+    const isMoving = this._isMoving();
+    const isOpen = this._isOpen();
     const name = this._config.name || stateObj.attributes.friendly_name || this._config.entity;
-    const icon = this._config.icon || stateObj.attributes.icon || "mdi:lightbulb";
-    const supportsBrightness = lightSupportsBrightness(stateObj);
-    const brightnessPct = isOn
-      ? supportsBrightness
-        ? brightnessToPct(stateObj.attributes.brightness)
-        : 100
-      : 0;
+    const icon =
+      this._config.icon ||
+      (stateObj.attributes.icon as string | undefined) ||
+      defaultCoverIcon(stateObj.attributes.device_class as string | undefined, isOpen);
+
+    const pct = this._primaryPct();
     const stateLabel =
-      isOn && supportsBrightness ? `${brightnessPct}%` : this._formatState(stateObj.state);
-    const brightnessColor = isOn
-      ? resolveColor(
-          this._config.brightness_color,
-          stateObj,
-          this._config.brightness_color_custom,
-        )
+      !isMoving && this._hasPrimaryAttr() && pct > 0 ? `${pct}%` : this._formatState(stateObj.state);
+    const positionColor = isOpen
+      ? resolveColor(this._config.position_color, this._config.position_color_custom)
       : "var(--ted-style-muted)";
-    const iconColor = isOn
-      ? resolveColor(
-          this._config.icon_color || "light",
-          stateObj,
-          this._config.icon_color_custom,
-        )
+    const iconColor = isOpen
+      ? resolveColor(this._config.icon_color, this._config.icon_color_custom)
       : "rgba(255, 255, 255, 0.5)";
+    const showHint = this._config.show_hint !== false;
 
     return html`
       <ha-card
         class=${classMap({
-          on: isOn,
+          open: isOpen,
           unavailable: isUnavailable,
           "layout-static": this.layout !== "grid",
           ...themeClasses,
@@ -199,17 +209,21 @@ export class TedLightCard extends LitElement implements LovelaceCard {
         @pointercancel=${this._onCardPointerUp}
         @pointerleave=${this._onCardPointerUp}
       >
-        <div class="brightness" aria-hidden="true">
+        <div class="position" aria-hidden="true">
           <div
-            class="brightness-fill"
-            style=${styleMap({ height: `${brightnessPct}%`, backgroundColor: brightnessColor })}
+            class="position-fill"
+            style=${styleMap({ height: `${pct}%`, backgroundColor: positionColor })}
           ></div>
         </div>
-        ${this._config.show_hint
+        ${showHint
           ? html`
               <div class="stripe" aria-hidden="true"></div>
-              <span class="stripe-symbol stripe-plus" aria-hidden="true">+</span>
-              <span class="stripe-symbol stripe-minus" aria-hidden="true">−</span>
+              <svg class="stripe-symbol stripe-up" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M7.41,15.41L12,10.83L16.59,15.41L18,14L12,8L6,14L7.41,15.41Z"></path>
+              </svg>
+              <svg class="stripe-symbol stripe-down" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z"></path>
+              </svg>
             `
           : nothing}
         <button
@@ -259,12 +273,12 @@ export class TedLightCard extends LitElement implements LovelaceCard {
     if (this._topClickTimer !== undefined) {
       window.clearTimeout(this._topClickTimer);
       this._topClickTimer = undefined;
-      this._topDoubleClick();
+      this._execAction(this._action("up_double_tap", "open"));
       return;
     }
     this._topClickTimer = window.setTimeout(() => {
       this._topClickTimer = undefined;
-      this._topSingleClick();
+      this._execAction(this._action("up_tap", "open_step", "open"));
     }, DOUBLE_CLICK_MS);
   };
 
@@ -273,77 +287,124 @@ export class TedLightCard extends LitElement implements LovelaceCard {
     if (this._bottomClickTimer !== undefined) {
       window.clearTimeout(this._bottomClickTimer);
       this._bottomClickTimer = undefined;
-      this._bottomDoubleClick();
+      this._execAction(this._action("down_double_tap", "close"));
       return;
     }
     this._bottomClickTimer = window.setTimeout(() => {
       this._bottomClickTimer = undefined;
-      this._bottomSingleClick();
+      this._execAction(this._action("down_tap", "close_step", "close"));
     }, DOUBLE_CLICK_MS);
   };
 
-  private _isOn(): boolean {
-    if (!this.hass || !this._config) return false;
-    return this.hass.states[this._config.entity]?.state === "on";
+  // ---- State accessors ----
+
+  private _stateObj() {
+    if (!this.hass || !this._config) return undefined;
+    return this.hass.states[this._config.entity];
   }
 
-  private _currentPct(): number {
-    if (!this.hass || !this._config) return 0;
-    const stateObj = this.hass.states[this._config.entity];
-    if (!stateObj || stateObj.state !== "on") return 0;
-    return brightnessToPct(stateObj.attributes.brightness);
+  private _features(): number {
+    return Number(this._stateObj()?.attributes.supported_features ?? 0);
   }
 
-  private _supportsBrightness(): boolean {
-    if (!this.hass || !this._config) return false;
-    const stateObj = this.hass.states[this._config.entity];
-    return !!stateObj && lightSupportsBrightness(stateObj);
+  private _canSetPosition(): boolean {
+    return (this._features() & FEATURE_SET_POSITION) !== 0;
   }
+
+  private _canSetTilt(): boolean {
+    return (this._features() & FEATURE_SET_TILT_POSITION) !== 0;
+  }
+
+  private _supportsTilt(): boolean {
+    return (this._features() & (FEATURE_OPEN_TILT | FEATURE_CLOSE_TILT | FEATURE_SET_TILT_POSITION)) !== 0;
+  }
+
+  /** Whether either region step can drive a continuous value (position or tilt). */
+  private _hasPrimary(): boolean {
+    return this._canSetPosition() || this._canSetTilt();
+  }
+
+  private _positionAttr(): number | undefined {
+    const value = this._stateObj()?.attributes.current_position;
+    return typeof value === "number" ? value : undefined;
+  }
+
+  private _tiltAttr(): number | undefined {
+    const value = this._stateObj()?.attributes.current_tilt_position;
+    return typeof value === "number" ? value : undefined;
+  }
+
+  private _hasPrimaryAttr(): boolean {
+    return this._positionAttr() !== undefined || this._tiltAttr() !== undefined;
+  }
+
+  /** The 0–100 value shown by the position bar (position, else tilt, else open/closed). */
+  private _primaryPct(): number {
+    const pos = this._positionAttr();
+    if (pos !== undefined) return clampPct(pos);
+    const tilt = this._tiltAttr();
+    if (tilt !== undefined) return clampPct(tilt);
+    return this._isOpen() ? 100 : 0;
+  }
+
+  private _isMoving(): boolean {
+    const state = this._stateObj()?.state;
+    return state === "opening" || state === "closing";
+  }
+
+  private _isClosed(): boolean {
+    const stateObj = this._stateObj();
+    if (!stateObj) return false;
+    if (stateObj.state === "closed") return true;
+    const pos = this._positionAttr();
+    return pos !== undefined && pos <= 0;
+  }
+
+  private _isOpen(): boolean {
+    const stateObj = this._stateObj();
+    if (!stateObj || stateObj.state === "unavailable") return false;
+    return !this._isClosed();
+  }
+
+  // ---- Action dispatch ----
 
   /** Configured action for a region + gesture, falling back to a sensible default. */
   private _action(
-    key: keyof LightCardConfig,
-    dimmableDefault: LightAction,
-    fallback: LightAction = dimmableDefault,
-  ): LightAction {
-    const configured = this._config?.[key] as LightAction | undefined;
+    key: keyof CoverCardConfig,
+    primaryDefault: CoverAction,
+    fallback: CoverAction = primaryDefault,
+  ): CoverAction {
+    const configured = this._config?.[key] as CoverAction | undefined;
     if (configured) return configured;
-    return this._supportsBrightness() ? dimmableDefault : fallback;
-  }
-
-  private _topSingleClick(): void {
-    this._execAction(this._action("up_tap", "increase", "full_on"));
-  }
-
-  private _topDoubleClick(): void {
-    this._execAction(this._action("up_double_tap", "full_on"));
-  }
-
-  private _bottomSingleClick(): void {
-    this._execAction(this._action("down_tap", "decrease", "full_off"));
-  }
-
-  private _bottomDoubleClick(): void {
-    this._execAction(this._action("down_double_tap", "full_off"));
+    return this._hasPrimary() ? primaryDefault : fallback;
   }
 
   /** Run one of the configurable actions. */
-  private _execAction(action: LightAction): void {
+  private _execAction(action: CoverAction): void {
     switch (action) {
-      case "increase":
-        this._stepUp();
+      case "open_step":
+        this._stepOpen();
         break;
-      case "decrease":
-        this._stepDown();
+      case "close_step":
+        this._stepClose();
         break;
-      case "full_on":
-        this._fullOn();
+      case "open":
+        this._openFull();
         break;
-      case "full_off":
-        this._callLight("turn_off", {});
+      case "close":
+        this._closeFull();
         break;
       case "toggle":
         this._toggle();
+        break;
+      case "stop":
+        this._callCover("stop_cover", {});
+        break;
+      case "tilt_open":
+        this._callCover("open_cover_tilt", {});
+        break;
+      case "tilt_close":
+        this._callCover("close_cover_tilt", {});
         break;
       case "more_info":
         this._moreInfo();
@@ -353,98 +414,131 @@ export class TedLightCard extends LitElement implements LovelaceCard {
     }
   }
 
-  /** Increase brightness to the next 5% (off → on at the memory brightness). */
-  private _stepUp(): void {
-    if (!this._supportsBrightness() || !this._isOn()) {
-      this._turnOn();
+  /** Open more: step the primary value up (closed / non-stepping covers open to memory). */
+  private _stepOpen(): void {
+    if (!this._hasPrimary() || !this._isOpen()) {
+      this._openToMemory();
       return;
     }
-    const next = Math.min(100, (Math.floor(this._currentPct() / BRIGHTNESS_STEP) + 1) * BRIGHTNESS_STEP);
-    this._setBrightness(next);
+    this._step(1);
   }
 
-  /** Decrease brightness to the next 5% (toggle-only lights turn off). */
-  private _stepDown(): void {
-    if (!this._supportsBrightness()) {
-      this._callLight("turn_off", {});
+  /** Close more: step the primary value down (non-stepping covers fully close). */
+  private _stepClose(): void {
+    if (!this._hasPrimary()) {
+      this._closeFull();
       return;
     }
-    if (!this._isOn()) return;
-    const next = Math.max(0, (Math.ceil(this._currentPct() / BRIGHTNESS_STEP) - 1) * BRIGHTNESS_STEP);
-    this._setBrightness(next);
+    if (!this._isOpen()) return;
+    this._step(-1);
   }
 
-  /** Full brightness (toggle-only lights just turn on). */
-  private _fullOn(): void {
-    if (this._supportsBrightness()) {
-      this._setBrightness(100);
+  private _step(delta: number): void {
+    if (this._canSetPosition()) {
+      this._setPosition(stepPct(this._positionAttr() ?? 0, delta));
+    } else if (this._canSetTilt()) {
+      this._setTilt(stepPct(this._tiltAttr() ?? 0, delta));
+    } else if (delta > 0) {
+      this._openFull();
     } else {
-      this._callLight("turn_on", {});
+      this._closeFull();
     }
   }
 
+  /** Fully open (no memory). */
+  private _openFull(): void {
+    if (this._canSetPosition()) {
+      this._setPosition(100);
+    } else if (this._supportsTilt() && !this._positionAttr()) {
+      this._callCover("open_cover_tilt", {});
+    } else {
+      this._callCover("open_cover", {});
+    }
+  }
+
+  /** Fully close. */
+  private _closeFull(): void {
+    if (this._supportsTilt() && !this._canSetPosition() && this._positionAttr() === undefined) {
+      this._callCover("close_cover_tilt", {});
+    } else {
+      this._callCover("close_cover", {});
+    }
+  }
+
+  /** Smart toggle: stop while moving, otherwise open (to memory) / close. */
   private _toggle(): void {
-    if (this._isOn()) {
-      this._callLight("turn_off", {});
+    if (this._isMoving()) {
+      this._callCover("stop_cover", {});
+    } else if (this._isOpen()) {
+      this._closeFull();
     } else {
-      this._turnOn();
+      this._openToMemory();
     }
   }
 
-  /** Turn the light on, applying the configured brightness "memory" when set. */
-  private _turnOn(): void {
-    const mem = this._memoryPct();
-    if (mem != null) {
-      this._callLight("turn_on", { brightness_pct: mem });
+  /** Open applying the configured position "memory" when set. */
+  private _openToMemory(): void {
+    if (this._canSetPosition()) {
+      const mem = this._memoryPct();
+      this._setPosition(mem ?? 100);
+    } else if (this._supportsTilt() && this._positionAttr() === undefined) {
+      this._callCover("open_cover_tilt", {});
     } else {
-      this._callLight("turn_on", {});
+      this._callCover("open_cover", {});
     }
   }
 
-  /** Resolve the memory brightness (1–100) for dimmable lights, or null when unset. */
+  /** Resolve the memory position (1–100) for position-capable covers, or null when unset. */
   private _memoryPct(): number | null {
-    if (!this._supportsBrightness()) return null;
+    if (!this._canSetPosition()) return null;
     const mode = this._config?.memory_mode;
     if (mode === "static") {
       const value = this._config?.memory_value;
-      return typeof value === "number" ? this._clampPct(value) : 100;
+      return typeof value === "number" ? this._clampMemory(value) : 100;
     }
     if (mode === "helper") {
       const entity = this._config?.memory_entity;
       const stateObj = entity ? this.hass?.states[entity] : undefined;
       const value = stateObj ? Number(stateObj.state) : NaN;
-      return Number.isFinite(value) ? this._clampPct(value) : null;
+      return Number.isFinite(value) ? this._clampMemory(value) : null;
     }
     return null;
   }
 
-  private _clampPct(value: number): number {
+  private _clampMemory(value: number): number {
     return Math.min(100, Math.max(1, Math.round(value)));
   }
 
-  private _setBrightness(pct: number): void {
-    if (pct <= 0) {
-      this._callLight("turn_off", {});
+  private _setPosition(pct: number): void {
+    const value = clampPct(pct);
+    if (value <= 0) {
+      this._callCover("close_cover", {});
       return;
     }
-    this._callLight("turn_on", { brightness_pct: pct });
-    this._writeMemoryHelper(pct);
+    this._callCover("set_cover_position", { position: value });
+    this._writeMemoryHelper(value);
   }
 
-  /** When using a memory helper, mirror brightness changes back into the helper. */
+  private _setTilt(pct: number): void {
+    this._callCover("set_cover_tilt_position", { tilt_position: clampPct(pct) });
+  }
+
+  /** When using a memory helper, mirror position changes back into the helper. */
   private _writeMemoryHelper(pct: number): void {
     if (!this.hass || this._config?.memory_mode !== "helper") return;
     const entity = this._config.memory_entity;
     if (!entity) return;
     const domain = entity.split(".")[0];
     if (domain !== "input_number" && domain !== "number") return;
-    this.hass.callService(domain, "set_value", { entity_id: entity, value: this._clampPct(pct) });
+    this.hass.callService(domain, "set_value", { entity_id: entity, value: this._clampMemory(pct) });
   }
 
-  private _callLight(service: "turn_on" | "turn_off", data: Record<string, unknown>): void {
+  private _callCover(service: string, data: Record<string, unknown>): void {
     if (!this.hass || !this._config) return;
-    this.hass.callService("light", service, { entity_id: this._config.entity, ...data });
+    this.hass.callService("cover", service, { entity_id: this._config.entity, ...data });
   }
+
+  // ---- Pointer / long-press handling ----
 
   // Long-press on a region runs that region's configured hold action. We arm a
   // timer on pointer down and cancel it on release; the resulting click is suppressed.
@@ -473,7 +567,7 @@ export class TedLightCard extends LitElement implements LovelaceCard {
     return undefined;
   }
 
-  private _holdActionFor(region: "up" | "down" | "icon"): LightAction {
+  private _holdActionFor(region: "up" | "down" | "icon"): CoverAction {
     if (region === "up") return this._action("up_hold", "more_info");
     if (region === "down") return this._action("down_hold", "more_info");
     return this._action("icon_hold", "more_info");
@@ -523,10 +617,6 @@ export class TedLightCard extends LitElement implements LovelaceCard {
       height: 100%;
     }
     ha-card {
-      /* Light-card-specific "on" color (amber) — no equivalent in the shared token set. */
-      --tlc-on-fg: #ffc107;
-      --tlc-on-bg: rgba(255, 193, 7, 0.22);
-
       position: relative;
       display: flex;
       flex-direction: column;
@@ -539,11 +629,6 @@ export class TedLightCard extends LitElement implements LovelaceCard {
       transition: background-color 180ms ease;
       outline: none;
       color: var(--ted-style-text);
-    }
-    ha-card.ted-card--theme-ha {
-      /* Follow the active Home Assistant theme for the light's amber "on" color. */
-      --tlc-on-fg: var(--state-light-active-color, #ffc107);
-      --tlc-on-bg: rgba(var(--rgb-state-light, 255, 193, 7), 0.22);
     }
     ha-card.unavailable {
       opacity: 0.6;
@@ -668,7 +753,7 @@ export class TedLightCard extends LitElement implements LovelaceCard {
       text-overflow: ellipsis;
       white-space: nowrap;
     }
-    .brightness {
+    .position {
       position: absolute;
       left: 0;
       top: 0;
@@ -679,14 +764,14 @@ export class TedLightCard extends LitElement implements LovelaceCard {
       background-color: var(--ted-style-surface-2);
       pointer-events: none;
     }
-    .brightness-fill {
+    .position-fill {
       position: absolute;
       left: 0;
       right: 0;
       bottom: 0;
       transition: height 180ms ease, background-color 180ms ease;
     }
-    /* Right-edge stripe mirroring the brightness bar's off state, with +/- hints. */
+    /* Right-edge stripe mirroring the position bar, with up/down chevron hints. */
     .stripe {
       position: absolute;
       right: 0;
@@ -700,21 +785,19 @@ export class TedLightCard extends LitElement implements LovelaceCard {
     }
     .stripe-symbol {
       position: absolute;
-      right: 0;
+      right: -3px;
       z-index: 0;
-      width: 9px;
-      text-align: center;
-      color: var(--ted-style-text);
+      width: 15px;
+      height: 15px;
+      fill: var(--ted-style-text);
       opacity: 0.5;
-      font-size: 13px;
-      line-height: 1;
       pointer-events: none;
     }
-    .stripe-plus {
+    .stripe-up {
       top: 25%;
       transform: translateY(-50%);
     }
-    .stripe-minus {
+    .stripe-down {
       top: 75%;
       transform: translateY(-50%);
     }
@@ -729,6 +812,6 @@ export class TedLightCard extends LitElement implements LovelaceCard {
 
 declare global {
   interface HTMLElementTagNameMap {
-    "ted-light-card": TedLightCard;
+    "ted-cover-card": TedCoverCard;
   }
 }

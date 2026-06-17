@@ -73,6 +73,7 @@ export class TedLightCardEditor extends LitElement implements LovelaceCardEditor
       brightness_color: "theme",
       icon_color: "light",
       brushed: false,
+      rocker: false,
       up_tap: dimmable ? "increase" : "full_on",
       up_double_tap: "full_on",
       up_hold: "more_info",
@@ -151,6 +152,7 @@ export class TedLightCardEditor extends LitElement implements LovelaceCardEditor
       visual.push({ name: "icon_color_custom", selector: { color_rgb: {} } });
     }
     visual.push({ name: "background_on", selector: { ui_color: {} } });
+    visual.push({ name: "rocker", selector: { boolean: {} } });
     visual.push({ name: "brushed", selector: { boolean: {} } });
     visual.push({
       type: "grid",
@@ -316,7 +318,9 @@ export class TedLightCardEditor extends LitElement implements LovelaceCardEditor
       case "background_on":
         return "Background color when on";
       case "brushed":
-        return "Add brushed look";
+        return "Brushed effect";
+      case "rocker":
+        return "Rocker effect";
       case "show_name":
         return "Show name";
       case "name_scale":

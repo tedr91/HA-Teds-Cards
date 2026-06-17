@@ -74,6 +74,39 @@ export const tedStyleTheme: CSSResult = css`
     width: 100%;
     height: 100%;
   }
+
+  /* Decora-style rocker bevel: makes one half appear raised, pivoting at the
+     center. Default = top half raised; add \`is-bottom\` to raise the bottom. */
+  .ted-rocker {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background: linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.1) 0%,
+      rgba(255, 255, 255, 0.03) 22%,
+      rgba(255, 255, 255, 0) 44%,
+      rgba(0, 0, 0, 0.05) 48%,
+      rgba(0, 0, 0, 0.2) 50%,
+      rgba(0, 0, 0, 0.1) 55%,
+      rgba(0, 0, 0, 0.03) 64%,
+      rgba(0, 0, 0, 0) 75%
+    );
+  }
+  .ted-rocker.is-bottom {
+    background: linear-gradient(
+      to top,
+      rgba(255, 255, 255, 0.1) 0%,
+      rgba(255, 255, 255, 0.03) 22%,
+      rgba(255, 255, 255, 0) 44%,
+      rgba(0, 0, 0, 0.05) 48%,
+      rgba(0, 0, 0, 0.2) 50%,
+      rgba(0, 0, 0, 0.1) 55%,
+      rgba(0, 0, 0, 0.03) 64%,
+      rgba(0, 0, 0, 0) 75%
+    );
+  }
 `;
 
 /**

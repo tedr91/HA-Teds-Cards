@@ -33,6 +33,7 @@ export interface LightCardConfig extends LovelaceCardConfig {
   icon_color_custom?: number[];
   background_on?: string;
   brushed?: boolean;
+  rocker?: boolean;
   show_name?: boolean;
   name_scale?: number;
   show_icon?: boolean;

@@ -91,6 +91,8 @@ The icon is centered in the card and lights up when the light is on. `icon_color
 
 `brushed` (optional, default off, in the **Visual** section): overlay a brushed-metal sheen just above the background. Pair it with a metallic `background_on` color (e.g. silver `#c0c0c0`) for a brushed-aluminum look.
 
+`rocker` (optional, default off, in the **Visual** section): a Decora-style rocker bevel that makes one half of the card appear raised, pivoting at the center. The raised half follows the state — **top** half raised when off, **bottom** half raised when on.
+
 Also in the **Visual** section: `show_name`, `show_icon`, and `show_state` (all default **on**) toggle the name, centered icon, and the state/brightness label; `name_scale` and `icon_scale` (percent, default `100`) scale the name text and icon size. `width` and `height` (px, default `100` × `120`) set the card's fixed size when it is **not** a direct item in a grid (Sections) view — e.g. inside a stack, masonry, or panel view. As a direct grid item the card honors the grid cell size instead.
 
 ### Switch Behavior
@@ -175,6 +177,8 @@ chevron** hints. The position bar fills from the bottom up with the cover's curr
 `background_open` (optional, in the **Visual** section): override the card's background color while the cover is **open**. Pick a color with the editor's color picker (stored as a `#RRGGBB` hex string). When unset, the theme background is used.
 
 `brushed` (optional, default off, in the **Visual** section): overlay a brushed-metal sheen just above the background. Pair it with a metallic `background_open` color (e.g. silver `#c0c0c0`) for a brushed-aluminum look.
+
+`rocker` (optional, default off, in the **Visual** section): a Decora-style rocker bevel that makes one half of the card appear raised, pivoting at the center. The raised half follows the state — **top** half raised when closed, **bottom** half raised when open.
 
 Also in the **Visual** section: `show_name`, `show_icon`, and `show_state` (all default **on**) toggle the name, centered icon, and the state/position label; `name_scale` and `icon_scale` (percent, default `100`) scale the name text and icon size. `width` and `height` (px, default `100` × `120`) set the card's fixed size when it is **not** a direct item in a grid (Sections) view — e.g. inside a stack, masonry, or panel view. As a direct grid item the card honors the grid cell size instead.
 

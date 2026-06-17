@@ -3,7 +3,7 @@ import { LovelaceCardConfig } from "custom-card-helpers";
 /** Visual styling mode. `ted-style` = self-contained "Ted's Home Theater" look; `ha` = follow HA theme. */
 export type LightCardTheme = "ted-style" | "ha";
 
-/** Source for the brightness hint-bar color when the light is on. */
+/** Source for the brightness hint-bar and icon colors when the light is on. */
 export type BrightnessColorMode = "theme" | "light" | "other";
 
 export interface LightCardConfig extends LovelaceCardConfig {
@@ -14,4 +14,7 @@ export interface LightCardConfig extends LovelaceCardConfig {
   theme?: LightCardTheme;
   brightness_color?: BrightnessColorMode;
   brightness_color_custom?: number[];
+  icon_color?: BrightnessColorMode;
+  icon_color_custom?: number[];
+  show_hint?: boolean;
 }

@@ -6,6 +6,7 @@ import {
   type HomeAssistant,
   type LovelaceCard,
   type LovelaceCardEditor,
+  fireEvent,
 } from "custom-card-helpers";
 
 import { registerCustomCard } from "../../shared/register-card";
@@ -18,6 +19,7 @@ import {
 import type { LightCardConfig } from "./types";
 
 const DOUBLE_CLICK_MS = 250;
+const LONG_PRESS_MS = 500;
 const BRIGHTNESS_STEP = 5;
 
 /** Convert HA brightness (0–255) to the 1–100% scale HA uses for display. */
@@ -32,8 +34,8 @@ function lightSupportsBrightness(stateObj: { attributes: { supported_color_modes
   return modes.some((mode) => mode !== "onoff" && mode !== "unknown");
 }
 
-/** Resolve the brightness-bar fill color (when on) from config + entity state. */
-function resolveBrightnessColor(
+/** Resolve a color (theme accent / light's rgb_color / custom) from config + entity state. */
+function resolveColor(
   mode: string | undefined,
   stateObj: { attributes: { rgb_color?: number[] } },
   custom?: number[],
@@ -87,6 +89,9 @@ export class TedLightCard extends LitElement implements LovelaceCard {
 
   private _topClickTimer?: number;
   private _bottomClickTimer?: number;
+  private _iconClickTimer?: number;
+  private _longPressTimer?: number;
+  private _longPressFired = false;
 
   public setConfig(config: LightCardConfig): void {
     if (!config) {
@@ -128,6 +133,8 @@ export class TedLightCard extends LitElement implements LovelaceCard {
     super.disconnectedCallback();
     if (this._topClickTimer !== undefined) window.clearTimeout(this._topClickTimer);
     if (this._bottomClickTimer !== undefined) window.clearTimeout(this._bottomClickTimer);
+    if (this._iconClickTimer !== undefined) window.clearTimeout(this._iconClickTimer);
+    if (this._longPressTimer !== undefined) window.clearTimeout(this._longPressTimer);
   }
 
   protected render(): TemplateResult | typeof nothing {
@@ -159,12 +166,19 @@ export class TedLightCard extends LitElement implements LovelaceCard {
     const stateLabel =
       isOn && supportsBrightness ? `${brightnessPct}%` : this._formatState(stateObj.state);
     const brightnessColor = isOn
-      ? resolveBrightnessColor(
+      ? resolveColor(
           this._config.brightness_color,
           stateObj,
           this._config.brightness_color_custom,
         )
       : "var(--tlc-muted)";
+    const iconColor = isOn
+      ? resolveColor(
+          this._config.icon_color || "light",
+          stateObj,
+          this._config.icon_color_custom,
+        )
+      : "rgba(255, 255, 255, 0.5)";
 
     return html`
       <ha-card
@@ -174,6 +188,10 @@ export class TedLightCard extends LitElement implements LovelaceCard {
           "layout-static": this.layout !== "grid",
           ...themeClasses,
         })}
+        @pointerdown=${this._onCardPointerDown}
+        @pointerup=${this._onCardPointerUp}
+        @pointercancel=${this._onCardPointerUp}
+        @pointerleave=${this._onCardPointerUp}
       >
         ${supportsBrightness
           ? html`
@@ -185,9 +203,23 @@ export class TedLightCard extends LitElement implements LovelaceCard {
               </div>
             `
           : nothing}
-        <div class="stripe" aria-hidden="true"></div>
-        <span class="stripe-symbol stripe-plus" aria-hidden="true">+</span>
-        <span class="stripe-symbol stripe-minus" aria-hidden="true">−</span>
+        ${this._config.show_hint
+          ? html`
+              <div class="stripe" aria-hidden="true"></div>
+              <span class="stripe-symbol stripe-plus" aria-hidden="true">+</span>
+              <span class="stripe-symbol stripe-minus" aria-hidden="true">−</span>
+            `
+          : nothing}
+        <button
+          type="button"
+          class="icon-shape"
+          style=${styleMap({ color: iconColor })}
+          aria-label=${`Toggle ${name}`}
+          ?disabled=${isUnavailable}
+          @click=${this._onIconClick}
+        >
+          <ha-icon .icon=${icon}></ha-icon>
+        </button>
         <button
           type="button"
           class="zone zone-top"
@@ -206,9 +238,6 @@ export class TedLightCard extends LitElement implements LovelaceCard {
           @click=${this._onBottomClick}
         >
           <div class="info">
-            <div class="icon-shape">
-              <ha-icon .icon=${icon}></ha-icon>
-            </div>
             <span class="secondary">${stateLabel}</span>
           </div>
         </button>
@@ -222,6 +251,7 @@ export class TedLightCard extends LitElement implements LovelaceCard {
   }
 
   private _onTopClick = (): void => {
+    if (this._consumeLongPress()) return;
     if (this._topClickTimer !== undefined) {
       window.clearTimeout(this._topClickTimer);
       this._topClickTimer = undefined;
@@ -235,6 +265,7 @@ export class TedLightCard extends LitElement implements LovelaceCard {
   };
 
   private _onBottomClick = (): void => {
+    if (this._consumeLongPress()) return;
     if (this._bottomClickTimer !== undefined) {
       window.clearTimeout(this._bottomClickTimer);
       this._bottomClickTimer = undefined;
@@ -297,6 +328,58 @@ export class TedLightCard extends LitElement implements LovelaceCard {
   private _callLight(service: "turn_on" | "turn_off", data: Record<string, unknown>): void {
     if (!this.hass || !this._config) return;
     this.hass.callService("light", service, { entity_id: this._config.entity, ...data });
+  }
+
+  // Long-press anywhere on the card opens more-info. We arm a timer on pointer
+  // down and cancel it on release; the resulting click is suppressed.
+  private _onCardPointerDown = (): void => {
+    this._longPressFired = false;
+    if (this._longPressTimer !== undefined) window.clearTimeout(this._longPressTimer);
+    this._longPressTimer = window.setTimeout(() => {
+      this._longPressTimer = undefined;
+      this._longPressFired = true;
+      this._moreInfo();
+    }, LONG_PRESS_MS);
+  };
+
+  private _onCardPointerUp = (): void => {
+    if (this._longPressTimer !== undefined) {
+      window.clearTimeout(this._longPressTimer);
+      this._longPressTimer = undefined;
+    }
+  };
+
+  private _consumeLongPress(): boolean {
+    if (this._longPressFired) {
+      this._longPressFired = false;
+      return true;
+    }
+    return false;
+  }
+
+  /** Icon: single click toggles; double click opens more-info. */
+  private _onIconClick = (ev: Event): void => {
+    ev.stopPropagation();
+    if (this._consumeLongPress()) return;
+    if (this._iconClickTimer !== undefined) {
+      window.clearTimeout(this._iconClickTimer);
+      this._iconClickTimer = undefined;
+      this._moreInfo();
+      return;
+    }
+    this._iconClickTimer = window.setTimeout(() => {
+      this._iconClickTimer = undefined;
+      this._toggle();
+    }, DOUBLE_CLICK_MS);
+  };
+
+  private _toggle(): void {
+    this._callLight(this._isOn() ? "turn_off" : "turn_on", {});
+  }
+
+  private _moreInfo(): void {
+    if (!this._config) return;
+    fireEvent(this, "hass-more-info", { entityId: this._config.entity });
   }
 
   static styles = css`
@@ -405,9 +488,30 @@ export class TedLightCard extends LitElement implements LovelaceCard {
       background-color: var(--tlc-divider);
     }
     .icon-shape {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 2;
       display: inline-flex;
       line-height: 0;
-      color: rgba(255, 255, 255, 0.5);
+      background: none;
+      border: none;
+      margin: 0;
+      padding: 0;
+      cursor: pointer;
+      outline: none;
+      transition: color 180ms ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .icon-shape:focus-visible {
+      box-shadow: 0 0 0 2px var(--tlc-accent);
+    }
+    .icon-shape:active {
+      transform: translate(-50%, -50%) scale(0.92);
+    }
+    ha-card.unavailable .icon-shape {
+      cursor: not-allowed;
     }
     .info {
       display: flex;

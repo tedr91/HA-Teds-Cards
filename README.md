@@ -70,6 +70,13 @@ Brightness is shown as a thin vertical hint bar pinned to the card's left edge (
 - `light`: the light's current color (its `rgb_color`), falling back to a warm tone.
 - `other`: a custom color — set `brightness_color_custom` to an `[r, g, b]` array (chosen via the editor's color picker).
 
+`show_hint` (optional, default `false`, in the **Visual** section): show a matching stripe up the right edge with **+** / **−** hints, indicating the top half raises brightness and the bottom half lowers it.
+
+The icon is centered in the card and lights up when the light is on. `icon_color` (optional, in the **Visual** section) sets its on color:
+- `theme`: the theme accent color.
+- `light` (default): the light's current color (its `rgb_color`), falling back to a warm tone.
+- `other`: a custom color — set `icon_color_custom` to an `[r, g, b]` array.
+
 ## Development
 
 ```sh

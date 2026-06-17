@@ -21,7 +21,7 @@ export class TedLightCardEditor extends LitElement implements LovelaceCardEditor
     if (!this.hass || !this._config) return nothing;
 
     // Apply defaults so the dropdowns show the current selection.
-    const data = { theme: "ted-style", brightness_color: "theme", ...this._config };
+    const data = { theme: "ted-style", brightness_color: "theme", icon_color: "light", ...this._config };
 
     return html`
       <ha-form
@@ -65,6 +65,23 @@ export class TedLightCardEditor extends LitElement implements LovelaceCardEditor
     if (this._config?.brightness_color === "other") {
       visual.push({ name: "brightness_color_custom", selector: { color_rgb: {} } });
     }
+    visual.push({
+      name: "icon_color",
+      selector: {
+        select: {
+          mode: "dropdown",
+          options: [
+            { value: "theme", label: "Theme color" },
+            { value: "light", label: "Light color (default)" },
+            { value: "other", label: "Custom color" },
+          ],
+        },
+      },
+    });
+    if (this._config?.icon_color === "other") {
+      visual.push({ name: "icon_color_custom", selector: { color_rgb: {} } });
+    }
+    visual.push({ name: "show_hint", selector: { boolean: {} } });
     return [
       {
         name: "entity",
@@ -104,6 +121,12 @@ export class TedLightCardEditor extends LitElement implements LovelaceCardEditor
         return "Brightness slider color";
       case "brightness_color_custom":
         return "Custom color";
+      case "icon_color":
+        return "Icon color";
+      case "icon_color_custom":
+        return "Custom icon color";
+      case "show_hint":
+        return "Show +/- hint";
       default:
         return schema.name;
     }
@@ -120,6 +143,15 @@ export class TedLightCardEditor extends LitElement implements LovelaceCardEditor
     }
     if (config.brightness_color !== "other") {
       delete config.brightness_color_custom;
+    }
+    if (config.icon_color === "light") {
+      delete config.icon_color;
+    }
+    if (config.icon_color !== "other") {
+      delete config.icon_color_custom;
+    }
+    if (!config.show_hint) {
+      delete config.show_hint;
     }
     fireEvent(this, "config-changed", { config });
   };

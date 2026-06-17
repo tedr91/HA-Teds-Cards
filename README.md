@@ -44,6 +44,8 @@ entities only. Brightness is shown as a thin vertical hint bar on the card's lef
 | Single click | If off, turn on; if on, increase brightness to the next 5% | Decrease brightness to the next 5% (off below the lowest step) |
 | Double click | Set to 100% brightness | Turn off |
 
+For **toggle-only** lights (no brightness support), the top half turns the light **on** and the bottom half turns it **off**; the left hint bar shows full when on and empty when off. The icon (single click toggles, double click opens more-info) and long-press (more-info) work for all lights.
+
 Minimal config:
 
 ```yaml

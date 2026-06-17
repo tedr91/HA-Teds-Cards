@@ -162,7 +162,11 @@ export class TedLightCard extends LitElement implements LovelaceCard {
     const name = this._config.name || stateObj.attributes.friendly_name || this._config.entity;
     const icon = this._config.icon || stateObj.attributes.icon || "mdi:lightbulb";
     const supportsBrightness = lightSupportsBrightness(stateObj);
-    const brightnessPct = isOn ? brightnessToPct(stateObj.attributes.brightness) : 0;
+    const brightnessPct = isOn
+      ? supportsBrightness
+        ? brightnessToPct(stateObj.attributes.brightness)
+        : 100
+      : 0;
     const stateLabel =
       isOn && supportsBrightness ? `${brightnessPct}%` : this._formatState(stateObj.state);
     const brightnessColor = isOn
@@ -193,16 +197,12 @@ export class TedLightCard extends LitElement implements LovelaceCard {
         @pointercancel=${this._onCardPointerUp}
         @pointerleave=${this._onCardPointerUp}
       >
-        ${supportsBrightness
-          ? html`
-              <div class="brightness" aria-hidden="true">
-                <div
-                  class="brightness-fill"
-                  style=${styleMap({ height: `${brightnessPct}%`, backgroundColor: brightnessColor })}
-                ></div>
-              </div>
-            `
-          : nothing}
+        <div class="brightness" aria-hidden="true">
+          <div
+            class="brightness-fill"
+            style=${styleMap({ height: `${brightnessPct}%`, backgroundColor: brightnessColor })}
+          ></div>
+        </div>
         ${this._config.show_hint
           ? html`
               <div class="stripe" aria-hidden="true"></div>
@@ -290,9 +290,15 @@ export class TedLightCard extends LitElement implements LovelaceCard {
     return brightnessToPct(stateObj.attributes.brightness);
   }
 
-  /** Top half, single click: off → on; on → step brightness up to the next 5%. */
+  private _supportsBrightness(): boolean {
+    if (!this.hass || !this._config) return false;
+    const stateObj = this.hass.states[this._config.entity];
+    return !!stateObj && lightSupportsBrightness(stateObj);
+  }
+
+  /** Top half, single click: off → on; on → step brightness up (toggle-only lights just turn on). */
   private _topSingleClick(): void {
-    if (!this._isOn()) {
+    if (!this._supportsBrightness() || !this._isOn()) {
       this._callLight("turn_on", {});
       return;
     }
@@ -300,13 +306,21 @@ export class TedLightCard extends LitElement implements LovelaceCard {
     this._setBrightness(next);
   }
 
-  /** Top half, double click: full brightness. */
+  /** Top half, double click: full brightness (toggle-only lights just turn on). */
   private _topDoubleClick(): void {
+    if (!this._supportsBrightness()) {
+      this._callLight("turn_on", {});
+      return;
+    }
     this._setBrightness(100);
   }
 
-  /** Bottom half, single click: step brightness down to the next 5% (off below the lowest step). */
+  /** Bottom half, single click: step brightness down to the next 5% (toggle-only lights turn off). */
   private _bottomSingleClick(): void {
+    if (!this._supportsBrightness()) {
+      this._callLight("turn_off", {});
+      return;
+    }
     if (!this._isOn()) return;
     const next = Math.max(0, (Math.ceil(this._currentPct() / BRIGHTNESS_STEP) - 1) * BRIGHTNESS_STEP);
     this._setBrightness(next);

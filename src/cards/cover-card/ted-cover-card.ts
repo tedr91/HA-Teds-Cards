@@ -10,7 +10,7 @@ import {
 } from "custom-card-helpers";
 
 import { registerCustomCard } from "../../shared/register-card";
-import { tedStyleTheme } from "../../shared/theme";
+import { brushedOverlay, tedStyleTheme } from "../../shared/theme";
 import {
   COVER_CARD_DESCRIPTION,
   COVER_CARD_EDITOR_TYPE,
@@ -237,6 +237,7 @@ export class TedCoverCard extends LitElement implements LovelaceCard {
         @pointercancel=${this._onCardPointerUp}
         @pointerleave=${this._onCardPointerUp}
       >
+        ${this._config.brushed ? brushedOverlay : nothing}
         <div class="position" aria-hidden="true">
           <div
             class="position-fill"

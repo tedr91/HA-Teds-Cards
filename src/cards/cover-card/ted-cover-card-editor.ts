@@ -90,6 +90,7 @@ export class TedCoverCardEditor extends LitElement implements LovelaceCardEditor
       theme: "ted-style",
       position_color: "theme",
       icon_color: "theme",
+      brushed: false,
       show_hint: true,
       up_tap: primary ? "open_step" : "open",
       up_double_tap: "open",
@@ -175,6 +176,7 @@ export class TedCoverCardEditor extends LitElement implements LovelaceCardEditor
       visual.push({ name: "icon_color_custom", selector: { color_rgb: {} } });
     }
     visual.push({ name: "background_open", selector: { ui_color: {} } });
+    visual.push({ name: "brushed", selector: { boolean: {} } });
     visual.push({
       type: "grid",
       name: "",
@@ -347,6 +349,8 @@ export class TedCoverCardEditor extends LitElement implements LovelaceCardEditor
         return "Custom icon color";
       case "background_open":
         return "Background color when open";
+      case "brushed":
+        return "Add brushed look";
       case "show_name":
         return "Show name";
       case "name_scale":

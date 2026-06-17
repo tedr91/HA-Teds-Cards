@@ -1,4 +1,4 @@
-import { css, type CSSResult } from "lit";
+import { css, html, type CSSResult, type TemplateResult } from "lit";
 
 import type { TedStyleTheme } from "./types";
 
@@ -59,6 +59,45 @@ export const tedStyleTheme: CSSResult = css`
     color: var(--ted-style-text);
     --ha-card-border-radius: var(--ted-style-radius);
   }
+
+  /* Brushed-metal sheen overlay (sits just above the card background). */
+  .ted-brushed {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.5;
+    mix-blend-mode: overlay;
+  }
+  .ted-brushed-svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+`;
+
+/**
+ * Brushed-metal sheen: a desaturated, horizontally-stretched noise layer meant
+ * to sit just above the card background, where `mix-blend-mode: overlay` lets it
+ * modulate whatever background color is set (e.g. silver → brushed aluminum).
+ * Render it as the first child of the card's `ha-card`.
+ */
+export const brushedOverlay: TemplateResult = html`
+  <div class="ted-brushed" aria-hidden="true">
+    <svg class="ted-brushed-svg" preserveAspectRatio="none">
+      <filter id="ted-brushed-filter" x="0" y="0" width="100%" height="100%">
+        <feTurbulence
+          type="fractalNoise"
+          baseFrequency="0.012 0.74"
+          numOctaves="2"
+          stitchTiles="stitch"
+          result="n"
+        ></feTurbulence>
+        <feColorMatrix in="n" type="saturate" values="0"></feColorMatrix>
+      </filter>
+      <rect width="100%" height="100%" filter="url(#ted-brushed-filter)"></rect>
+    </svg>
+  </div>
 `;
 
 /** Resolve the theme class to apply to a card's `ha-card`. */

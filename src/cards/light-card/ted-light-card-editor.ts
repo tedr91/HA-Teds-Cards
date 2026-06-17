@@ -154,7 +154,7 @@ export class TedLightCardEditor extends LitElement implements LovelaceCardEditor
       name: "",
       schema: [
         { name: "show_name", selector: { boolean: {} } },
-        { name: "name_scale", selector: { number: { min: 10, max: 300, step: 5, mode: "box", unit_of_measurement: "%" } } },
+        { name: "name_scale", disabled: this._config?.show_name === false, selector: { number: { min: 10, max: 300, step: 5, mode: "box", unit_of_measurement: "%" } } },
       ],
     });
     visual.push({
@@ -162,11 +162,17 @@ export class TedLightCardEditor extends LitElement implements LovelaceCardEditor
       name: "",
       schema: [
         { name: "show_icon", selector: { boolean: {} } },
-        { name: "icon_scale", selector: { number: { min: 10, max: 300, step: 5, mode: "box", unit_of_measurement: "%" } } },
+        { name: "icon_scale", disabled: this._config?.show_icon === false, selector: { number: { min: 10, max: 300, step: 5, mode: "box", unit_of_measurement: "%" } } },
       ],
     });
-    visual.push({ name: "show_state", selector: { boolean: {} } });
-    visual.push({ name: "show_hint", selector: { boolean: {} } });
+    visual.push({
+      type: "grid",
+      name: "",
+      schema: [
+        { name: "show_state", selector: { boolean: {} } },
+        { name: "show_hint", selector: { boolean: {} } },
+      ],
+    });
 
     const switchBehavior = {
       name: "",
@@ -220,14 +226,8 @@ export class TedLightCardEditor extends LitElement implements LovelaceCardEditor
         required: true,
         selector: { entity: { domain: "light" } },
       },
-      {
-        type: "grid",
-        name: "",
-        schema: [
-          { name: "name", selector: { text: {} } },
-          { name: "icon", selector: { icon: {} } },
-        ],
-      },
+      { name: "name", selector: { text: {} } },
+      { name: "icon", selector: { icon: {} } },
       {
         name: "",
         type: "expandable",

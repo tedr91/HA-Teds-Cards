@@ -179,7 +179,7 @@ export class TedCoverCardEditor extends LitElement implements LovelaceCardEditor
       name: "",
       schema: [
         { name: "show_name", selector: { boolean: {} } },
-        { name: "name_scale", selector: { number: { min: 10, max: 300, step: 5, mode: "box", unit_of_measurement: "%" } } },
+        { name: "name_scale", disabled: this._config?.show_name === false, selector: { number: { min: 10, max: 300, step: 5, mode: "box", unit_of_measurement: "%" } } },
       ],
     });
     visual.push({
@@ -187,11 +187,17 @@ export class TedCoverCardEditor extends LitElement implements LovelaceCardEditor
       name: "",
       schema: [
         { name: "show_icon", selector: { boolean: {} } },
-        { name: "icon_scale", selector: { number: { min: 10, max: 300, step: 5, mode: "box", unit_of_measurement: "%" } } },
+        { name: "icon_scale", disabled: this._config?.show_icon === false, selector: { number: { min: 10, max: 300, step: 5, mode: "box", unit_of_measurement: "%" } } },
       ],
     });
-    visual.push({ name: "show_state", selector: { boolean: {} } });
-    visual.push({ name: "show_hint", selector: { boolean: {} } });
+    visual.push({
+      type: "grid",
+      name: "",
+      schema: [
+        { name: "show_state", selector: { boolean: {} } },
+        { name: "show_hint", selector: { boolean: {} } },
+      ],
+    });
 
     const switchBehavior = {
       name: "",
@@ -245,11 +251,11 @@ export class TedCoverCardEditor extends LitElement implements LovelaceCardEditor
         required: true,
         selector: { entity: { domain: "cover" } },
       },
+      { name: "name", selector: { text: {} } },
       {
         type: "grid",
         name: "",
         schema: [
-          { name: "name", selector: { text: {} } },
           { name: "icon", selector: { icon: {} } },
           { name: "icon_open", selector: { icon: {} } },
         ],
@@ -319,7 +325,7 @@ export class TedCoverCardEditor extends LitElement implements LovelaceCardEditor
       case "icon":
         return "Icon (optional)";
       case "icon_open":
-        return "Open icon (optional)";
+        return "Open state icon (optional)";
       case "theme":
         return "Visual styling";
       case "position_color":

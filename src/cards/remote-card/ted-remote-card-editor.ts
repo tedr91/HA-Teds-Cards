@@ -50,7 +50,6 @@ export class TedRemoteCardEditor extends LitElement implements LovelaceCardEdito
       brushed: false,
       show_name: true,
       name_scale: 100,
-      show_status: true,
       scale: 100,
     };
   }
@@ -132,15 +131,8 @@ export class TedRemoteCardEditor extends LitElement implements LovelaceCardEdito
         ],
       },
       {
-        type: "grid",
-        name: "",
-        schema: [
-          { name: "show_status", selector: { boolean: {} } },
-          {
-            name: "scale",
-            selector: { number: { min: 50, max: 200, step: 5, mode: "box", unit_of_measurement: "%" } },
-          },
-        ],
+        name: "scale",
+        selector: { number: { min: 50, max: 200, step: 5, mode: "box", unit_of_measurement: "%" } },
       },
     ];
 
@@ -193,8 +185,6 @@ export class TedRemoteCardEditor extends LitElement implements LovelaceCardEdito
         return "Show name";
       case "name_scale":
         return "Name size";
-      case "show_status":
-        return "Show status";
       case "scale":
         return "Card scale";
       default:

@@ -125,10 +125,10 @@ export class TedRemoteCard extends LitElement implements LovelaceCard {
 
   public getGridOptions(): GridOptions {
     return {
-      columns: 6,
-      rows: 9,
-      min_columns: 4,
-      min_rows: 6,
+      columns: 12,
+      rows: 6,
+      min_columns: 6,
+      min_rows: 4,
     };
   }
 
@@ -172,7 +172,6 @@ export class TedRemoteCard extends LitElement implements LovelaceCard {
     const isPlaying = this._isPlaying();
     const name = this._config.name || stateObj.attributes.friendly_name || this._config.remote_entity;
     const showName = this._config.show_name !== false;
-    const showStatus = this._config.show_status !== false;
     const scale = typeof this._config.scale === "number" ? this._config.scale : 100;
 
     const cardStyle: Record<string, string> = { "--rc-scale": String(scale / 100) };
@@ -184,20 +183,34 @@ export class TedRemoteCard extends LitElement implements LovelaceCard {
     return html`
       <ha-card class=${classMap(themeClasses)} style=${styleMap(cardStyle)}>
         ${this._config.brushed ? brushedOverlay : nothing}
-        <div class="remote-body">
-          <div class="topbar">
+        <div class="header-row">
+          <div class="header-lead">
             ${showName
-              ? html`<span
-                  class="device-name"
+              ? html`<div
+                  class="header"
                   style=${styleMap({
-                    fontSize: `calc(${(14 * (this._config.name_scale ?? 100)) / 100}px * var(--rc-scale))`,
+                    fontSize: `calc(1.05rem * ${(this._config.name_scale ?? 100) / 100})`,
                   })}
-                  >${name}</span
+                  title=${name}
+                  >${name}</div
                 >`
-              : html`<span></span>`}
-            ${this._renderButton("power", { lit: isOn, cls: "power-button" })}
+              : nothing}
           </div>
-
+          <div class="header-actions">
+            <div class="header-status">
+              <span
+                class=${classMap({
+                  "status-dot": true,
+                  "status-dot--on": isOn,
+                  "status-dot--off": !isOn,
+                })}
+                title=${this._statusLabel()}
+              ></span>
+            </div>
+            ${this._renderPowerButton(isOn)}
+          </div>
+        </div>
+        <div class="remote-body">
           <div class="dpad" aria-label="Directional pad">
             ${this._renderButton("up", { cls: "dpad-up" })}
             ${this._renderButton("left", { cls: "dpad-left" })}
@@ -238,9 +251,6 @@ export class TedRemoteCard extends LitElement implements LovelaceCard {
                 )}
               </div>`
             : nothing}
-          ${showStatus
-            ? html`<div class="status">${this._statusLabel()}</div>`
-            : nothing}
         </div>
       </ha-card>
     `;
@@ -265,6 +275,31 @@ export class TedRemoteCard extends LitElement implements LovelaceCard {
         ${opts.text
           ? html`<span class="rbtn-text">${opts.text}</span>`
           : html`<ha-icon .icon=${BUTTON_ICONS[button]}></ha-icon>`}
+      </button>
+    `;
+  }
+
+  /** Dedicated circular power button in the header (matches the DenonMarantz card). */
+  private _renderPowerButton(powerIsOn: boolean): TemplateResult {
+    return html`
+      <button
+        type="button"
+        class=${classMap({
+          "power-button": true,
+          "power-button--on": powerIsOn,
+          "power-button--off": !powerIsOn,
+        })}
+        role="switch"
+        aria-checked=${powerIsOn ? "true" : "false"}
+        aria-label="Toggle power"
+        title="Toggle power"
+        @click=${() => this._press("power")}
+      >
+        <svg class="power-button-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            d="M12 3a1 1 0 0 1 1 1v8a1 1 0 0 1-2 0V4a1 1 0 0 1 1-1zm5.66 2.93a1 1 0 0 1 1.41 0 9 9 0 1 1-12.73 0 1 1 0 1 1 1.41 1.42 7 7 0 1 0 9.9 0 1 1 0 0 1 0-1.42z"
+          ></path>
+        </svg>
       </button>
     `;
   }
@@ -401,12 +436,101 @@ export class TedRemoteCard extends LitElement implements LovelaceCard {
         isolation: isolate;
         display: flex;
         flex-direction: column;
-        align-items: center;
-        padding: calc(16px * var(--rc-scale));
         height: 100%;
         box-sizing: border-box;
         overflow: hidden;
         color: var(--ted-style-text);
+      }
+      /* Header area mirrors the DenonMarantz card: name + status dot + power button. */
+      .header-row {
+        align-items: center;
+        display: flex;
+        gap: var(--ted-style-gap);
+        justify-content: space-between;
+        padding: 16px 16px 4px;
+      }
+      .header-lead {
+        align-items: center;
+        display: inline-flex;
+        gap: 10px;
+        min-width: 0;
+      }
+      .header {
+        font-weight: 600;
+        letter-spacing: 0.01em;
+        line-height: 1.2;
+        color: var(--ted-style-text);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .header-status {
+        align-items: center;
+        display: inline-flex;
+        flex: none;
+        gap: 8px;
+      }
+      .header-actions {
+        align-items: center;
+        display: inline-flex;
+        flex: none;
+        gap: 14px;
+      }
+      .status-dot {
+        border-radius: 50%;
+        flex: none;
+        height: 10px;
+        width: 10px;
+        transition: background-color 0.25s ease, box-shadow 0.25s ease;
+      }
+      .status-dot--on {
+        background: var(--ted-style-success);
+        box-shadow: 0 0 8px color-mix(in srgb, var(--ted-style-success) 70%, transparent);
+      }
+      .status-dot--off {
+        background: color-mix(in srgb, var(--ted-style-muted) 55%, transparent);
+      }
+      .power-button {
+        align-items: center;
+        background: var(--ted-style-surface-2);
+        border: 1px solid var(--ted-style-divider);
+        border-radius: 50%;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
+        box-sizing: border-box;
+        color: color-mix(in srgb, var(--ted-style-text) 60%, transparent);
+        cursor: pointer;
+        display: inline-flex;
+        flex: none;
+        height: 30px;
+        width: 30px;
+        justify-content: center;
+        padding: 0;
+        transition: background 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease,
+          color 0.2s ease, transform 0.08s ease;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .power-button:hover {
+        border-color: color-mix(in srgb, var(--ted-style-accent) 45%, var(--ted-style-divider));
+      }
+      .power-button:active {
+        transform: scale(0.94);
+      }
+      .power-button:focus-visible {
+        outline: 2px solid var(--ted-style-accent);
+        outline-offset: 2px;
+      }
+      .power-button-icon {
+        fill: currentColor;
+        height: 16px;
+        width: 16px;
+      }
+      /* ON: a glowing green ring (dark center) rather than a filled accent button. */
+      .power-button--on {
+        background: var(--ted-style-surface-2);
+        border-color: var(--ted-style-success);
+        box-shadow: 0 0 0 1px var(--ted-style-success),
+          0 0 12px color-mix(in srgb, var(--ted-style-success) 55%, transparent);
+        color: var(--ted-style-success);
       }
       .remote-body {
         display: flex;
@@ -415,21 +539,10 @@ export class TedRemoteCard extends LitElement implements LovelaceCard {
         gap: var(--rc-gap);
         width: 100%;
         max-width: calc(220px * var(--rc-scale));
-      }
-      .topbar {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        width: 100%;
-        gap: var(--rc-gap);
-        min-height: var(--rc-btn);
-      }
-      .device-name {
-        font-weight: 500;
-        color: var(--ted-style-text);
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
+        margin: 0 auto;
+        padding: calc(8px * var(--rc-scale)) calc(16px * var(--rc-scale))
+          calc(16px * var(--rc-scale));
+        box-sizing: border-box;
       }
       .row {
         display: flex;
@@ -475,14 +588,6 @@ export class TedRemoteCard extends LitElement implements LovelaceCard {
         font-size: calc(13px * var(--rc-scale));
         font-weight: 600;
         line-height: 1;
-      }
-      .power-button {
-        margin-left: auto;
-      }
-      .power-button.lit {
-        color: var(--ted-style-success);
-        box-shadow: 0 0 0 1px var(--ted-style-success),
-          0 0 calc(10px * var(--rc-scale)) rgba(108, 203, 95, 0.35);
       }
       /* Directional pad arranged on a 3×3 grid inside a circular pad. */
       .dpad {
@@ -556,12 +661,6 @@ export class TedRemoteCard extends LitElement implements LovelaceCard {
       }
       .app-btn:active {
         transform: scale(0.97);
-      }
-      .status {
-        margin-top: calc(var(--rc-gap) * 0.25);
-        font-size: calc(12px * var(--rc-scale));
-        color: var(--ted-style-muted);
-        text-align: center;
       }
       .not-found {
         padding: 12px;

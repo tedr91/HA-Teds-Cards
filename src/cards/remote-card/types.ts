@@ -41,7 +41,6 @@ export interface RemoteCardConfig extends LovelaceCardConfig {
   brushed?: boolean;
   show_name?: boolean;
   name_scale?: number;
-  show_status?: boolean;
   scale?: number;
   // Quick-launch app buttons (Apple TV only) — each value is a media_player source name.
   app_launch_1?: string;

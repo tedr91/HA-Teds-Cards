@@ -642,8 +642,8 @@ export class TedLightCard extends LitElement implements LovelaceCard {
       height: 1px;
       margin: 0;
       /* Engraved/sunken look: a dark groove with a faint highlight just below. */
-      background-color: rgba(0, 0, 0, 0.45);
-      box-shadow: 0 1px 0 rgba(200, 200, 200, 0.13);
+      background-color: rgba(80, 80, 80, 0.45);
+      box-shadow: 0 1px 0 rgba(255, 255, 255, 0.13);
     }
     .icon-shape {
       position: absolute;

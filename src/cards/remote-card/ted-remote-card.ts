@@ -15,10 +15,27 @@ import {
   REMOTE_CARD_NAME,
   REMOTE_CARD_TYPE,
 } from "./const";
-import type { RemoteButton, RemoteCardConfig } from "./types";
+import type { DeviceFamily, RemoteButton, RemoteCardConfig } from "./types";
 
 /** States that count as "not powered on" for a media_player / remote entity. */
 const OFF_STATES = ["off", "standby", "unavailable", "unknown"];
+
+/** Max gap between two taps to count as a double-click. */
+const DOUBLE_CLICK_MS = 250;
+
+/** Resolve a `ui_color` value (hex/rgb/hsl/var or a theme color name) to a CSS color. */
+function cssColor(value?: string): string | undefined {
+  if (!value) return undefined;
+  if (
+    value.startsWith("#") ||
+    value.startsWith("rgb") ||
+    value.startsWith("hsl") ||
+    value.startsWith("var")
+  ) {
+    return value;
+  }
+  return `var(--${value}-color, ${value})`;
+}
 
 /** Resolved Home Assistant service call. */
 interface ServiceCall {
@@ -66,6 +83,41 @@ const BUTTON_LABELS: Record<RemoteButton, string> = {
   volume_down: "Volume down",
 };
 
+/**
+ * Built-in device-family brand logos shown in the header (no external assets).
+ * Apple mark (simple-icons, tinted with the card text color) for Apple TV; the
+ * Kaleidescape multi-colour diamond mark (from HA-Firemote) for Kaleidescape.
+ */
+const DEVICE_LOGOS: Record<DeviceFamily, TemplateResult> = {
+  "apple-tv": html`<svg class="device-logo device-logo--mono" viewBox="0 0 16 16" aria-hidden="true">
+    <path
+      d="M11.182.008C11.148-.03 9.923.023 8.857 1.18c-1.066 1.156-.902 2.482-.878 2.516.024.034 1.52.087 2.475-1.258.955-1.345.762-2.391.728-2.43Zm3.314 11.733c-.048-.096-2.325-1.234-2.113-3.422.212-2.189 1.675-2.789 1.698-2.854.023-.065-.597-.79-1.254-1.157a3.692 3.692 0 0 0-1.563-.434c-.108-.003-.483-.095-1.254.116-.508.139-1.653.589-1.968.607-.316.018-1.256-.522-2.267-.665-.647-.125-1.333.131-1.824.328-.49.196-1.422.754-2.074 2.237-.652 1.482-.311 3.83-.067 4.56.244.729.625 1.924 1.273 2.796.576.984 1.34 1.667 1.659 1.899.319.232 1.219.386 1.843.067.502-.308 1.408-.485 1.766-.472.357.013 1.061.154 1.782.539.571.197 1.111.115 1.652-.105.541-.221 1.324-1.059 2.238-2.758.347-.79.505-1.217.473-1.282Z"
+    ></path>
+  </svg>`,
+  kaleidescape: html`<svg class="device-logo" viewBox="0 0 24 24" fill-rule="evenodd" aria-hidden="true">
+    <path d="M1.36 17.58L5.46 15.21L1.36 12.85Z" fill="#ffb612"></path>
+    <path d="M1.36 11.15L5.46 8.79L1.36 6.42Z" fill="#739abc"></path>
+    <path d="M1.85 18.42L5.95 20.79L5.95 16.06Z" fill="#739abc"></path>
+    <path d="M1.85 12L5.95 14.36L5.95 9.64Z" fill="#165788"></path>
+    <path d="M1.85 5.58L5.95 7.94L5.95 3.21Z" fill="#165788"></path>
+    <path d="M6.93 14.36L11.02 12L6.93 9.64Z" fill="#165788"></path>
+    <path d="M6.93 7.94L11.02 5.58L6.93 3.21Z" fill="#165788"></path>
+    <path d="M7.42 21.64L11.51 24L11.51 19.27Z" fill="#739abc"></path>
+    <path d="M7.42 15.21L11.51 17.58L11.51 12.85Z" fill="#739abc"></path>
+    <path d="M7.42 8.79L11.51 11.15L11.51 6.42Z" fill="#ffb612"></path>
+    <path d="M12.49 24L16.58 21.64L12.49 19.27Z" fill="#739abc"></path>
+    <path d="M12.49 17.58L16.58 15.21L12.49 12.85Z" fill="#739abc"></path>
+    <path d="M12.49 11.15L16.58 8.79L12.49 6.42Z" fill="#739abc"></path>
+    <path d="M12.49 4.73L16.58 2.36L12.49 0Z" fill="#165788"></path>
+    <path d="M12.98 18.42L17.07 20.79L17.07 16.06Z" fill="#165788"></path>
+    <path d="M12.98 5.58L17.07 7.94L17.07 3.21Z" fill="#739abc"></path>
+    <path d="M18.05 20.79L22.15 18.42L18.05 16.06Z" fill="#ffb612"></path>
+    <path d="M18.05 7.94L22.15 5.58L18.05 3.21Z" fill="#165788"></path>
+    <path d="M18.54 15.21L22.64 17.58L22.64 12.85Z" fill="#165788"></path>
+    <path d="M18.54 8.79L22.64 11.15L22.64 6.42Z" fill="#165788"></path>
+  </svg>`,
+};
+
 /** Subset of Home Assistant's LovelaceGridOptions for the Sections grid layout. */
 interface GridOptions {
   columns?: number | "full";
@@ -100,6 +152,9 @@ export class TedRemoteCard extends LitElement implements LovelaceCard {
   @property({ attribute: false }) public layout?: string;
   @state() private _config?: RemoteCardConfig;
 
+  /** Pending single-click timers, keyed by button, for double-click detection. */
+  private _clickTimers = new Map<RemoteButton, number>();
+
   public setConfig(config: RemoteCardConfig): void {
     if (!config) {
       throw new Error("Invalid configuration");
@@ -125,10 +180,10 @@ export class TedRemoteCard extends LitElement implements LovelaceCard {
 
   public getGridOptions(): GridOptions {
     return {
-      columns: 12,
-      rows: 6,
-      min_columns: 6,
-      min_rows: 4,
+      columns: 6,
+      rows: 5,
+      min_columns: 4,
+      min_rows: 3,
     };
   }
 
@@ -147,11 +202,15 @@ export class TedRemoteCard extends LitElement implements LovelaceCard {
   protected render(): TemplateResult | typeof nothing {
     if (!this._config || !this.hass) return nothing;
 
-    const themeMode = this._config.theme === "ha" ? "ha" : "ted-style";
+    const family = this._config.device_family;
+    const theme = this._config.theme ?? "manufacturer";
     const themeClasses = {
       "ted-card": true,
-      "ted-card--theme-ted-style": themeMode === "ted-style",
-      "ted-card--theme-ha": themeMode === "ha",
+      "ted-card--theme-ted-style": theme === "ted-style",
+      "ted-card--theme-ha": theme === "ha",
+      "ted-card--theme-mfr": theme === "manufacturer",
+      "mfr--apple-tv": theme === "manufacturer" && family === "apple-tv",
+      "mfr--kaleidescape": theme === "manufacturer" && family === "kaleidescape",
     };
 
     const stateObj = this.hass.states[this._config.remote_entity];
@@ -165,26 +224,32 @@ export class TedRemoteCard extends LitElement implements LovelaceCard {
       `;
     }
 
-    const family = this._config.device_family;
     const isAppleTv = family === "apple-tv";
     const isKaleidescape = family === "kaleidescape";
     const isOn = this._isOn();
     const isPlaying = this._isPlaying();
     const name = this._config.name || stateObj.attributes.friendly_name || this._config.remote_entity;
-    const showName = this._config.show_name !== false;
-    const scale = typeof this._config.scale === "number" ? this._config.scale : 100;
+    const showIcon = this._config.show_icon !== false;
+    const showName = this._config.show_name === true;
+    const scale = typeof this._config.scale === "number" ? this._config.scale : 75;
 
     const cardStyle: Record<string, string> = { "--rc-scale": String(scale / 100) };
     const isGrid = this.layout === "grid";
     if (!isGrid) cardStyle.margin = "0 auto";
+    const bgOverride = cssColor(this._config.background);
+    if (bgOverride) cardStyle.background = bgOverride;
+    // Kaleidescape's manufacturer look has a brushed-metal sheen; honor the explicit toggle too.
+    const showBrushed =
+      this._config.brushed === true || (theme === "manufacturer" && isKaleidescape);
 
     const launchers = isAppleTv ? this._configuredLaunchers() : [];
 
     return html`
       <ha-card class=${classMap(themeClasses)} style=${styleMap(cardStyle)}>
-        ${this._config.brushed ? brushedOverlay : nothing}
+        ${showBrushed ? brushedOverlay : nothing}
         <div class="header-row">
           <div class="header-lead">
+            ${showIcon ? DEVICE_LOGOS[family] : nothing}
             ${showName
               ? html`<div
                   class="header"
@@ -225,11 +290,15 @@ export class TedRemoteCard extends LitElement implements LovelaceCard {
           </div>
 
           <div class="row transport">
-            ${isKaleidescape ? this._renderButton("skip_previous") : nothing}
-            ${this._renderButton("rewind")}
+            ${this._renderButton(
+              "rewind",
+              isKaleidescape ? { doubleClick: "skip_previous" } : {},
+            )}
             ${this._renderButton("play_pause", { lit: isPlaying })}
-            ${this._renderButton("fast_forward")}
-            ${isKaleidescape ? this._renderButton("skip_next") : nothing}
+            ${this._renderButton(
+              "fast_forward",
+              isKaleidescape ? { doubleClick: "skip_next" } : {},
+            )}
           </div>
 
           ${isAppleTv
@@ -259,24 +328,57 @@ export class TedRemoteCard extends LitElement implements LovelaceCard {
   /** Render a single remote button. Returns `nothing` if the button has no mapping. */
   private _renderButton(
     button: RemoteButton,
-    opts: { lit?: boolean; cls?: string; text?: string } = {},
+    opts: { lit?: boolean; cls?: string; text?: string; doubleClick?: RemoteButton } = {},
   ): TemplateResult | typeof nothing {
     if (!this._resolve(button)) return nothing;
     const classes: Record<string, boolean> = { rbtn: true, lit: !!opts.lit };
     if (opts.cls) classes[opts.cls] = true;
+    const label = opts.doubleClick
+      ? `${BUTTON_LABELS[button]} (double-tap: ${BUTTON_LABELS[opts.doubleClick]})`
+      : BUTTON_LABELS[button];
     return html`
       <button
         type="button"
         class=${classMap(classes)}
-        aria-label=${BUTTON_LABELS[button]}
-        title=${BUTTON_LABELS[button]}
-        @click=${() => this._press(button)}
+        aria-label=${label}
+        title=${label}
+        @click=${() => this._onButtonClick(button, opts.doubleClick)}
       >
         ${opts.text
           ? html`<span class="rbtn-text">${opts.text}</span>`
           : html`<ha-icon .icon=${BUTTON_ICONS[button]}></ha-icon>`}
       </button>
     `;
+  }
+
+  /**
+   * Route a button click: when a `doubleClick` action is bound, a single tap
+   * fires `button` after a short delay and a second tap within the window fires
+   * `doubleClick` instead; otherwise the press is immediate.
+   */
+  private _onButtonClick(button: RemoteButton, doubleClick?: RemoteButton): void {
+    if (!doubleClick) {
+      this._press(button);
+      return;
+    }
+    const pending = this._clickTimers.get(button);
+    if (pending !== undefined) {
+      window.clearTimeout(pending);
+      this._clickTimers.delete(button);
+      this._press(doubleClick);
+      return;
+    }
+    const timer = window.setTimeout(() => {
+      this._clickTimers.delete(button);
+      this._press(button);
+    }, DOUBLE_CLICK_MS);
+    this._clickTimers.set(button, timer);
+  }
+
+  public disconnectedCallback(): void {
+    super.disconnectedCallback();
+    for (const timer of this._clickTimers.values()) window.clearTimeout(timer);
+    this._clickTimers.clear();
   }
 
   /** Dedicated circular power button in the header (matches the DenonMarantz card). */
@@ -342,6 +444,11 @@ export class TedRemoteCard extends LitElement implements LovelaceCard {
       } else {
         command = "pause";
       }
+      return { domain: "remote", service: "send_command", data: { entity_id: remote, command } };
+    }
+
+    if (button === "home" && cfg.device_family === "kaleidescape") {
+      const command = cfg.kaleidescape_home || "home";
       return { domain: "remote", service: "send_command", data: { entity_id: remote, command } };
     }
 
@@ -455,6 +562,15 @@ export class TedRemoteCard extends LitElement implements LovelaceCard {
         gap: 10px;
         min-width: 0;
       }
+      .device-logo {
+        display: block;
+        flex: none;
+        height: 22px;
+        width: 22px;
+      }
+      .device-logo--mono {
+        fill: var(--ted-style-text);
+      }
       .header {
         font-weight: 600;
         letter-spacing: 0.01em;
@@ -529,7 +645,7 @@ export class TedRemoteCard extends LitElement implements LovelaceCard {
         background: var(--ted-style-surface-2);
         border-color: var(--ted-style-success);
         box-shadow: 0 0 0 1px var(--ted-style-success),
-          0 0 12px color-mix(in srgb, var(--ted-style-success) 55%, transparent);
+          0 0 7px color-mix(in srgb, var(--ted-style-success) 38%, transparent);
         color: var(--ted-style-success);
       }
       .remote-body {
@@ -661,6 +777,77 @@ export class TedRemoteCard extends LitElement implements LovelaceCard {
       }
       .app-btn:active {
         transform: scale(0.97);
+      }
+      /* ---- Manufacturer styles (evoke the Firemote remote look per family) ---- */
+      ha-card.ted-card--theme-mfr {
+        border-radius: 22px;
+      }
+      /* Apple TV — silver aluminium body with dark round buttons. */
+      ha-card.mfr--apple-tv {
+        background: linear-gradient(0deg, #939496 0%, #cfd3d5 100%);
+        border: 1px solid #d1d1d1;
+        color: #1d1d1f;
+        --ted-style-text: #1d1d1f;
+        --ted-style-muted: rgba(0, 0, 0, 0.55);
+        --ted-style-divider: rgba(0, 0, 0, 0.18);
+      }
+      .mfr--apple-tv .rbtn {
+        background-color: #212121;
+        border-color: #000000;
+        color: #c6c6c6;
+      }
+      .mfr--apple-tv .rbtn:hover {
+        background-color: #2c2c2c;
+      }
+      .mfr--apple-tv .dpad {
+        background: #050505;
+        border-color: #000000;
+      }
+      .mfr--apple-tv .dpad .rbtn {
+        color: #c6c6c6;
+      }
+      .mfr--apple-tv .dpad .rbtn:hover {
+        background-color: rgba(255, 255, 255, 0.08);
+      }
+      .mfr--apple-tv .dpad-select {
+        background: linear-gradient(180deg, #000000 0%, #303030 100%) !important;
+        border-color: #2e2e2e !important;
+        color: #c6c6c6;
+      }
+      .mfr--apple-tv .app-btn {
+        background-color: #212121;
+        border-color: #000000;
+        color: #e6e6e6;
+      }
+      /* Kaleidescape — dark brushed body, slate buttons, blue d-pad. */
+      ha-card.mfr--kaleidescape {
+        background: linear-gradient(145deg, #2e2e32 0%, #222226 45%, #16161a 100%);
+        border: 1px solid #14141a;
+        box-shadow: 0 6px 22px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      }
+      .mfr--kaleidescape .rbtn {
+        background: linear-gradient(180deg, #3c3c42 0%, #2c2c31 100%);
+        border-color: #101015;
+        color: #f4f5f7;
+      }
+      .mfr--kaleidescape .rbtn:hover {
+        filter: brightness(1.12);
+      }
+      .mfr--kaleidescape .dpad {
+        background: radial-gradient(circle at 50% 36%, #6189bd 0%, #41699c 45%, #324f78 100%);
+        border-color: #0d0f15;
+        box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.5), 0 1px 0 rgba(255, 255, 255, 0.06);
+      }
+      .mfr--kaleidescape .dpad .rbtn {
+        color: #ffffff;
+      }
+      .mfr--kaleidescape .dpad .rbtn:hover {
+        background-color: rgba(255, 255, 255, 0.14);
+      }
+      .mfr--kaleidescape .dpad-select {
+        background: radial-gradient(circle at 50% 38%, #2c2c31 0%, #1b1b1f 70%, #131316 100%) !important;
+        border-color: #0e0e12 !important;
+        color: #f4f5f7;
       }
       .not-found {
         padding: 12px;

@@ -1,7 +1,7 @@
 import { LovelaceCardConfig } from "custom-card-helpers";
 
-/** Visual styling mode. `ted-style` = self-contained "Ted's Home Theater" look; `ha` = follow HA theme. */
-export type RemoteCardTheme = "ted-style" | "ha";
+/** Visual styling mode. `manufacturer` = Firemote-style per-device look; `ted-style` = self-contained "Ted's Home Theater" look; `ha` = follow HA theme. */
+export type RemoteCardTheme = "manufacturer" | "ted-style" | "ha";
 
 /**
  * Supported device families. Apple TV uses the built-in `apple_tv` integration;
@@ -35,10 +35,13 @@ export interface RemoteCardConfig extends LovelaceCardConfig {
   /** The `remote.*` entity that receives `remote.send_command` calls. */
   remote_entity: string;
   /** Optional `media_player.*` entity — drives state display and play/pause + power decisions. */
-  media_player_entity?: string;
-  name?: string;
+  media_player_entity?: string;  /** Kaleidescape only: which destination the Home button navigates to (a remote alias). */
+  kaleidescape_home?: string;  name?: string;
   theme?: RemoteCardTheme;
+  /** Optional override for the card background (hex/rgb/hsl/var or a theme color name). */
+  background?: string;
   brushed?: boolean;
+  show_icon?: boolean;
   show_name?: boolean;
   name_scale?: number;
   scale?: number;

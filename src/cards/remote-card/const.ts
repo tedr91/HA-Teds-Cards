@@ -21,6 +21,19 @@ export const DEVICE_FAMILY_LABELS: Record<DeviceFamily, string> = {
 };
 
 /**
+ * Destinations the Kaleidescape Home button can navigate to. Values are
+ * `kaleidescape_strato` remote aliases (`home` → HOME, `movie_covers` →
+ * GO_MOVIE_COVERS, etc.).
+ */
+export const KALEIDESCAPE_HOME_OPTIONS: Array<{ value: string; label: string }> = [
+  { value: "home", label: "Home (default)" },
+  { value: "movie_covers", label: "Movie covers" },
+  { value: "movie_list", label: "Movie list" },
+  { value: "movie_collections", label: "Movie collections" },
+  { value: "system_status", label: "System status" },
+];
+
+/**
  * Apple TV — logical button → `remote.send_command` command (pyatv RemoteControl /
  * power / audio commands exposed by the HA `apple_tv` integration). `power` and
  * `play_pause` are handled specially (state-dependent) in the card.

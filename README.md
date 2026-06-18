@@ -4,7 +4,9 @@ A collection of custom Lovelace cards for [Home Assistant](https://www.home-assi
 
 ![Ted's Cards — light and cover cards](images/showcase.png)
 
-> **Status:** early development. Includes `ted-light-card` and `ted-cover-card`; more are planned.
+> **⚠️ Interim release — testing only.** This is a pre-release build published for testing purposes only and is not intended for production use. Features may change or break without notice.
+
+> **Status:** early development. Includes `ted-light-card`, `ted-cover-card`, and `ted-remote-card`; more are planned.
 
 ## Cards
 
@@ -12,6 +14,7 @@ A collection of custom Lovelace cards for [Home Assistant](https://www.home-assi
 | --- | --- | --- |
 | Light Card | `custom:ted-light-card` | Light tile with click-to-dim halves and a brightness hint bar. |
 | Cover Card | `custom:ted-cover-card` | Cover tile with click-to-position halves and a position hint bar. |
+| Remote Card | `custom:ted-remote-card` | Remote control for Apple TV and Kaleidescape devices. |
 
 ## Installation
 

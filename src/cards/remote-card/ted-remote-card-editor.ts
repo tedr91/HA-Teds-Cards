@@ -250,6 +250,7 @@ export class TedRemoteCardEditor extends LitElement implements LovelaceCardEdito
 
   private _valueChanged = (ev: CustomEvent): void => {
     const previousFamily = this._family();
+    const previousRemote = this._config?.remote_entity;
     const config = { ...ev.detail.value } as RemoteCardConfig;
     const mutable = config as Partial<RemoteCardConfig>;
 
@@ -264,6 +265,17 @@ export class TedRemoteCardEditor extends LitElement implements LovelaceCardEdito
       for (let i = 1; i <= APP_LAUNCH_SLOTS; i++) {
         delete mutable[`app_launch_${i}` as keyof RemoteCardConfig];
       }
+    }
+
+    // When the remote entity is (re)selected and no media player is set yet, try
+    // to auto-fill the matching media_player (same device first, then by name).
+    if (
+      config.remote_entity &&
+      config.remote_entity !== previousRemote &&
+      !config.media_player_entity
+    ) {
+      const match = this._matchMediaPlayer(config.remote_entity, family);
+      if (match) config.media_player_entity = match;
     }
 
     // Kaleidescape has no app launchers — never persist them.
@@ -289,6 +301,40 @@ export class TedRemoteCardEditor extends LitElement implements LovelaceCardEdito
 
     fireEvent(this, "config-changed", { config });
   };
+
+  /**
+   * Find the media_player that best matches a remote entity: first an entity on
+   * the same device, then one whose name (object_id) matches, restricted to the
+   * family's integration.
+   */
+  private _matchMediaPlayer(remoteId: string, family: DeviceFamily): string | undefined {
+    const hass = this.hass;
+    if (!hass) return undefined;
+    const registry = (hass as unknown as {
+      entities?: Record<string, { device_id?: string; platform?: string }>;
+    }).entities;
+    const integration = REMOTE_INTEGRATIONS[family];
+    const candidates = Object.keys(hass.states).filter((id) => id.startsWith("media_player."));
+
+    // 1) Same device as the remote.
+    const deviceId = registry?.[remoteId]?.device_id;
+    if (deviceId) {
+      const byDevice = candidates.find((id) => registry?.[id]?.device_id === deviceId);
+      if (byDevice) return byDevice;
+    }
+
+    // 2) Same integration + matching name (object_id), exact then fuzzy.
+    const sameIntegration = candidates.filter(
+      (id) => !registry || registry[id]?.platform === integration,
+    );
+    const remoteObj = remoteId.split(".")[1] ?? "";
+    const exact = sameIntegration.find((id) => (id.split(".")[1] ?? "") === remoteObj);
+    if (exact) return exact;
+    return sameIntegration.find((id) => {
+      const obj = id.split(".")[1] ?? "";
+      return obj.includes(remoteObj) || remoteObj.includes(obj);
+    });
+  }
 
   static styles = css`
     :host {

@@ -226,8 +226,8 @@ export class TedLightCard extends LitElement implements LovelaceCard {
         @pointercancel=${this._onCardPointerUp}
         @pointerleave=${this._onCardPointerUp}
       >
-        ${this._config.brushed ? brushedOverlay : nothing}
-        ${this._config.rocker
+        ${this._config.brushed !== false ? brushedOverlay : nothing}
+        ${this._config.rocker !== false
           ? html`<div class="ted-rocker${isOn ? " is-bottom" : ""}" aria-hidden="true"></div>`
           : nothing}
         <div class="brightness" aria-hidden="true">
@@ -565,6 +565,7 @@ export class TedLightCard extends LitElement implements LovelaceCard {
       --tlc-on-bg: rgba(255, 193, 7, 0.22);
 
       position: relative;
+      isolation: isolate;
       display: flex;
       flex-direction: column;
       justify-content: flex-start;
@@ -636,11 +637,14 @@ export class TedLightCard extends LitElement implements LovelaceCard {
     }
     .divider {
       position: relative;
-      z-index: 1;
+      z-index: -2;
       flex: none;
       height: 1px;
       margin: 0;
-      background-color: var(--ted-style-divider);
+      /* Engraved/sunken look: a dark groove with a faint highlight just below.
+         Sits below the brushed and rocker overlays so they render over it. */
+      background-color: rgba(0, 0, 0, 0.45);
+      box-shadow: 0 1px 0 rgba(255, 255, 255, 0.13);
     }
     .icon-shape {
       position: absolute;

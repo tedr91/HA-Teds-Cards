@@ -64,7 +64,7 @@ export const tedStyleTheme: CSSResult = css`
   .ted-brushed {
     position: absolute;
     inset: 0;
-    z-index: 0;
+    z-index: -3;
     pointer-events: none;
     opacity: 0.5;
     mix-blend-mode: overlay;
@@ -80,7 +80,7 @@ export const tedStyleTheme: CSSResult = css`
   .ted-rocker {
     position: absolute;
     inset: 0;
-    z-index: 0;
+    z-index: -1;
     pointer-events: none;
     background: linear-gradient(
       to bottom,

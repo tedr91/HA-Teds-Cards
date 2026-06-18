@@ -921,10 +921,9 @@ export class TedRemoteCard extends LitElement implements LovelaceCard {
       .mfr--apple-tv .dpad-center {
         width: calc(5.7rem * var(--rc-scale));
         height: calc(5.7rem * var(--rc-scale));
-        background: #373737 !important;
+        background: linear-gradient(180deg, #000000 0%, #303030 100%) !important;
         border: calc(0.0714rem * var(--rc-scale)) solid #000000 !important;
-        box-shadow: inset 0 calc(0.2857rem * var(--rc-scale)) calc(0.1428rem * var(--rc-scale))
-          calc(-0.1428rem * var(--rc-scale)) #000000d9;
+        outline: solid #2e2e2e calc(0.0714rem * var(--rc-scale));
         color: #c6c6c6;
       }
       /* Pressed center: Firemote's deeper inset shadow, no scale. */
@@ -932,6 +931,20 @@ export class TedRemoteCard extends LitElement implements LovelaceCard {
         transform: translate(-50%, -50%);
         box-shadow: inset 0 calc(0.28rem * var(--rc-scale)) calc(0.5rem * var(--rc-scale))
           rgb(0 0 0 / 85%);
+      }
+      /* Apple power button matches Firemote: transparent (silver body shows
+         through), thin gray border, dark glyph — keeping our green "on" glow. */
+      .mfr--apple-tv .power-button {
+        background: none;
+        border-color: rgba(0, 0, 0, 0.35);
+        box-shadow: none;
+        color: #1d1d1f;
+      }
+      .mfr--apple-tv .power-button--on {
+        background: none;
+        border-color: var(--ted-style-success);
+        box-shadow: 0 0 0 1px var(--ted-style-success),
+          0 0 7px color-mix(in srgb, var(--ted-style-success) 38%, transparent);
       }
       .mfr--apple-tv .app-btn {
         background-color: #212121;

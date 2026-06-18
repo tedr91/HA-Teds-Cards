@@ -14,6 +14,7 @@ import {
   REMOTE_CARD_EDITOR_TYPE,
   REMOTE_CARD_NAME,
   REMOTE_CARD_TYPE,
+  entityFamily,
 } from "./const";
 import type { DeviceFamily, RemoteButton, RemoteCardConfig } from "./types";
 
@@ -145,7 +146,7 @@ export class TedRemoteCard extends LitElement implements LovelaceCard {
 
   public static getStubConfig(hass: HomeAssistant): Omit<RemoteCardConfig, "type"> {
     const remotes = Object.keys(hass.states).filter((id) => id.startsWith("remote."));
-    return { device_family: "apple-tv", remote_entity: remotes[0] ?? "" };
+    return { remote_entity: remotes[0] ?? "" };
   }
 
   @property({ attribute: false }) public hass?: HomeAssistant;
@@ -158,9 +159,6 @@ export class TedRemoteCard extends LitElement implements LovelaceCard {
   public setConfig(config: RemoteCardConfig): void {
     if (!config) {
       throw new Error("Invalid configuration");
-    }
-    if (config.device_family !== "apple-tv" && config.device_family !== "kaleidescape") {
-      throw new Error("You must choose a device family (apple-tv or kaleidescape)");
     }
     if (!config.remote_entity) {
       throw new Error("You must specify a remote entity");
@@ -202,7 +200,7 @@ export class TedRemoteCard extends LitElement implements LovelaceCard {
   protected render(): TemplateResult | typeof nothing {
     if (!this._config || !this.hass) return nothing;
 
-    const family = this._config.device_family;
+    const family = this._family();
     const theme = this._config.theme ?? "manufacturer";
     const themeClasses = {
       "ted-card": true,
@@ -432,6 +430,7 @@ export class TedRemoteCard extends LitElement implements LovelaceCard {
     if (!cfg) return undefined;
     const remote = cfg.remote_entity;
     const mp = cfg.media_player_entity;
+    const family = this._family();
 
     if (button === "power") {
       const on = this._isOn();
@@ -445,7 +444,7 @@ export class TedRemoteCard extends LitElement implements LovelaceCard {
       let command: string;
       if (mp) {
         command = this._isPaused() ? "play" : "pause";
-      } else if (cfg.device_family === "apple-tv") {
+      } else if (family === "apple-tv") {
         command = "play_pause";
       } else {
         command = "pause";
@@ -453,15 +452,22 @@ export class TedRemoteCard extends LitElement implements LovelaceCard {
       return { domain: "remote", service: "send_command", data: { entity_id: remote, command } };
     }
 
-    if (button === "home" && cfg.device_family === "kaleidescape") {
+    if (button === "home" && family === "kaleidescape") {
       const command = cfg.kaleidescape_home || "home";
       return { domain: "remote", service: "send_command", data: { entity_id: remote, command } };
     }
 
-    const map = cfg.device_family === "apple-tv" ? APPLE_TV_COMMANDS : KALEIDESCAPE_COMMANDS;
+    const map = family === "apple-tv" ? APPLE_TV_COMMANDS : KALEIDESCAPE_COMMANDS;
     const command = map[button];
     if (!command) return undefined;
     return { domain: "remote", service: "send_command", data: { entity_id: remote, command } };
+  }
+
+  /** The device family: explicit config wins, otherwise auto-detected from the remote entity. */
+  private _family(): DeviceFamily {
+    const fam = this._config?.device_family;
+    if (fam === "apple-tv" || fam === "kaleidescape") return fam;
+    return entityFamily(this.hass, this._config?.remote_entity) ?? "apple-tv";
   }
 
   /** The entity whose state best represents the device (media_player when configured). */

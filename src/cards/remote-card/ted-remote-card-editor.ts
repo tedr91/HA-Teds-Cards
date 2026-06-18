@@ -4,10 +4,10 @@ import { type HomeAssistant, type LovelaceCardEditor, fireEvent } from "custom-c
 
 import {
   APP_LAUNCH_SLOTS,
-  DEVICE_FAMILY_LABELS,
   KALEIDESCAPE_HOME_OPTIONS,
   REMOTE_CARD_EDITOR_TYPE,
   REMOTE_INTEGRATIONS,
+  entityFamily,
 } from "./const";
 import type { DeviceFamily, RemoteCardConfig } from "./types";
 
@@ -45,12 +45,15 @@ export class TedRemoteCardEditor extends LitElement implements LovelaceCardEdito
   }
 
   private _family(): DeviceFamily {
-    return this._config?.device_family === "kaleidescape" ? "kaleidescape" : "apple-tv";
+    return (
+      this._config?.device_family ??
+      entityFamily(this.hass, this._config?.remote_entity) ??
+      "apple-tv"
+    );
   }
 
   private _defaults(): Partial<RemoteCardConfig> {
     return {
-      device_family: "apple-tv",
       theme: "manufacturer",
       brushed: false,
       show_icon: true,
@@ -84,23 +87,18 @@ export class TedRemoteCardEditor extends LitElement implements LovelaceCardEdito
   }
 
   private _schema() {
-    const family = this._family();
-    const integration = REMOTE_INTEGRATIONS[family];
+    // Entities are limited to the two supported integrations; the device family
+    // is auto-detected from whichever entity the user selects (no dropdown).
+    const remoteFilter = [
+      { domain: "remote", integration: REMOTE_INTEGRATIONS["apple-tv"] },
+      { domain: "remote", integration: REMOTE_INTEGRATIONS.kaleidescape },
+    ];
+    const mediaFilter = [
+      { domain: "media_player", integration: REMOTE_INTEGRATIONS["apple-tv"] },
+      { domain: "media_player", integration: REMOTE_INTEGRATIONS.kaleidescape },
+    ];
 
     const sections: Array<Record<string, unknown>> = [
-      {
-        name: "device_family",
-        required: true,
-        selector: {
-          select: {
-            mode: "dropdown",
-            options: (Object.keys(DEVICE_FAMILY_LABELS) as DeviceFamily[]).map((value) => ({
-              value,
-              label: DEVICE_FAMILY_LABELS[value],
-            })),
-          },
-        },
-      },
       {
         type: "grid",
         name: "",
@@ -108,11 +106,11 @@ export class TedRemoteCardEditor extends LitElement implements LovelaceCardEdito
           {
             name: "remote_entity",
             required: true,
-            selector: { entity: { domain: "remote", integration } },
+            selector: { entity: { filter: remoteFilter } },
           },
           {
             name: "media_player_entity",
-            selector: { entity: { domain: "media_player", integration } },
+            selector: { entity: { filter: mediaFilter } },
           },
         ],
       },
@@ -176,7 +174,7 @@ export class TedRemoteCardEditor extends LitElement implements LovelaceCardEdito
     });
 
     // Behaviors — device-family-specific button behavior (Kaleidescape Home target).
-    if (family === "kaleidescape") {
+    if (this._family() === "kaleidescape") {
       sections.push({
         name: "",
         type: "expandable",
@@ -195,7 +193,7 @@ export class TedRemoteCardEditor extends LitElement implements LovelaceCardEdito
     }
 
     // App launchers — Apple TV only (Kaleidescape has no app launching).
-    if (family === "apple-tv") {
+    if (this._family() === "apple-tv") {
       const selector = this._appLaunchSelector();
       const launcherSchema: Array<Record<string, unknown>> = [];
       for (let i = 1; i <= APP_LAUNCH_SLOTS; i++) {
@@ -251,13 +249,17 @@ export class TedRemoteCardEditor extends LitElement implements LovelaceCardEdito
   };
 
   private _valueChanged = (ev: CustomEvent): void => {
-    const previousFamily = this._config?.device_family;
+    const previousFamily = this._family();
     const config = { ...ev.detail.value } as RemoteCardConfig;
     const mutable = config as Partial<RemoteCardConfig>;
 
-    // Switching families invalidates the entity selections (different integrations).
-    if (previousFamily && config.device_family !== previousFamily) {
-      delete mutable.remote_entity;
+    // Auto-detect the device family from the selected remote entity's integration.
+    const family = entityFamily(this.hass, config.remote_entity) ?? previousFamily;
+    config.device_family = family;
+
+    // Picking an entity from the other integration switches families: drop the
+    // media player + launchers that belonged to the previous family.
+    if (family !== previousFamily) {
       delete mutable.media_player_entity;
       for (let i = 1; i <= APP_LAUNCH_SLOTS; i++) {
         delete mutable[`app_launch_${i}` as keyof RemoteCardConfig];
@@ -265,7 +267,7 @@ export class TedRemoteCardEditor extends LitElement implements LovelaceCardEdito
     }
 
     // Kaleidescape has no app launchers — never persist them.
-    if (config.device_family === "kaleidescape") {
+    if (family === "kaleidescape") {
       for (let i = 1; i <= APP_LAUNCH_SLOTS; i++) {
         delete mutable[`app_launch_${i}` as keyof RemoteCardConfig];
       }

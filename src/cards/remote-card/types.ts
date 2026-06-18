@@ -31,7 +31,8 @@ export type RemoteButton =
 
 export interface RemoteCardConfig extends LovelaceCardConfig {
   type: string;
-  device_family: DeviceFamily;
+  /** Device family. Optional: auto-detected from the remote entity's integration when omitted. */
+  device_family?: DeviceFamily;
   /** The `remote.*` entity that receives `remote.send_command` calls. */
   remote_entity: string;
   /** Optional `media_player.*` entity — drives state display and play/pause + power decisions. */

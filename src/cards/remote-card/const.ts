@@ -1,4 +1,5 @@
 import { NAMESPACE } from "../../shared/const";
+import type { HomeAssistant } from "custom-card-helpers";
 import type { DeviceFamily, RemoteButton } from "./types";
 
 export const REMOTE_CARD_TYPE = `${NAMESPACE}-remote-card`;
@@ -19,6 +20,25 @@ export const DEVICE_FAMILY_LABELS: Record<DeviceFamily, string> = {
   "apple-tv": "Apple TV",
   kaleidescape: "Kaleidescape",
 };
+
+/** Map an entity integration platform (e.g. `apple_tv`) to its device family. */
+export function familyForPlatform(platform?: string): DeviceFamily | undefined {
+  if (platform === REMOTE_INTEGRATIONS.kaleidescape) return "kaleidescape";
+  if (platform === REMOTE_INTEGRATIONS["apple-tv"]) return "apple-tv";
+  return undefined;
+}
+
+/** Derive the device family from a configured entity's integration, via the entity registry. */
+export function entityFamily(
+  hass: HomeAssistant | undefined,
+  entityId: string | undefined,
+): DeviceFamily | undefined {
+  if (!hass || !entityId) return undefined;
+  const platform = (hass as unknown as { entities?: Record<string, { platform?: string }> }).entities?.[
+    entityId
+  ]?.platform;
+  return familyForPlatform(platform);
+}
 
 /**
  * Destinations the Kaleidescape Home button can navigate to. Values are

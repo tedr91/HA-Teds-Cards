@@ -12,6 +12,30 @@ const VISUAL_ICON_PATH =
 const INTERACTIONS_ICON_PATH =
   "M10,9A1,1 0 0,1 11,8A1,1 0 0,1 12,9V13.47L13.21,13.6L18.15,15.79C18.68,16.03 19,16.56 19,17.13V21.5C18.97,22.32 18.32,22.97 17.5,23H11C10.62,23 10.26,22.85 10,22.57L5.1,18.37L5.84,17.6C6.03,17.39 6.3,17.28 6.59,17.28H6.75L10,19V9M11,5A4,4 0 0,1 15,9C15,10.5 14.2,11.77 13,12.46V11.24C13.61,10.69 14,9.89 14,9A3,3 0 0,0 11,6A3,3 0 0,0 8,9C8,9.89 8.39,10.69 9,11.24V12.46C7.8,11.77 7,10.5 7,9A4,4 0 0,1 11,5Z";
 
+// Mirrors Home Assistant's ACTION_RELATED_CONTEXT so the action editor can resolve
+// entity-based defaults (more-info / toggle) from our `entity` field.
+const ACTION_CONTEXT = { entity_id: "entity" } as const;
+
+// Domains whose default button action is "toggle" (matches HA's getEntityDefaultButtonAction).
+const TOGGLE_DOMAINS = new Set([
+  "light",
+  "switch",
+  "fan",
+  "input_boolean",
+  "automation",
+  "script",
+  "group",
+  "cover",
+  "lock",
+  "climate",
+  "media_player",
+  "humidifier",
+  "valve",
+  "siren",
+  "remote",
+  "vacuum",
+]);
+
 @customElement(LABEL_BUTTON_CARD_EDITOR_TYPE)
 export class TedLabelButtonCardEditor extends LitElement implements LovelaceCardEditor {
   @property({ attribute: false }) public hass?: HomeAssistant;
@@ -82,9 +106,28 @@ export class TedLabelButtonCardEditor extends LitElement implements LovelaceCard
     ];
 
     const interactions: Array<Record<string, unknown>> = [
-      { name: "tap_action", selector: { ui_action: {} } },
-      { name: "hold_action", selector: { ui_action: {} } },
-      { name: "double_tap_action", selector: { ui_action: {} } },
+      {
+        name: "tap_action",
+        selector: { ui_action: { default_action: this._defaultTapAction() } },
+        context: ACTION_CONTEXT,
+      },
+      {
+        name: "hold_action",
+        selector: { ui_action: { default_action: "more-info" } },
+        context: ACTION_CONTEXT,
+      },
+      {
+        name: "",
+        type: "optional_actions",
+        flatten: true,
+        schema: [
+          {
+            name: "double_tap_action",
+            selector: { ui_action: { default_action: "none" } },
+            context: ACTION_CONTEXT,
+          },
+        ],
+      },
     ];
 
     return [
@@ -110,6 +153,14 @@ export class TedLabelButtonCardEditor extends LitElement implements LovelaceCard
     ];
   }
 
+  /** Default tap action shown in the editor, based on the configured entity's domain. */
+  private _defaultTapAction(): string {
+    const entity = this._config?.entity;
+    if (!entity) return "none";
+    const domain = entity.split(".")[0];
+    return TOGGLE_DOMAINS.has(domain) ? "toggle" : "more-info";
+  }
+
   private _computeLabel = (schema: { name: string }): string => {
     switch (schema.name) {
       case "entity":
@@ -133,11 +184,14 @@ export class TedLabelButtonCardEditor extends LitElement implements LovelaceCard
       case "show_state":
         return "Show entity state";
       case "tap_action":
-        return "Tap action";
       case "hold_action":
-        return "Hold action";
-      case "double_tap_action":
-        return "Double tap action";
+      case "double_tap_action": {
+        const label =
+          this.hass?.localize(`ui.panel.lovelace.editor.card.generic.${schema.name}`) || "";
+        const optional =
+          this.hass?.localize("ui.panel.lovelace.editor.card.config.optional") || "optional";
+        return label ? `${label} (${optional})` : schema.name;
+      }
       default:
         return schema.name;
     }

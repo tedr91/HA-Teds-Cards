@@ -36,14 +36,20 @@ export class TedClockWeatherCardEditor extends LitElement implements LovelaceCar
     const data = { ...this._defaults(), ...this._config };
 
     return html`
-      <ha-form
-        .hass=${this.hass}
-        .data=${data}
-        .schema=${this._appearanceSchema()}
-        .computeLabel=${this._computeLabel}
-        @value-changed=${this._valueChanged}
-      ></ha-form>
-      ${this._renderLayout(data)}
+      <ha-expansion-panel outlined .leftChevron=${true}>
+        <ha-svg-icon slot="leading-icon" .path=${VISUAL_ICON_PATH}></ha-svg-icon>
+        <span slot="header">Appearance (General)</span>
+        <div class="appearance-content">
+          <ha-form
+            .hass=${this.hass}
+            .data=${data}
+            .schema=${this._appearanceFields()}
+            .computeLabel=${this._computeLabel}
+            @value-changed=${this._valueChanged}
+          ></ha-form>
+          ${this._renderLayout(data)}
+        </div>
+      </ha-expansion-panel>
       <ha-form
         .hass=${this.hass}
         .data=${data}
@@ -91,10 +97,10 @@ export class TedClockWeatherCardEditor extends LitElement implements LovelaceCar
     return { number: { min: 10, max: 400, step: 5, mode: "box", unit_of_measurement: "%" } };
   }
 
-  private _appearanceSchema() {
+  private _appearanceFields() {
     const cfg = this._config ?? ({} as ClockWeatherCardConfig);
 
-    const visual: Array<Record<string, unknown>> = [
+    return [
       {
         name: "theme",
         selector: {
@@ -120,17 +126,6 @@ export class TedClockWeatherCardEditor extends LitElement implements LovelaceCar
         ],
       },
       { name: "brushed", selector: { boolean: {} } },
-    ];
-
-    return [
-      {
-        name: "",
-        type: "expandable",
-        title: "Appearance (General)",
-        iconPath: VISUAL_ICON_PATH,
-        flatten: true,
-        schema: visual,
-      },
     ];
   }
 
@@ -338,7 +333,10 @@ export class TedClockWeatherCardEditor extends LitElement implements LovelaceCar
   ): TemplateResult {
     return html`
       <div class="offset-field">
-        <div class="offset-label">${label}</div>
+        <div class="offset-header">
+          <span class="offset-label">${label}</span>
+          <span class="offset-value">${value - 50}</span>
+        </div>
         <input
           class="offset-slider"
           type="range"
@@ -452,6 +450,15 @@ export class TedClockWeatherCardEditor extends LitElement implements LovelaceCar
       color: var(--secondary-text-color);
     }
 
+    .appearance-content {
+      padding: 0 16px 8px;
+    }
+
+    /* The Layout sub-section is nested inside Appearance. */
+    .appearance-content ha-expansion-panel {
+      margin-top: 4px;
+    }
+
     .layout-content {
       display: flex;
       flex-direction: column;
@@ -471,9 +478,21 @@ export class TedClockWeatherCardEditor extends LitElement implements LovelaceCar
       flex-direction: column;
     }
 
-    .offset-label {
+    .offset-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
       margin-bottom: 8px;
+      gap: 12px;
+    }
+
+    .offset-label {
       color: var(--primary-text-color);
+    }
+
+    .offset-value {
+      font-variant-numeric: tabular-nums;
+      color: var(--secondary-text-color);
     }
 
     .offset-slider {

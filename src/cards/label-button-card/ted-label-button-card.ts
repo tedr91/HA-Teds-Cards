@@ -142,7 +142,7 @@ export class TedLabelButtonCard extends LitElement implements LovelaceCard {
     const cardClasses = {
       "ted-card": true,
       [tedCardThemeClass(theme)]: true,
-      clickable: hasAction(this._config.tap_action) || !!this._config.entity,
+      clickable: this._hasInteractions(),
     };
 
     const cardStyle: Record<string, string> = {};
@@ -174,6 +174,8 @@ export class TedLabelButtonCard extends LitElement implements LovelaceCard {
   }
 
   private _onClick = (): void => {
+    // Behave as a static header/label unless an interaction is configured.
+    if (!this._hasInteractions()) return;
     if (this._longPressFired) {
       this._longPressFired = false;
       return;
@@ -192,6 +194,7 @@ export class TedLabelButtonCard extends LitElement implements LovelaceCard {
 
   private _onPointerDown = (): void => {
     this._longPressFired = false;
+    if (!this._hasInteractions()) return;
     if (!hasAction(this._config?.hold_action)) return;
     if (this._longPressTimer !== undefined) window.clearTimeout(this._longPressTimer);
     this._longPressTimer = window.setTimeout(() => {
@@ -207,6 +210,17 @@ export class TedLabelButtonCard extends LitElement implements LovelaceCard {
       this._longPressTimer = undefined;
     }
   };
+
+  /** True when any tap/hold/double-tap action is configured (card acts as a button). */
+  private _hasInteractions(): boolean {
+    const config = this._config;
+    if (!config) return false;
+    return (
+      hasAction(config.tap_action) ||
+      hasAction(config.hold_action) ||
+      hasAction(config.double_tap_action)
+    );
+  }
 
   /** Run a configured action. Hold/double only fire when configured; tap defaults to more-info. */
   private _dispatch(action: "tap" | "hold" | "double_tap"): void {

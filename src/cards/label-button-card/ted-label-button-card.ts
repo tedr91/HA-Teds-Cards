@@ -244,6 +244,17 @@ export class TedLabelButtonCard extends LitElement implements LovelaceCard {
 
       ha-card.clickable {
         cursor: pointer;
+        transition: filter 120ms ease, transform 80ms ease;
+      }
+
+      @media (hover: hover) {
+        ha-card.clickable:hover {
+          filter: brightness(1.06);
+        }
+      }
+
+      ha-card.clickable:active {
+        transform: scale(0.97);
       }
 
       .lbc {

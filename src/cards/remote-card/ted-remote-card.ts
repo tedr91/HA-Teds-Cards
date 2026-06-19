@@ -295,10 +295,7 @@ export class TedRemoteCard extends LitElement implements LovelaceCard {
               ${this._renderButton("left", { cls: "dpad-q dpad-left" })}
               ${this._renderButton("down", { cls: "dpad-q dpad-down" })}
             </div>
-            ${this._renderButton("select", {
-              cls: "dpad-center",
-              text: isAppleTv ? undefined : "OK",
-            })}
+            ${this._renderButton("select", { cls: "dpad-center" })}
           </div>
 
           <div class="row nav">
@@ -822,9 +819,9 @@ export class TedRemoteCard extends LitElement implements LovelaceCard {
         background: currentColor;
         opacity: 0.82;
       }
-      /* Center button has no label/icon. */
-      .rc--apple-tv .dpad-center ha-icon,
-      .rc--apple-tv .dpad-center .rbtn-text {
+      /* Center button is never labelled (no icon, no text), in every theme. */
+      .dpad-center ha-icon,
+      .dpad-center .rbtn-text {
         display: none;
       }
       /* Back, Home and Play/Pause are 25% larger. */
@@ -904,21 +901,22 @@ export class TedRemoteCard extends LitElement implements LovelaceCard {
           rgb(171 253 255 / 15%);
       }
       /* Apple clickpad matches Firemote: flat #141414 disc with subtle quadrant
-         outlines and a lighter #373737 center (sizes unchanged). */
-      .mfr--apple-tv .dpad-ring {
+         outlines and a lighter center. Defined at the family level so the d-pad
+         looks identical in every theme. */
+      .rc--apple-tv .dpad-ring {
         background: #141414;
         border-color: #000000;
         box-shadow: rgb(20 20 20) calc(0.1428rem * var(--rc-scale))
           calc(0.1428rem * var(--rc-scale)) calc(0.4285rem * var(--rc-scale));
       }
-      .mfr--apple-tv .dpad-ring .rbtn {
+      .rc--apple-tv .dpad-ring .rbtn {
         color: #c6c6c6;
         outline: solid #2e2e2e calc(0.0714rem * var(--rc-scale));
       }
-      .mfr--apple-tv .dpad-ring .rbtn:hover {
+      .rc--apple-tv .dpad-ring .rbtn:hover {
         background-color: rgba(255, 255, 255, 0.08);
       }
-      .mfr--apple-tv .dpad-center {
+      .rc--apple-tv .dpad-center {
         width: calc(5.7rem * var(--rc-scale));
         height: calc(5.7rem * var(--rc-scale));
         background: linear-gradient(180deg, #000000 0%, #303030 100%) !important;
@@ -927,7 +925,7 @@ export class TedRemoteCard extends LitElement implements LovelaceCard {
         color: #c6c6c6;
       }
       /* Pressed center: Firemote's deeper inset shadow, no scale. */
-      .mfr--apple-tv .dpad-center:active {
+      .rc--apple-tv .dpad-center:active {
         transform: translate(-50%, -50%);
         box-shadow: inset 0 calc(0.28rem * var(--rc-scale)) calc(0.5rem * var(--rc-scale))
           rgb(0 0 0 / 85%);
@@ -977,8 +975,9 @@ export class TedRemoteCard extends LitElement implements LovelaceCard {
         background: linear-gradient(180deg, #2a2a2f 0%, #232327 100%);
         box-shadow: inset 0 calc(2px * var(--rc-scale)) calc(4px * var(--rc-scale)) rgb(0 0 0 / 55%);
       }
-      /* Blue brushed disc with a conic sheen over a radial highlight (Firemote KA1). */
-      .mfr--kaleidescape .dpad-ring {
+      /* Blue brushed disc with a conic sheen over a radial highlight (Firemote
+         KA1). Defined at the family level so it's identical in every theme. */
+      .rc--kaleidescape .dpad-ring {
         background: conic-gradient(
             from 0deg at 50% 50%,
             rgba(255, 255, 255, 0.1),
@@ -996,23 +995,20 @@ export class TedRemoteCard extends LitElement implements LovelaceCard {
           inset 0 calc(-0.16rem * var(--rc-scale)) calc(0.32rem * var(--rc-scale)) rgb(255 255 255 / 12%);
       }
       /* Dark translucent triangles (Firemote KA1). */
-      .mfr--kaleidescape .dpad-ring .rbtn::after {
+      .rc--kaleidescape .dpad-ring .rbtn::after {
         border-bottom-color: rgba(0, 0, 0, 0.4);
         opacity: 1;
       }
-      .mfr--kaleidescape .dpad-ring .rbtn:active {
+      .rc--kaleidescape .dpad-ring .rbtn:active {
         background: rgba(0, 0, 0, 0.18);
       }
       /* Large dark recessed center button. */
-      .mfr--kaleidescape .dpad-center {
+      .rc--kaleidescape .dpad-center {
         background: radial-gradient(circle at 50% 38%, #2c2c31 0%, #1b1b1f 70%, #131316 100%) !important;
         border: calc(0.0714rem * var(--rc-scale)) solid #0e0e12 !important;
         box-shadow: inset 0 calc(0.2rem * var(--rc-scale)) calc(0.4rem * var(--rc-scale)) rgb(0 0 0 / 75%),
           0 calc(0.05rem * var(--rc-scale)) calc(0.15rem * var(--rc-scale)) rgb(255 255 255 / 8%);
         color: #f4f5f7;
-      }
-      .mfr--kaleidescape .dpad-center .rbtn-text {
-        display: none;
       }
       .not-found {
         padding: 12px;

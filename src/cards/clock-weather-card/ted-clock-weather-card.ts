@@ -442,16 +442,15 @@ export class TedClockWeatherCard extends LitElement implements LovelaceCard {
     const icon = this._weatherIcon();
     const weatherVisible = showWeather && (showIcon || (showTemp && temp != null));
 
-    const position = this._config.clock_position ?? "left";
-    const weatherAlign = this._config.weather_align ?? "right";
-    const dateAlign = this._config.date_align ?? "right";
-    // A component can only stay overlaid in the clock row when it sits on the
-    // opposite side of the clock (clock left + component right, or vice versa).
-    // Otherwise it would overlap the clock, so force it onto its own row.
-    const isOpposite = (align: string): boolean =>
-      (position === "left" && align === "right") || (position === "right" && align === "left");
-    const weatherAbove = this._config.weather_above_clock === true || !isOpposite(weatherAlign);
-    const dateBelow = this._config.date_below_clock === true || !isOpposite(dateAlign);
+    const clockOff = this._config.clock_offset ?? 0;
+    const weatherOff = this._config.weather_offset ?? 100;
+    const dateOff = this._config.date_offset ?? 100;
+    // A component can only stay overlaid in the clock row when it sits far
+    // enough to the opposite side of the clock not to overlap it. Otherwise it
+    // is forced onto its own row.
+    const canOverlay = (off: number): boolean => Math.abs(off - clockOff) > 50;
+    const weatherAbove = this._config.weather_above_clock === true || !canOverlay(weatherOff);
+    const dateBelow = this._config.date_below_clock === true || !canOverlay(dateOff);
 
     let iconEl;
     if (iconStyle === "basic") {
@@ -466,36 +465,37 @@ export class TedClockWeatherCard extends LitElement implements LovelaceCard {
       ${showTemp && temp != null ? html`<span class="temp">${temp}</span>` : nothing}
     `;
     const clockEl = showClock
-      ? html`<div class="clock">
+      ? html`<div class="clock" style=${styleMap({ "--cwc-off": String(clockOff) })}>
           <span class="t-main">${timeMain}</span
           >${timeSuffix ? html`<span class="t-suffix">${timeSuffix}</span>` : nothing}
         </div>`
       : nothing;
-    const dateEl = html`<div class="date">${dateText}</div>`;
 
     // When overlaid in the clock row, nudge the small component (never the clock)
     // so it lines up with the clock's glyphs. Expressed in clock font-size units.
-    const dateNudgeStyle = showClock
+    const dateNudge = showClock
       ? { "--cwc-nudge-y": `calc(var(--cwc-clock-size, 4rem) * ${-DATE_BASELINE_NUDGE})` }
       : {};
-    const weatherNudgeStyle = showClock
+    const weatherNudge = showClock
       ? { "--cwc-nudge-y": `calc(var(--cwc-clock-size, 4rem) * ${WEATHER_TOP_NUDGE})` }
       : {};
 
     return html`
       <ha-card class=${classMap(cardClasses)} style=${styleMap(cardStyle)}>
         ${brushed ? brushedOverlay : nothing}
-        <div class="cwc pos-${position}">
+        <div class="cwc">
           ${weatherVisible && weatherAbove
-            ? html`<div class="row weather-row align-${weatherAlign}">
-                <div class="weather">${weatherInner}</div>
+            ? html`<div class="row weather-row">
+                <div class="weather" style=${styleMap({ "--cwc-off": String(weatherOff) })}>
+                  ${weatherInner}
+                </div>
               </div>`
             : nothing}
           <div class="row clock-row">
             ${weatherVisible && !weatherAbove
               ? html`<div
-                  class="weather weather-abs align-${weatherAlign}"
-                  style=${styleMap(weatherNudgeStyle)}
+                  class="weather weather-abs"
+                  style=${styleMap({ ...weatherNudge, "--cwc-off": String(weatherOff) })}
                 >
                   ${weatherInner}
                 </div>`
@@ -503,15 +503,19 @@ export class TedClockWeatherCard extends LitElement implements LovelaceCard {
             ${clockEl}
             ${showDate && !dateBelow
               ? html`<div
-                  class="date date-abs align-${dateAlign}"
-                  style=${styleMap(dateNudgeStyle)}
+                  class="date date-abs"
+                  style=${styleMap({ ...dateNudge, "--cwc-off": String(dateOff) })}
                 >
                   ${dateText}
                 </div>`
               : nothing}
           </div>
           ${showDate && dateBelow
-            ? html`<div class="row date-row align-${dateAlign}">${dateEl}</div>`
+            ? html`<div class="row date-row">
+                <div class="date" style=${styleMap({ "--cwc-off": String(dateOff) })}>
+                  ${dateText}
+                </div>
+              </div>`
             : nothing}
         </div>
       </ha-card>
@@ -566,60 +570,33 @@ export class TedClockWeatherCard extends LitElement implements LovelaceCard {
         display: flex;
       }
 
-      /* Clock position only affects the clock's own alignment. */
-      .pos-center .clock {
-        text-align: center;
+      /* Continuous horizontal positioning driven by --cwc-off (0 = left … 100 =
+         right). The left/translateX pair places the element's left edge at off%
+         of the container and pulls it back by off% of its own width, so 0 sits
+         flush-left, 100 flush-right and 50 perfectly centered. */
+      .weather-row > .weather,
+      .date-row > .date {
+        flex: 0 1 auto;
+        position: relative;
+        left: calc(var(--cwc-off, 0) * 1%);
+        transform: translateX(calc(var(--cwc-off, 0) * -1%));
       }
 
-      .pos-right .clock {
-        text-align: right;
-      }
-
-      /* Independent alignment for the weather and date components (in a row). */
-      .weather-row.align-left,
-      .date-row.align-left {
-        justify-content: flex-start;
-      }
-
-      .weather-row.align-center,
-      .date-row.align-center {
-        justify-content: center;
-      }
-
-      .weather-row.align-right,
-      .date-row.align-right {
-        justify-content: flex-end;
-      }
-
-      /* Alignment when overlaid in the clock row (absolutely positioned). The
+      /* Same offset when overlaid in the clock row (absolutely positioned). The
          optional --cwc-nudge-y lines the small component up with the clock glyphs. */
       .weather-abs,
       .date-abs {
-        transform: translateY(var(--cwc-nudge-y, 0));
-      }
-
-      .weather-abs.align-left,
-      .date-abs.align-left {
-        left: 0;
+        left: calc(var(--cwc-off, 0) * 1%);
         right: auto;
-      }
-
-      .weather-abs.align-center,
-      .date-abs.align-center {
-        left: 50%;
-        right: auto;
-        transform: translate(-50%, var(--cwc-nudge-y, 0));
-      }
-
-      .weather-abs.align-right,
-      .date-abs.align-right {
-        right: 0;
-        left: auto;
+        transform: translate(calc(var(--cwc-off, 0) * -1%), var(--cwc-nudge-y, 0));
       }
 
       .clock {
-        flex: 1 1 auto;
+        flex: 0 1 auto;
         min-width: 0;
+        position: relative;
+        left: calc(var(--cwc-off, 0) * 1%);
+        transform: translateX(calc(var(--cwc-off, 0) * -1%));
         font-size: var(--cwc-clock-size, 4rem);
         line-height: 1;
         font-weight: 600;

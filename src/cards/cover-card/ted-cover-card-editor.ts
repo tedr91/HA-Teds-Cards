@@ -276,7 +276,7 @@ export class TedCoverCardEditor extends LitElement implements LovelaceCardEditor
       {
         name: "",
         type: "expandable",
-        title: "Visual",
+        title: "Appearance",
         iconPath: VISUAL_ICON_PATH,
         flatten: true,
         schema: visual,

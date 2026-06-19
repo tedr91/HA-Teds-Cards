@@ -74,29 +74,29 @@ icon: mdi:floor-lamp       # optional, defaults to entity icon
 theme: ted-style           # optional, visual styling: ted-style (default) | ha
 ```
 
-`theme` (optional) — **Visual styling**, selectable in the editor's **Visual** section:
+`theme` (optional) — **Visual styling**, selectable in the editor's **Appearance** section:
 - `ted-style` (default): a self-contained "Ted's Home Theater" look (Windows 11 Fluent / Mica-dark) that looks the same regardless of your Home Assistant theme.
 - `ha`: follow the active Home Assistant theme (surfaces, text, and accent color).
 
-Brightness is shown as a thin vertical hint bar pinned to the card's left edge (it fills bottom→up with the light's brightness; it is not interactive). `brightness_color` (optional, in the **Visual** section) sets its color when the light is on:
+Brightness is shown as a thin vertical hint bar pinned to the card's left edge (it fills bottom→up with the light's brightness; it is not interactive). `brightness_color` (optional, in the **Appearance** section) sets its color when the light is on:
 - `theme` (default): the theme accent color.
 - `light`: the light's current color (its `rgb_color`), falling back to a warm tone.
 - `other`: a custom color — set `brightness_color_custom` to an `[r, g, b]` array (chosen via the editor's color picker).
 
-`show_hint` (optional, default `false`, in the **Visual** section): show a matching stripe up the right edge with **+** / **−** hints, indicating the top half raises brightness and the bottom half lowers it.
+`show_hint` (optional, default `false`, in the **Appearance** section): show a matching stripe up the right edge with **+** / **−** hints, indicating the top half raises brightness and the bottom half lowers it.
 
-The icon is centered in the card and lights up when the light is on. `icon_color` (optional, in the **Visual** section) sets its on color:
+The icon is centered in the card and lights up when the light is on. `icon_color` (optional, in the **Appearance** section) sets its on color:
 - `theme`: the theme accent color.
 - `light` (default): the light's current color (its `rgb_color`), falling back to a warm tone.
 - `other`: a custom color — set `icon_color_custom` to an `[r, g, b]` array.
 
-`background_on` (optional, in the **Visual** section): override the card's background color while the light is **on**. Pick a color with the editor's color picker (stored as a `#RRGGBB` hex string). When unset, the theme background is used.
+`background_on` (optional, in the **Appearance** section): override the card's background color while the light is **on**. Pick a color with the editor's color picker (stored as a `#RRGGBB` hex string). When unset, the theme background is used.
 
-`brushed` (optional, default off, in the **Visual** section): overlay a brushed-metal sheen just above the background. Pair it with a metallic `background_on` color (e.g. silver `#c0c0c0`) for a brushed-aluminum look.
+`brushed` (optional, default off, in the **Appearance** section): overlay a brushed-metal sheen just above the background. Pair it with a metallic `background_on` color (e.g. silver `#c0c0c0`) for a brushed-aluminum look.
 
-`rocker` (optional, default on, in the **Visual** section): a Decora-style rocker bevel that makes one half of the card appear raised, pivoting at the center. The raised half follows the state — **top** half raised when off, **bottom** half raised when on.
+`rocker` (optional, default on, in the **Appearance** section): a Decora-style rocker bevel that makes one half of the card appear raised, pivoting at the center. The raised half follows the state — **top** half raised when off, **bottom** half raised when on.
 
-Also in the **Visual** section: `show_name`, `show_icon`, and `show_state` (all default **on**) toggle the name, centered icon, and the state/brightness label; `name_scale` and `icon_scale` (percent, default `100`) scale the name text and icon size. `width` and `height` (px, default `100` × `120`) set the card's fixed size when it is **not** a direct item in a grid (Sections) view — e.g. inside a stack, masonry, or panel view. As a direct grid item the card honors the grid cell size instead.
+Also in the **Appearance** section: `show_name`, `show_icon`, and `show_state` (all default **on**) toggle the name, centered icon, and the state/brightness label; `name_scale` and `icon_scale` (percent, default `100`) scale the name text and icon size. `width` and `height` (px, default `100` × `120`) set the card's fixed size when it is **not** a direct item in a grid (Sections) view — e.g. inside a stack, masonry, or panel view. As a direct grid item the card honors the grid cell size instead.
 
 ### Switch Behavior
 
@@ -173,17 +173,17 @@ theme: ted-style           # optional, visual styling: ted-style (default) | ha
 with `icon_open: mdi:garage-open`. When unset, `icon` (or a device-class default) is used in all states.
 
 `theme`, `position_color`, `icon_color`, and `show_hint` work as in the Light Card (all in the
-editor's **Visual** section). `position_color` (`theme` default / `other` custom) colors the
+editor's **Appearance** section). `position_color` (`theme` default / `other` custom) colors the
 position bar when open; `show_hint` (**on by default**) shows a right-edge stripe with **up/down
 chevron** hints. The position bar fills from the bottom up with the cover's current position.
 
-`background_open` (optional, in the **Visual** section): override the card's background color while the cover is **open**. Pick a color with the editor's color picker (stored as a `#RRGGBB` hex string). When unset, the theme background is used.
+`background_open` (optional, in the **Appearance** section): override the card's background color while the cover is **open**. Pick a color with the editor's color picker (stored as a `#RRGGBB` hex string). When unset, the theme background is used.
 
-`brushed` (optional, default off, in the **Visual** section): overlay a brushed-metal sheen just above the background. Pair it with a metallic `background_open` color (e.g. silver `#c0c0c0`) for a brushed-aluminum look.
+`brushed` (optional, default off, in the **Appearance** section): overlay a brushed-metal sheen just above the background. Pair it with a metallic `background_open` color (e.g. silver `#c0c0c0`) for a brushed-aluminum look.
 
-`rocker` (optional, default on, in the **Visual** section): a Decora-style rocker bevel that makes one half of the card appear raised, pivoting at the center. The raised half follows the state — **top** half raised when closed, **bottom** half raised when open.
+`rocker` (optional, default on, in the **Appearance** section): a Decora-style rocker bevel that makes one half of the card appear raised, pivoting at the center. The raised half follows the state — **top** half raised when closed, **bottom** half raised when open.
 
-Also in the **Visual** section: `show_name`, `show_icon`, and `show_state` (all default **on**) toggle the name, centered icon, and the state/position label; `name_scale` and `icon_scale` (percent, default `100`) scale the name text and icon size. `width` and `height` (px, default `100` × `120`) set the card's fixed size when it is **not** a direct item in a grid (Sections) view — e.g. inside a stack, masonry, or panel view. As a direct grid item the card honors the grid cell size instead.
+Also in the **Appearance** section: `show_name`, `show_icon`, and `show_state` (all default **on**) toggle the name, centered icon, and the state/position label; `name_scale` and `icon_scale` (percent, default `100`) scale the name text and icon size. `width` and `height` (px, default `100` × `120`) set the card's fixed size when it is **not** a direct item in a grid (Sections) view — e.g. inside a stack, masonry, or panel view. As a direct grid item the card honors the grid cell size instead.
 
 ### Switch Behavior (cover)
 

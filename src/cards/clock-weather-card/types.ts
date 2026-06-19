@@ -2,8 +2,6 @@ import type { LovelaceCardConfig } from "custom-card-helpers";
 import type { TedStyleTheme } from "../../shared/types";
 
 export type ClockSize = "small" | "medium" | "large" | "custom";
-export type ClockPosition = "left" | "center" | "right";
-export type Align = "left" | "center" | "right";
 export type IconStyle = "basic" | "cool" | "fancy";
 export type TimeFormat = "auto" | "12h" | "24h" | "custom";
 export type DateSize = "standard" | "custom";
@@ -23,7 +21,8 @@ export interface ClockWeatherCardConfig extends LovelaceCardConfig {
   show_clock?: boolean;
   clock_size?: ClockSize;
   clock_size_custom?: number;
-  clock_position?: ClockPosition;
+  /** Horizontal position offset, 0 (left) – 100 (right). */
+  clock_offset?: number;
   time_format?: TimeFormat;
   time_format_custom?: string;
 
@@ -34,7 +33,8 @@ export interface ClockWeatherCardConfig extends LovelaceCardConfig {
   date_format?: DateFormat;
   date_format_custom?: string;
   date_below_clock?: boolean;
-  date_align?: Align;
+  /** Horizontal position offset, 0 (left) – 100 (right). */
+  date_offset?: number;
 
   // Weather
   show_weather?: boolean;
@@ -44,7 +44,8 @@ export interface ClockWeatherCardConfig extends LovelaceCardConfig {
   show_weather_icon?: boolean;
   show_current_temp?: boolean;
   weather_above_clock?: boolean;
-  weather_align?: Align;
+  /** Horizontal position offset, 0 (left) – 100 (right). */
+  weather_offset?: number;
   icon_style?: IconStyle;
   /** @deprecated replaced by `icon_style`. */
   fancy_icons?: boolean;

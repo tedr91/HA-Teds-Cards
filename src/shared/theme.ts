@@ -54,7 +54,8 @@ export const tedStyleTheme: CSSResult = css`
   }
 
   ha-card.ted-card--theme-ted-style {
-    background: var(--ted-style-surface);
+    /* Brushed dark body matching the Kaleidescape manufacturer remote. */
+    background: linear-gradient(145deg, #2e2e32 0%, #222226 45%, #16161a 100%);
     border: 1px solid var(--ted-style-divider);
     color: var(--ted-style-text);
     --ha-card-border-radius: var(--ted-style-radius);

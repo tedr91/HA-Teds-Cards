@@ -665,7 +665,7 @@ export class TedRemoteCard extends LitElement implements LovelaceCard {
         background: var(--ted-style-surface-2);
         border-color: var(--ted-style-success);
         box-shadow: 0 0 0 1px var(--ted-style-success),
-          0 0 7px color-mix(in srgb, var(--ted-style-success) 38%, transparent);
+          0 0 4px color-mix(in srgb, var(--ted-style-success) 22%, transparent);
         color: var(--ted-style-success);
       }
       .remote-body {
@@ -944,7 +944,7 @@ export class TedRemoteCard extends LitElement implements LovelaceCard {
         background: none;
         border-color: var(--ted-style-success);
         box-shadow: 0 0 0 1px var(--ted-style-success),
-          0 0 7px color-mix(in srgb, var(--ted-style-success) 38%, transparent);
+          0 0 4px color-mix(in srgb, var(--ted-style-success) 22%, transparent);
       }
       .mfr--apple-tv .app-btn {
         background-color: #212121;

@@ -11,5 +11,6 @@ import { printVersionBanner } from "./shared/version-banner";
 import "./cards/light-card/ted-light-card";
 import "./cards/cover-card/ted-cover-card";
 import "./cards/remote-card/ted-remote-card";
+import "./cards/clock-weather-card/ted-clock-weather-card";
 
 printVersionBanner();

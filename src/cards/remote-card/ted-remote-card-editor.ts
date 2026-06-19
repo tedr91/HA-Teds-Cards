@@ -61,6 +61,7 @@ export class TedRemoteCardEditor extends LitElement implements LovelaceCardEdito
       show_name: false,
       name_scale: 100,
       scale: 100,
+      show_status_indicator: false,
       kaleidescape_home: "home",
     };
   }
@@ -161,6 +162,7 @@ export class TedRemoteCardEditor extends LitElement implements LovelaceCardEdito
         name: "scale",
         selector: { number: { min: 50, max: 200, step: 5, mode: "box", unit_of_measurement: "%" } },
       },
+      { name: "show_status_indicator", selector: { boolean: {} } },
     ];
 
     sections.push({
@@ -243,6 +245,8 @@ export class TedRemoteCardEditor extends LitElement implements LovelaceCardEdito
         return "Name size";
       case "scale":
         return "Card scale";
+      case "show_status_indicator":
+        return "Show status indicator";
       default:
         return schema.name;
     }

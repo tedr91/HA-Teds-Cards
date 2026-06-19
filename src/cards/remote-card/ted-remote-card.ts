@@ -240,6 +240,7 @@ export class TedRemoteCard extends LitElement implements LovelaceCard {
     const showIcon = this._config.show_icon !== false;
     const iconScale = typeof this._config.icon_scale === "number" ? this._config.icon_scale : 100;
     const showName = this._config.show_name === true;
+    const showStatus = this._config.show_status_indicator === true;
     const scale = typeof this._config.scale === "number" ? this._config.scale : 100;
 
     const cardStyle: Record<string, string> = {
@@ -274,16 +275,18 @@ export class TedRemoteCard extends LitElement implements LovelaceCard {
               : nothing}
           </div>
           <div class="header-actions">
-            <div class="header-status">
-              <span
-                class=${classMap({
-                  "status-dot": true,
-                  "status-dot--on": isOn,
-                  "status-dot--off": !isOn,
-                })}
-                title=${this._statusLabel()}
-              ></span>
-            </div>
+            ${showStatus
+              ? html`<div class="header-status">
+                  <span
+                    class=${classMap({
+                      "status-dot": true,
+                      "status-dot--on": isOn,
+                      "status-dot--off": !isOn,
+                    })}
+                    title=${this._statusLabel()}
+                  ></span>
+                </div>`
+              : nothing}
             ${this._renderPowerButton(isOn)}
           </div>
         </div>
@@ -555,6 +558,8 @@ export class TedRemoteCard extends LitElement implements LovelaceCard {
         --rc-btn: calc(44px * var(--rc-scale));
         --rc-gap: calc(10px * var(--rc-scale));
         --rc-pad-x: calc(16px * var(--rc-scale));
+        /* Power "on" glow: green for manufacturer / ted-style, theme color for HA. */
+        --rc-glow: var(--ted-style-success);
 
         position: relative;
         isolation: isolate;
@@ -564,6 +569,10 @@ export class TedRemoteCard extends LitElement implements LovelaceCard {
         box-sizing: border-box;
         overflow: hidden;
         color: var(--ted-style-text);
+      }
+      /* HA theme: the power "on" glow follows the active theme's accent color. */
+      ha-card.ted-card--theme-ha {
+        --rc-glow: var(--ted-style-accent);
       }
       /* Header area mirrors the DenonMarantz card: name + status dot + power button. */
       .header-row {
@@ -660,10 +669,10 @@ export class TedRemoteCard extends LitElement implements LovelaceCard {
       /* ON: a glowing green ring (dark center) rather than a filled accent button. */
       .power-button--on {
         background: var(--ted-style-surface-2);
-        border-color: var(--ted-style-success);
-        box-shadow: 0 0 0 1px var(--ted-style-success),
-          0 0 4px color-mix(in srgb, var(--ted-style-success) 22%, transparent);
-        color: var(--ted-style-success);
+        border-color: var(--rc-glow);
+        box-shadow: 0 0 0 1px var(--rc-glow),
+          0 0 4px color-mix(in srgb, var(--rc-glow) 22%, transparent);
+        color: var(--rc-glow);
       }
       .remote-body {
         display: flex;
@@ -940,9 +949,9 @@ export class TedRemoteCard extends LitElement implements LovelaceCard {
       }
       .mfr--apple-tv .power-button--on {
         background: none;
-        border-color: var(--ted-style-success);
-        box-shadow: 0 0 0 1px var(--ted-style-success),
-          0 0 4px color-mix(in srgb, var(--ted-style-success) 22%, transparent);
+        border-color: var(--rc-glow);
+        box-shadow: 0 0 0 1px var(--rc-glow),
+          0 0 4px color-mix(in srgb, var(--rc-glow) 22%, transparent);
       }
       .mfr--apple-tv .app-btn {
         background-color: #212121;

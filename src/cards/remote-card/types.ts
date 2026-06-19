@@ -47,6 +47,8 @@ export interface RemoteCardConfig extends LovelaceCardConfig {
   show_name?: boolean;
   name_scale?: number;
   scale?: number;
+  /** Show the on/off/playing status dot in the header (default off). */
+  show_status_indicator?: boolean;
   // Quick-launch app buttons (Apple TV only) — each value is a media_player source name.
   app_launch_1?: string;
   app_launch_2?: string;

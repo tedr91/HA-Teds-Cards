@@ -69,7 +69,7 @@ export class TedClockWeatherCardEditor extends LitElement implements LovelaceCar
       weather_size_custom: 100,
       show_weather_icon: false,
       show_current_temp: true,
-      weather_above_clock: true,
+      weather_above_clock: false,
       weather_align: "right",
       icon_style: "fancy",
       weather_entity: weatherEntity,

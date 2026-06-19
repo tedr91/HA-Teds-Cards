@@ -234,7 +234,7 @@ export class TedClockWeatherCard extends LitElement implements LovelaceCard {
   public getGridOptions(): GridOptions {
     return {
       columns: "full",
-      rows: 3,
+      rows: "auto",
       min_rows: 1,
     };
   }
@@ -450,7 +450,7 @@ export class TedClockWeatherCard extends LitElement implements LovelaceCard {
     // Otherwise it would overlap the clock, so force it onto its own row.
     const isOpposite = (align: string): boolean =>
       (position === "left" && align === "right") || (position === "right" && align === "left");
-    const weatherAbove = this._config.weather_above_clock !== false || !isOpposite(weatherAlign);
+    const weatherAbove = this._config.weather_above_clock === true || !isOpposite(weatherAlign);
     const dateBelow = this._config.date_below_clock === true || !isOpposite(dateAlign);
 
     let iconEl;

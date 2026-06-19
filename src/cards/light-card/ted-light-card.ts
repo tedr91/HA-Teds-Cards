@@ -478,8 +478,21 @@ export class TedLightCard extends LitElement implements LovelaceCard {
     this.hass.callService(domain, "set_value", { entity_id: entity, value: this._clampPct(pct) });
   }
 
+  /**
+   * Before turning the light off, capture its current brightness into the memory
+   * helper so the value persists even if it was last changed elsewhere (more-info,
+   * an automation, etc.). Only applies to dimmable lights using a memory helper.
+   */
+  private _captureBrightnessToMemory(): void {
+    if (this._config?.memory_mode !== "helper") return;
+    if (!this._supportsBrightness() || !this._isOn()) return;
+    const pct = this._currentPct();
+    if (pct > 0) this._writeMemoryHelper(pct);
+  }
+
   private _callLight(service: "turn_on" | "turn_off", data: Record<string, unknown>): void {
     if (!this.hass || !this._config) return;
+    if (service === "turn_off") this._captureBrightnessToMemory();
     this.hass.callService("light", service, { entity_id: this._config.entity, ...data });
   }
 

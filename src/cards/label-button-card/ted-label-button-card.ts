@@ -221,6 +221,7 @@ export class TedLabelButtonCard extends LitElement implements LovelaceCard {
     css`
       :host {
         display: block;
+        height: 100%;
       }
 
       ha-card {

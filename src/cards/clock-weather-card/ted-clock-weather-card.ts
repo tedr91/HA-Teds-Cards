@@ -2,6 +2,7 @@ import { LitElement, css, html, nothing, type PropertyValues, type TemplateResul
 import { customElement, property, state } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { styleMap } from "lit/directives/style-map.js";
+import { unsafeSVG } from "lit/directives/unsafe-svg.js";
 import {
   type HomeAssistant,
   type LovelaceCard,
@@ -18,6 +19,8 @@ import {
   DEFAULT_WEATHER_ICON,
   WEATHER_ICONS,
 } from "./const";
+import { fancyWeatherIcon } from "./weather-icons";
+import { coolWeatherIcon } from "./cool-icons";
 import type { ClockWeatherCardConfig, TimeFormat, DateFormat } from "./types";
 
 /** Reference string used to keep the clock font-size stable across minutes. */
@@ -30,6 +33,15 @@ const CLOCK_WIDTH_FRACTION = 0.6;
 const DATE_WIDTH_FRACTION = 0.2625;
 /** Temperature font-size as a fraction of the clock font-size. */
 const TEMP_CLOCK_RATIO = 0.3;
+/** AM/PM suffix font-size as a fraction of the clock font-size. */
+const AMPM_SCALE = 1 / 3;
+/**
+ * Fixed reference instant used ONLY for font-size measurement so the clock and
+ * date never resize as the real time/date changes. Chosen to be wide:
+ * a Wednesday (long weekday) in September (long month), 22:22 (2-digit hour in
+ * both 12h and 24h, 2-digit minute).
+ */
+const REFERENCE_DATE = new Date(2000, 8, 20, 22, 22, 22);
 
 function pad(n: number): string {
   return n < 10 ? `0${n}` : `${n}`;
@@ -93,19 +105,33 @@ function autoHour12(timeFormat: string | undefined): boolean | undefined {
   }
 }
 
-function formatTime(
+/** Split the formatted time into its main part and the AM/PM suffix (empty if none). */
+function formatTimeParts(
   d: Date,
   fmt: TimeFormat,
   custom: string,
   lang: string,
   localeTimeFormat: string | undefined,
-): string {
-  if (fmt === "custom") return formatTimeTokens(d, custom || "H:MM");
+): { main: string; suffix: string } {
+  if (fmt === "custom") {
+    return { main: formatTimeTokens(d, custom || "H:MM"), suffix: "" };
+  }
   let hour12: boolean | undefined;
   if (fmt === "12h") hour12 = true;
   else if (fmt === "24h") hour12 = false;
   else hour12 = autoHour12(localeTimeFormat);
-  return new Intl.DateTimeFormat(lang, { hour: "numeric", minute: "2-digit", hour12 }).format(d);
+  const parts = new Intl.DateTimeFormat(lang, {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12,
+  }).formatToParts(d);
+  let main = "";
+  let suffix = "";
+  for (const p of parts) {
+    if (p.type === "dayPeriod") suffix = p.value;
+    else main += p.value;
+  }
+  return { main: main.trim(), suffix };
 }
 
 function formatDateTokens(d: Date, fmt: string, lang: string): string {
@@ -242,8 +268,11 @@ export class TedClockWeatherCard extends LitElement implements LovelaceCard {
     }
   }
 
-  protected updated(): void {
-    if (this._lastWidth > 0) this._recompute(this._lastWidth);
+  protected updated(changed: PropertyValues): void {
+    // Only re-measure when the config changes (sizes/formats). Resizes are
+    // handled by the ResizeObserver. The per-second clock tick must NOT trigger
+    // a re-measure, otherwise the font would change with the time/date text.
+    if (changed.has("_config") && this._lastWidth > 0) this._recompute(this._lastWidth);
   }
 
   private _clockFactor(): number {
@@ -276,9 +305,9 @@ export class TedClockWeatherCard extends LitElement implements LovelaceCard {
     return this.hass?.locale?.language || this.hass?.language || navigator.language || "en";
   }
 
-  private _timeText(): string {
-    return formatTime(
-      this._now,
+  private _timeParts(date: Date = this._now): { main: string; suffix: string } {
+    return formatTimeParts(
+      date,
       this._config?.time_format ?? "auto",
       this._config?.time_format_custom ?? "H:MM",
       this._lang(),
@@ -287,9 +316,9 @@ export class TedClockWeatherCard extends LitElement implements LovelaceCard {
     );
   }
 
-  private _dateText(): string {
+  private _dateText(date: Date = this._now): string {
     return formatDate(
-      this._now,
+      date,
       this._config?.date_format ?? "standard",
       this._config?.date_format_custom ?? "dddd, MMMM D",
       this._lang(),
@@ -314,6 +343,19 @@ export class TedClockWeatherCard extends LitElement implements LovelaceCard {
     return (condition && WEATHER_ICONS[condition]) || DEFAULT_WEATHER_ICON;
   }
 
+  /** Animated ("fancy") weather icon markup for the current condition. */
+  private _fancyWeatherIcon(): string {
+    const id = this._weatherEntityId();
+    const condition = id ? this.hass?.states[id]?.state : undefined;
+    return fancyWeatherIcon(condition);
+  }
+
+  /** Current weather condition string (entity state), if available. */
+  private _weatherCondition(): string | undefined {
+    const id = this._weatherEntityId();
+    return id ? this.hass?.states[id]?.state : undefined;
+  }
+
   /** Configured weather entity, or the first `weather.*` entity found. */
   private _weatherEntityId(): string | undefined {
     if (this._config?.weather_entity) return this._config.weather_entity;
@@ -335,10 +377,14 @@ export class TedClockWeatherCard extends LitElement implements LovelaceCard {
     if (!el || width <= 0) return;
     const family = getComputedStyle(el).fontFamily || "sans-serif";
 
-    const clockW = this._widthPer1px(this._timeText(), CLOCK_WEIGHT, family);
+    // Measure against a fixed reference date so sizes stay constant over time.
+    const { main, suffix } = this._timeParts(REFERENCE_DATE);
+    const mainW = this._widthPer1px(main, CLOCK_WEIGHT, family);
+    const suffixW = suffix ? this._widthPer1px(` ${suffix}`, CLOCK_WEIGHT, family) * AMPM_SCALE : 0;
+    const clockW = mainW + suffixW;
     const clockPx = clockW > 0 ? (width * CLOCK_WIDTH_FRACTION * this._clockFactor()) / clockW : 0;
 
-    const dateW = this._widthPer1px(this._dateText(), DATE_WEIGHT, family);
+    const dateW = this._widthPer1px(this._dateText(REFERENCE_DATE), DATE_WEIGHT, family);
     const datePx = dateW > 0 ? (width * DATE_WIDTH_FRACTION * this._dateFactor()) / dateW : 0;
 
     const tempPx = clockPx * TEMP_CLOCK_RATIO * this._weatherFactor();
@@ -378,26 +424,62 @@ export class TedClockWeatherCard extends LitElement implements LovelaceCard {
       if (bg) cardStyle.background = bg;
     }
 
-    const timeText = this._timeText();
+    const { main: timeMain, suffix: timeSuffix } = this._timeParts();
     const dateText = this._dateText();
     const temp = this._tempText();
+    const iconStyle =
+      this._config.icon_style ?? (this._config.fancy_icons === false ? "basic" : "fancy");
     const icon = this._weatherIcon();
     const weatherVisible = showWeather && (showIcon || (showTemp && temp != null));
+
+    const position = this._config.clock_position ?? "left";
+    // Centered clock forces weather and date onto their own rows.
+    const weatherAbove = position === "center" ? true : this._config.weather_above_clock !== false;
+    const dateBelow = position === "center" ? true : this._config.date_below_clock === true;
+    const weatherAlign = this._config.weather_align ?? "right";
+    const dateAlign = this._config.date_align ?? "right";
+
+    let iconEl;
+    if (iconStyle === "basic") {
+      iconEl = html`<ha-icon class="wicon" .icon=${icon}></ha-icon>`;
+    } else if (iconStyle === "cool") {
+      iconEl = html`<span class="wicon wicon-cool">${unsafeSVG(coolWeatherIcon(this._weatherCondition()))}</span>`;
+    } else {
+      iconEl = html`<span class="wicon wicon-fancy">${unsafeSVG(this._fancyWeatherIcon())}</span>`;
+    }
+    const weatherInner = html`
+      ${showIcon ? iconEl : nothing}
+      ${showTemp && temp != null ? html`<span class="temp">${temp}</span>` : nothing}
+    `;
+    const clockEl = showClock
+      ? html`<div class="clock">
+          <span class="t-main">${timeMain}</span
+          >${timeSuffix ? html`<span class="t-suffix">${timeSuffix}</span>` : nothing}
+        </div>`
+      : nothing;
+    const dateEl = html`<div class="date">${dateText}</div>`;
 
     return html`
       <ha-card class=${classMap(cardClasses)} style=${styleMap(cardStyle)}>
         ${brushed ? brushedOverlay : nothing}
-        <div class="cwc">
-          ${weatherVisible
-            ? html`
-                <div class="weather">
-                  ${showIcon ? html`<ha-icon class="wicon" .icon=${icon}></ha-icon>` : nothing}
-                  ${showTemp && temp != null ? html`<span class="temp">${temp}</span>` : nothing}
-                </div>
-              `
+        <div class="cwc pos-${position}">
+          ${weatherVisible && weatherAbove
+            ? html`<div class="row weather-row align-${weatherAlign}">
+                <div class="weather">${weatherInner}</div>
+              </div>`
             : nothing}
-          ${showClock ? html`<div class="clock">${timeText}</div>` : nothing}
-          ${showDate ? html`<div class="date">${dateText}</div>` : nothing}
+          <div class="row clock-row">
+            ${weatherVisible && !weatherAbove
+              ? html`<div class="weather weather-abs align-${weatherAlign}">${weatherInner}</div>`
+              : nothing}
+            ${clockEl}
+            ${showDate && !dateBelow
+              ? html`<div class="date date-abs align-${dateAlign}">${dateText}</div>`
+              : nothing}
+          </div>
+          ${showDate && dateBelow
+            ? html`<div class="row date-row align-${dateAlign}">${dateEl}</div>`
+            : nothing}
         </div>
       </ha-card>
     `;
@@ -416,6 +498,9 @@ export class TedClockWeatherCard extends LitElement implements LovelaceCard {
 
       ha-card.is-transparent {
         --ha-card-border-color: transparent;
+        --ha-card-backdrop-filter: none;
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
       }
 
       .cwc {
@@ -424,6 +509,7 @@ export class TedClockWeatherCard extends LitElement implements LovelaceCard {
         display: flex;
         flex-direction: column;
         justify-content: flex-end;
+        gap: 4px;
         width: 100%;
         height: 100%;
         min-height: 56px;
@@ -432,7 +518,69 @@ export class TedClockWeatherCard extends LitElement implements LovelaceCard {
         color: var(--ted-style-text);
       }
 
+      .row {
+        position: relative;
+        width: 100%;
+      }
+
+      .clock-row {
+        display: flex;
+        align-items: flex-end;
+      }
+
+      .weather-row,
+      .date-row {
+        display: flex;
+      }
+
+      /* Clock position only affects the clock's own alignment. */
+      .pos-center .clock {
+        text-align: center;
+      }
+
+      .pos-right .clock {
+        text-align: right;
+      }
+
+      /* Independent alignment for the weather and date components (in a row). */
+      .weather-row.align-left,
+      .date-row.align-left {
+        justify-content: flex-start;
+      }
+
+      .weather-row.align-center,
+      .date-row.align-center {
+        justify-content: center;
+      }
+
+      .weather-row.align-right,
+      .date-row.align-right {
+        justify-content: flex-end;
+      }
+
+      /* Alignment when overlaid in the clock row (absolutely positioned). */
+      .weather-abs.align-left,
+      .date-abs.align-left {
+        left: 0;
+        right: auto;
+      }
+
+      .weather-abs.align-center,
+      .date-abs.align-center {
+        left: 50%;
+        right: auto;
+        transform: translateX(-50%);
+      }
+
+      .weather-abs.align-right,
+      .date-abs.align-right {
+        right: 0;
+        left: auto;
+      }
+
       .clock {
+        flex: 1 1 auto;
+        min-width: 0;
         font-size: var(--cwc-clock-size, 4rem);
         line-height: 1;
         font-weight: 600;
@@ -442,10 +590,12 @@ export class TedClockWeatherCard extends LitElement implements LovelaceCard {
         text-align: left;
       }
 
+      .clock .t-suffix {
+        font-size: ${AMPM_SCALE}em;
+        margin-left: 0.25em;
+      }
+
       .date {
-        position: absolute;
-        right: 18px;
-        bottom: 12px;
         font-size: var(--cwc-date-size, 1.1rem);
         font-weight: 500;
         line-height: 1;
@@ -453,14 +603,21 @@ export class TedClockWeatherCard extends LitElement implements LovelaceCard {
         color: var(--ted-style-muted);
       }
 
-      .weather {
+      .date.date-abs {
         position: absolute;
-        right: 18px;
-        top: 12px;
+        bottom: 0;
+      }
+
+      .weather {
         display: flex;
         align-items: center;
         gap: 0.25em;
         line-height: 1;
+      }
+
+      .weather.weather-abs {
+        position: absolute;
+        top: 0;
       }
 
       .weather .temp {
@@ -475,6 +632,61 @@ export class TedClockWeatherCard extends LitElement implements LovelaceCard {
         width: var(--cwc-icon-size, 1.4rem);
         height: var(--cwc-icon-size, 1.4rem);
         color: var(--ted-style-text);
+      }
+
+      /* Animated "fancy" icons render slightly larger to match their inner padding. */
+      .weather .wicon-fancy {
+        --fancy-size: calc(var(--cwc-icon-size, 1.4rem) * 1.5);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: var(--fancy-size);
+        height: var(--fancy-size);
+        margin: calc(var(--cwc-icon-size, 1.4rem) * -0.25) 0;
+      }
+
+      .weather .wicon-fancy svg {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+
+      /* HA-frontend ("cool") weather icons. */
+      .weather .wicon-cool {
+        --cool-size: calc(var(--cwc-icon-size, 1.4rem) * 1.35);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: var(--cool-size);
+        height: var(--cool-size);
+      }
+
+      .weather .wicon-cool svg {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+
+      .weather .wicon-cool .rain {
+        fill: var(--weather-icon-rain-color, #30b3ff);
+      }
+      .weather .wicon-cool .sun {
+        fill: var(--weather-icon-sun-color, #fdd93c);
+      }
+      .weather .wicon-cool .moon {
+        fill: var(--weather-icon-moon-color, #fcf497);
+      }
+      .weather .wicon-cool .cloud-back {
+        fill: var(--weather-icon-cloud-back-color, #d4d4d4);
+      }
+      .weather .wicon-cool .cloud-front {
+        fill: var(--weather-icon-cloud-front-color, #f9f9f9);
+      }
+      .weather .wicon-cool .snow {
+        fill: var(--weather-icon-snow-color, #f9f9f9);
+        stroke: var(--weather-icon-snow-stroke-color, #d4d4d4);
+        stroke-width: 1;
+        paint-order: stroke;
       }
     `,
   ];

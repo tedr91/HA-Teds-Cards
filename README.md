@@ -230,6 +230,13 @@ To test against a running Home Assistant instance, copy `dist/ted-cards.js` into
 
 The GitHub Actions workflow at `.github/workflows/release.yml` automatically builds `ted-cards.js` and attaches it to any GitHub Release. Bump the version in `package.json`, push a `vX.Y.Z` tag, and publish a release — HACS will pick up the new asset.
 
+## Credits
+
+The Clock Weather Card was inspired by [pkissling/clock-weather-card](https://github.com/pkissling/clock-weather-card) and its fork [samuelgoodell/clock-weather-card-hui-icons](https://github.com/samuelgoodell/clock-weather-card-hui-icons) (both MIT).
+
+- **"Fancy" animated weather icons** — [Meteocons](https://github.com/basmilius/weather-icons) by [Bas Milius](https://github.com/basmilius), [MIT](./src/cards/clock-weather-card/icons/LICENSE). Bundled and mapped to Home Assistant conditions following pkissling/clock-weather-card.
+- **"Cool" weather icons** — the Home Assistant frontend weather SVGs, ported from [samuelgoodell/clock-weather-card-hui-icons](https://github.com/samuelgoodell/clock-weather-card-hui-icons) ([MIT](./src/cards/clock-weather-card/icons/LICENSE-hui-icons)), which adapts them from [home-assistant/frontend](https://github.com/home-assistant/frontend).
+
 ## License
 
 [MIT](./LICENSE)

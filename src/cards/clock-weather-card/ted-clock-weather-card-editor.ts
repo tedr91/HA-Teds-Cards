@@ -54,6 +54,7 @@ export class TedClockWeatherCardEditor extends LitElement implements LovelaceCar
       show_clock: true,
       clock_size: "large",
       clock_size_custom: 100,
+      clock_position: "left",
       time_format: "auto",
       time_format_custom: "H:MM",
       show_date: true,
@@ -61,17 +62,35 @@ export class TedClockWeatherCardEditor extends LitElement implements LovelaceCar
       date_size_custom: 100,
       date_format: "standard",
       date_format_custom: "dddd, MMMM D",
+      date_below_clock: false,
+      date_align: "right",
       show_weather: true,
       weather_size: "standard",
       weather_size_custom: 100,
       show_weather_icon: false,
       show_current_temp: true,
+      weather_above_clock: true,
+      weather_align: "right",
+      icon_style: "fancy",
       weather_entity: weatherEntity,
     };
   }
 
   private _scaleSelector() {
     return { number: { min: 10, max: 400, step: 5, mode: "box", unit_of_measurement: "%" } };
+  }
+
+  private _alignSelector() {
+    return {
+      select: {
+        mode: "dropdown",
+        options: [
+          { value: "left", label: "Left" },
+          { value: "center", label: "Centered" },
+          { value: "right", label: "Right (default)" },
+        ],
+      },
+    };
   }
 
   private _schema() {
@@ -109,6 +128,19 @@ export class TedClockWeatherCardEditor extends LitElement implements LovelaceCar
     // Clock Settings
     const clock: Array<Record<string, unknown>> = [
       { name: "show_clock", selector: { boolean: {} } },
+      {
+        name: "clock_position",
+        selector: {
+          select: {
+            mode: "dropdown",
+            options: [
+              { value: "left", label: "Left (default)" },
+              { value: "center", label: "Centered" },
+              { value: "right", label: "Right" },
+            ],
+          },
+        },
+      },
       {
         name: "clock_size",
         selector: {
@@ -179,11 +211,15 @@ export class TedClockWeatherCardEditor extends LitElement implements LovelaceCar
     if (cfg.date_format === "custom") {
       date.push({ name: "date_format_custom", selector: { text: {} } });
     }
+    date.push({ name: "date_below_clock", selector: { boolean: {} } });
+    date.push({ name: "date_align", selector: this._alignSelector() });
 
     // Weather Settings
     const weather: Array<Record<string, unknown>> = [
       { name: "show_weather", selector: { boolean: {} } },
       { name: "weather_entity", selector: { entity: { domain: "weather" } } },
+      { name: "weather_above_clock", selector: { boolean: {} } },
+      { name: "weather_align", selector: this._alignSelector() },
       {
         type: "grid",
         name: "",
@@ -191,6 +227,19 @@ export class TedClockWeatherCardEditor extends LitElement implements LovelaceCar
           { name: "show_weather_icon", selector: { boolean: {} } },
           { name: "show_current_temp", selector: { boolean: {} } },
         ],
+      },
+      {
+        name: "icon_style",
+        selector: {
+          select: {
+            mode: "dropdown",
+            options: [
+              { value: "basic", label: "Basic" },
+              { value: "cool", label: "Cool" },
+              { value: "fancy", label: "Fancy (default)" },
+            ],
+          },
+        },
       },
       {
         name: "weather_size",
@@ -261,6 +310,8 @@ export class TedClockWeatherCardEditor extends LitElement implements LovelaceCar
         return "Clock size";
       case "clock_size_custom":
         return "Clock size";
+      case "clock_position":
+        return "Position";
       case "time_format":
         return "Time format";
       case "time_format_custom":
@@ -275,10 +326,20 @@ export class TedClockWeatherCardEditor extends LitElement implements LovelaceCar
         return "Date format";
       case "date_format_custom":
         return "Date format (e.g. dddd, MMMM D)";
+      case "date_below_clock":
+        return "Position below clock";
+      case "date_align":
+        return "Alignment";
       case "show_weather":
         return "Show weather";
       case "weather_entity":
         return "Weather entity";
+      case "weather_above_clock":
+        return "Position above clock";
+      case "weather_align":
+        return "Alignment";
+      case "icon_style":
+        return "Icon style";
       case "show_weather_icon":
         return "Show weather icon";
       case "show_current_temp":

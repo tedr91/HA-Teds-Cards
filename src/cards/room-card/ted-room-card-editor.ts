@@ -133,11 +133,13 @@ export class TedRoomCardEditor extends LitElement implements LovelaceCardEditor 
         wanted.add(key);
         const entry = this._buttonEditors.get(key);
         if (entry && entry.type === button.type) {
-          // The mounted child editor owns its own config while open. Pushing
-          // setConfig back on every keystroke (HA echoes our config-changed
-          // back via setConfig) fights the user's input and reverts fields,
-          // so we only keep hass fresh here. Structural changes
-          // (add/move/delete/type change) clear the map and recreate editors.
+          // The child editors are "controlled": they render from their own
+          // setConfig and never self-update on input. We echo their emitted
+          // value back synchronously in _onButtonConfigChanged, so here we must
+          // NOT push setConfig again — HA's async config round-trip can lag
+          // behind fast typing and would revert the field to a stale value.
+          // Just keep hass fresh. Structural changes (add/move/delete/type
+          // change) clear the map and recreate editors from scratch.
           entry.el.hass = this.hass;
         } else {
           if (entry) this._buttonEditors.delete(key);
@@ -179,7 +181,14 @@ export class TedRoomCardEditor extends LitElement implements LovelaceCardEditor 
     const json = JSON.stringify(newButton);
     const entry = this._buttonEditors.get(key);
     if (entry && entry.json === json) return;
-    if (entry) entry.json = json;
+    if (entry) {
+      entry.json = json;
+      // The child editor is controlled: its rendered fields come from its own
+      // setConfig, and it does not self-update on input. Echo the value it just
+      // emitted straight back so a later re-render (e.g. when hass updates)
+      // shows the current value instead of reverting to a stale one.
+      entry.el.setConfig(newButton as LovelaceCardConfig);
+    }
     const [sIdx, bIdx] = key.split(":").map((part) => Number(part));
     const sections = [...(this._config?.sections ?? [])];
     const section = sections[sIdx];

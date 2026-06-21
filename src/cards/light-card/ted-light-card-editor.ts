@@ -162,6 +162,7 @@ export class TedLightCardEditor extends LitElement implements LovelaceCardEditor
     visual.push({
       type: "grid",
       name: "",
+      column_min_width: "100px",
       schema: [
         { name: "show_name", selector: { boolean: {} } },
         { name: "name_scale", disabled: this._config?.show_name === false, selector: { number: { min: 10, max: 300, step: 5, mode: "box", unit_of_measurement: "%" } } },
@@ -170,6 +171,7 @@ export class TedLightCardEditor extends LitElement implements LovelaceCardEditor
     visual.push({
       type: "grid",
       name: "",
+      column_min_width: "100px",
       schema: [
         { name: "show_icon", selector: { boolean: {} } },
         { name: "icon_scale", disabled: this._config?.show_icon === false, selector: { number: { min: 10, max: 300, step: 5, mode: "box", unit_of_measurement: "%" } } },
@@ -178,6 +180,7 @@ export class TedLightCardEditor extends LitElement implements LovelaceCardEditor
     visual.push({
       type: "grid",
       name: "",
+      column_min_width: "100px",
       schema: [
         { name: "show_state", selector: { boolean: {} } },
         { name: "show_hint", selector: { boolean: {} } },

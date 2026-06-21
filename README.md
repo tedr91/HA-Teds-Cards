@@ -6,7 +6,7 @@ A collection of custom Lovelace cards for [Home Assistant](https://www.home-assi
 
 > **⚠️ Interim release — testing only.** This is a pre-release build published for testing purposes only and is not intended for production use. Features may change or break without notice.
 
-> **Status:** early development. Includes `ted-light-card`, `ted-cover-card`, and `ted-remote-card`; more are planned.
+> **Status:** early development. Includes `ted-light-card`, `ted-cover-card`, `ted-remote-card`, and `ted-room-card`; more are planned.
 
 ## Cards
 
@@ -217,11 +217,10 @@ memory_entity: input_number.blinds_position
 
 ### Room Card
 
-An overview card for a Home Assistant **area**. The area is the card's primary selection, made in
-the editor's **Area Setup** section (an Area picker fed by your Home Assistant areas).
-
-> **Status:** early scaffold. The area is selectable and rendered as the card title; richer
-> per-area content is in progress.
+An overview card for a Home Assistant **area**, with a compact **status bar** along the top edge and
+one or more **button sections** below it. The area is the card's primary selection, made in the
+editor's **Room** section (an Area picker fed by your Home Assistant areas); it also seeds default
+temperature/occupancy entities for new status items.
 
 Minimal config:
 
@@ -238,9 +237,51 @@ area: living_room          # the Home Assistant area id
 name: Living Room          # optional title override, defaults to the area's name
 theme: ted-style           # optional, visual styling: ted-style (default) | ha
 brushed: false             # optional brushed-metal sheen over the background
+status_items:              # optional, the top status bar (see below)
+  - type: temperature
+    entity: sensor.living_room_temperature
+  - type: occupancy
+    entity: binary_sensor.living_room_motion
+  - type: brightness
+    entity: light.living_room
+  - type: volume
+    entity: media_player.living_room
+  - type: led
+    entity: binary_sensor.living_room_window
+sections:                  # optional, grids of buttons below the status bar
+  - title: Lights
+    max_rows: 0            # 0 = unlimited; otherwise caps rows (5 buttons/row)
+    buttons:
+      - type: custom:ted-light-card
+        entity: light.living_room
+      - type: custom:ted-cover-card
+        entity: cover.living_room
+      - type: custom:ted-label-button-card
+        name: Scene
 ```
 
 `theme` and `brushed` work as in the other cards (see the Light Card section).
+
+**Status bar** — a small strip of items pinned to the top edge of the card, managed in the editor's
+**Status items** section (add, reorder, delete). Each item is one of:
+
+| Type | Shows | Entity |
+| --- | --- | --- |
+| `temperature` | Icon + value | any sensor (auto-filled from the area) |
+| `occupancy` | Icon + value | any sensor (auto-filled from the area) |
+| `brightness` | Tap-to-open vertical slider | `light`, `number`, or `input_number` |
+| `volume` | Tap-to-open volume slider (double-tap mutes) | `media_player` |
+| `led` | Colored status dot | any entity |
+
+Each item also accepts an optional `icon` and `name`. `led` items accept `on_color` / `off_color`
+and an advanced `colors` map (state → color) for per-state colors.
+
+**Button sections** — one or more grids of buttons below the status bar, managed in the editor's
+**Button sections** section (add, reorder, delete sections; add, reorder, delete buttons within each).
+Each button is a `ted-label-button-card`, `ted-cover-card`, or `ted-light-card`, edited inline with
+that card's own editor. Buttons lay out 5 per row as squares; set a section's **Max rows** to cap the
+height (`0` = unlimited). When the buttons overflow the cap, the last visible cell becomes a **…**
+button that reveals the rest.
 
 
 ## Development

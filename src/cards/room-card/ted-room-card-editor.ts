@@ -109,6 +109,8 @@ export class TedRoomCardEditor extends LitElement implements LovelaceCardEditor 
   /** Embedded button editors keyed by `${sectionIndex}:${buttonIndex}`. */
   private _buttonEditors = new Map<string, ButtonEditorEntry>();
   private _creatingEditors = new Set<string>();
+  /** Key of the currently open "add" dropdown, if any. */
+  @state() private _openMenu?: string;
 
   public setConfig(config: RoomCardConfig): void {
     this._config = config;
@@ -213,26 +215,17 @@ export class TedRoomCardEditor extends LitElement implements LovelaceCardEditor 
     downDisabled: boolean,
   ): TemplateResult {
     return html`
-      <ha-button-menu
-        corner="BOTTOM_END"
-        menuCorner="END"
-        fixed
-        @click=${this._stop}
-        @closed=${this._stop}
-      >
-        <ha-icon-button slot="trigger" label="Options">
-          <ha-icon icon="mdi:dots-vertical"></ha-icon>
+      <div class="row-actions" @click=${this._stop}>
+        <ha-icon-button label="Move up" ?disabled=${upDisabled} @click=${onUp}>
+          <ha-icon icon="mdi:arrow-up"></ha-icon>
         </ha-icon-button>
-        <mwc-list-item graphic="icon" ?disabled=${upDisabled} @click=${onUp}>
-          <ha-icon slot="graphic" icon="mdi:arrow-up"></ha-icon>Move up
-        </mwc-list-item>
-        <mwc-list-item graphic="icon" ?disabled=${downDisabled} @click=${onDown}>
-          <ha-icon slot="graphic" icon="mdi:arrow-down"></ha-icon>Move down
-        </mwc-list-item>
-        <mwc-list-item graphic="icon" class="warning" @click=${onDelete}>
-          <ha-icon slot="graphic" icon="mdi:delete"></ha-icon>Delete
-        </mwc-list-item>
-      </ha-button-menu>
+        <ha-icon-button label="Move down" ?disabled=${downDisabled} @click=${onDown}>
+          <ha-icon icon="mdi:arrow-down"></ha-icon>
+        </ha-icon-button>
+        <ha-icon-button label="Delete" class="warning" @click=${onDelete}>
+          <ha-icon icon="mdi:delete"></ha-icon>
+        </ha-icon-button>
+      </div>
     `;
   }
 
@@ -322,16 +315,49 @@ export class TedRoomCardEditor extends LitElement implements LovelaceCardEditor 
     `;
   }
 
-  private _renderAddMenu(label: string, options: Array<{ value: string; label: string }>, onPick: (value: string) => void): TemplateResult {
+  private _toggleAddMenu = (key: string, ev: Event): void => {
+    ev.stopPropagation();
+    this._openMenu = this._openMenu === key ? undefined : key;
+  };
+
+  private _renderAddMenu(
+    key: string,
+    label: string,
+    options: Array<{ value: string; label: string }>,
+    onPick: (value: string) => void,
+  ): TemplateResult {
+    const open = this._openMenu === key;
     return html`
-      <ha-button-menu fixed @click=${this._stop} @closed=${this._stop}>
-        <button slot="trigger" type="button" class="add-button">
+      <div class="add-menu">
+        <button
+          type="button"
+          class="add-button ${open ? "open" : ""}"
+          aria-expanded=${open ? "true" : "false"}
+          @click=${(ev: Event) => this._toggleAddMenu(key, ev)}
+        >
           <ha-icon icon="mdi:plus"></ha-icon><span>${label}</span>
         </button>
-        ${options.map(
-          (option) => html`<mwc-list-item @click=${() => onPick(option.value)}>${option.label}</mwc-list-item>`,
-        )}
-      </ha-button-menu>
+        ${open
+          ? html`
+              <div class="add-menu-list" @click=${this._stop}>
+                ${options.map(
+                  (option) => html`
+                    <button
+                      type="button"
+                      class="add-menu-item"
+                      @click=${() => {
+                        this._openMenu = undefined;
+                        onPick(option.value);
+                      }}
+                    >
+                      ${option.label}
+                    </button>
+                  `,
+                )}
+              </div>
+            `
+          : nothing}
+      </div>
     `;
   }
 
@@ -407,6 +433,7 @@ export class TedRoomCardEditor extends LitElement implements LovelaceCardEditor 
             ${buttons.map((button, bIdx) => this._renderButtonRow(sIdx, bIdx, button, buttons.length))}
           </div>
           ${this._renderAddMenu(
+            `add-button-${sIdx}`,
             "Add button",
             [
               { value: ROOM_BUTTON_CARD_TYPES.label, label: "Button" },
@@ -452,6 +479,7 @@ export class TedRoomCardEditor extends LitElement implements LovelaceCardEditor 
               ${statusItems.map((item, idx) => this._renderStatusItemRow(item, idx, statusItems.length))}
             </div>
             ${this._renderAddMenu(
+              "add-status",
               "Add item",
               STATUS_ITEM_TYPES.map((type) => ({ value: type, label: STATUS_ITEM_LABEL[type] })),
               (value) => this._addStatusItem(value as RoomStatusItemType),
@@ -736,9 +764,20 @@ export class TedRoomCardEditor extends LitElement implements LovelaceCardEditor 
       flex: 1 1 auto;
       min-width: 0;
     }
-    .row-header ha-button-menu {
+    .row-actions {
+      display: flex;
+      align-items: center;
+      gap: 2px;
       flex: none;
-      margin: -8px 0 -8px auto;
+      margin-left: auto;
+    }
+    .row-actions ha-icon-button {
+      --mdc-icon-button-size: 36px;
+      --mdc-icon-size: 20px;
+      color: var(--secondary-text-color);
+    }
+    .row-actions ha-icon-button.warning {
+      color: var(--error-color, #db4437);
     }
     .subgroup-label {
       color: var(--secondary-text-color);
@@ -767,11 +806,38 @@ export class TedRoomCardEditor extends LitElement implements LovelaceCardEditor 
       font-size: 0.9em;
       padding: 8px 0;
     }
-    mwc-list-item.warning {
-      color: var(--error-color, #db4437);
+    .add-menu {
+      position: relative;
+      align-self: flex-start;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
     }
-    mwc-list-item.warning ha-icon {
-      color: var(--error-color, #db4437);
+    .add-button.open {
+      background: color-mix(in srgb, var(--primary-color) 12%, transparent);
+    }
+    .add-menu-list {
+      display: flex;
+      flex-direction: column;
+      min-width: 200px;
+      padding: 4px;
+      border: 1px solid var(--divider-color, rgba(127, 127, 127, 0.4));
+      border-radius: 8px;
+      background: var(--card-background-color, var(--ha-card-background, #1c1c1c));
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    }
+    .add-menu-item {
+      text-align: left;
+      padding: 10px 12px;
+      border: none;
+      border-radius: 6px;
+      background: none;
+      color: var(--primary-text-color);
+      cursor: pointer;
+      font: inherit;
+    }
+    .add-menu-item:hover {
+      background: var(--secondary-background-color, rgba(127, 127, 127, 0.12));
     }
   `;
 }

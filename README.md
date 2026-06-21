@@ -284,6 +284,21 @@ height (`0` = unlimited). When the buttons overflow the cap, the last visible ce
 button that reveals the rest.
 
 
+## Changelog
+
+The newest entry below is used as the GitHub Release notes by the release workflow, so it shows in
+the Home Assistant / HACS **update** dialog when you update. Newest first.
+
+### v2.0.27
+
+- Fixed the Room Card editor: the status-item and button menus now use reliable controls (inline move/delete buttons and a self-contained “add” menu) instead of the Home Assistant popup menu, which did not render in the card-editor preview.
+- Documented the Room Card status bar and button sections.
+
+### v2.0.26
+
+- Built out the Room Card: a top **status bar** (temperature, occupancy, brightness slider, volume slider, and status LEDs) and configurable **button sections** (label, cover, and light buttons laid out 5 per row, with a max-rows cap and an overflow button).
+
+
 ## Development
 
 ```sh
@@ -297,7 +312,7 @@ To test against a running Home Assistant instance, copy `dist/ted-cards.js` into
 
 ## Releasing
 
-The GitHub Actions workflow at `.github/workflows/release.yml` automatically builds `ted-cards.js` and attaches it to any GitHub Release. Bump the version in `package.json`, push a `vX.Y.Z` tag, and publish a release — HACS will pick up the new asset.
+The GitHub Actions workflow at `.github/workflows/release.yml` automatically builds `ted-cards.js` and attaches it to any GitHub Release. To cut a release: add a `### vX.Y.Z` entry to the [Changelog](#changelog), bump the version in `package.json`, push a `vX.Y.Z` tag, and publish a release. The workflow builds and attaches the asset and sets the GitHub Release notes from the matching changelog entry, so those notes appear in the Home Assistant / HACS update dialog. HACS picks up the new asset.
 
 ## Credits
 

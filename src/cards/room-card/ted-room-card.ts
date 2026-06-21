@@ -232,6 +232,9 @@ export class TedRoomCard extends LitElement implements LovelaceCard {
           return;
         }
         const el = this._helpers!.createCardElement(button as LovelaceCardConfig);
+        // Render buttons as grid items so cards that otherwise apply a fixed
+        // width/height (light, cover) fill the square cell instead.
+        (el as unknown as { layout?: string }).layout = "grid";
         el.hass = this.hass;
         next.set(key, { el, json });
       });

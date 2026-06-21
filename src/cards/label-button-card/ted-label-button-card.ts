@@ -3,9 +3,12 @@ import { customElement, property, state } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { styleMap } from "lit/directives/style-map.js";
 import {
+  type ActionConfig,
   type HomeAssistant,
   type LovelaceCard,
   type LovelaceCardEditor,
+  computeDomain,
+  forwardHaptic,
   handleAction,
   hasAction,
 } from "custom-card-helpers";
@@ -31,6 +34,50 @@ function cssColor(value?: string): string | undefined {
     return value;
   }
   return `var(--${value}-color, ${value})`;
+}
+
+/** States Home Assistant treats as "off" (mirrors the frontend's STATES_OFF). */
+const STATES_OFF = ["closed", "locked", "off"];
+
+/**
+ * Toggle an entity the way Home Assistant's built-in cards do.
+ *
+ * The bundled `custom-card-helpers` `toggleEntity` is outdated — it only special-cases
+ * `lock`/`cover`, so toggling a `scene` (or `button`/`input_button`/`valve`) falls through
+ * to `<domain>.turn_off`, which doesn't exist (e.g. "Action scene.turn_off not found").
+ * This mirrors the current HA frontend `turnOnOffEntity`.
+ */
+function toggleEntity(hass: HomeAssistant, entityId: string): void {
+  const stateObj = hass.states[entityId];
+  if (!stateObj) return;
+
+  const turnOn = STATES_OFF.includes(stateObj.state);
+  const stateDomain = computeDomain(entityId);
+  const serviceDomain = stateDomain === "group" ? "homeassistant" : stateDomain;
+
+  let service: string;
+  switch (stateDomain) {
+    case "lock":
+      service = turnOn ? "unlock" : "lock";
+      break;
+    case "cover":
+      service = turnOn ? "open_cover" : "close_cover";
+      break;
+    case "button":
+    case "input_button":
+      service = "press";
+      break;
+    case "scene":
+      service = "turn_on";
+      break;
+    case "valve":
+      service = turnOn ? "open_valve" : "close_valve";
+      break;
+    default:
+      service = turnOn ? "turn_on" : "turn_off";
+  }
+
+  hass.callService(serviceDomain, service, { entity_id: entityId });
 }
 
 /** Subset of Home Assistant's LovelaceGridOptions for the Sections grid layout. */
@@ -227,7 +274,41 @@ export class TedLabelButtonCard extends LitElement implements LovelaceCard {
     if (!this.hass || !this._config) return;
     if (action === "hold" && !hasAction(this._config.hold_action)) return;
     if (action === "double_tap" && !hasAction(this._config.double_tap_action)) return;
+
+    // `custom-card-helpers`' bundled `toggle` handler calls `<domain>.turn_off` for
+    // scenes/buttons/valves/etc., which fails (e.g. "scene.turn_off not found"). Handle
+    // `toggle` ourselves to match HA's built-in button card; delegate everything else.
+    const actionConfig =
+      action === "tap"
+        ? this._config.tap_action
+        : action === "hold"
+          ? this._config.hold_action
+          : this._config.double_tap_action;
+
+    if (actionConfig?.action === "toggle" && this._config.entity) {
+      if (!this._confirmAction(actionConfig)) return;
+      toggleEntity(this.hass, this._config.entity);
+      forwardHaptic("success");
+      return;
+    }
+
     handleAction(this, this.hass, this._config, action);
+  }
+
+  /** Mirror custom-card-helpers' confirmation gate so toggle confirmations still work. */
+  private _confirmAction(actionConfig: ActionConfig): boolean {
+    const confirmation = actionConfig.confirmation;
+    if (
+      confirmation &&
+      (!confirmation.exemptions ||
+        !confirmation.exemptions.some((e) => e.user === this.hass!.user?.id))
+    ) {
+      forwardHaptic("warning");
+      return window.confirm(
+        confirmation.text || `Are you sure you want to ${actionConfig.action}?`,
+      );
+    }
+    return true;
   }
 
   static styles = [

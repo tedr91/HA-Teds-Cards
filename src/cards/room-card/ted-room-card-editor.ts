@@ -1,69 +1,503 @@
-import { LitElement, css, html, nothing, type TemplateResult } from "lit";
+import { LitElement, css, html, nothing, type PropertyValues, type TemplateResult } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import { type HomeAssistant, type LovelaceCardEditor, fireEvent } from "custom-card-helpers";
+import {
+  type HomeAssistant,
+  type LovelaceCardConfig,
+  type LovelaceCardEditor,
+  fireEvent,
+} from "custom-card-helpers";
 
-import { ROOM_CARD_EDITOR_TYPE } from "./const";
-import type { RoomCardConfig } from "./types";
+import {
+  ROOM_BUTTON_CARD_TYPES,
+  ROOM_CARD_EDITOR_TYPE,
+  STATUS_ITEM_DEFAULT_ICON,
+  STATUS_ITEM_LABEL,
+} from "./const";
+import type {
+  RoomButtonConfig,
+  RoomButtonSection,
+  RoomCardConfig,
+  RoomStatusItem,
+  RoomStatusItemType,
+} from "./types";
 
-// mdi:texture-box — Area Setup section
+// mdi:texture-box — Room section
 const AREA_ICON_PATH =
   "M20,4H4A2,2 0 0,0 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V6A2,2 0 0,0 20,4M4,11H6V13H4V11M4,15H10V17H4V15M20,17H12V15H20V17M20,13H8V11H20V13M20,9H4V6H20V9Z";
 
-// mdi:palette — Appearance (General) section
+// mdi:palette — Appearance section
 const APPEARANCE_ICON_PATH =
   "M12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2C17.5,2 22,6 22,11A6,6 0 0,1 16,17H14.2C13.9,17 13.7,17.2 13.7,17.5C13.7,17.6 13.8,17.7 13.8,17.8C14.2,18.3 14.4,18.9 14.4,19.5C14.5,20.9 13.4,22 12,22M7,11A1,1 0 0,0 6,12A1,1 0 0,0 7,13A1,1 0 0,0 8,12A1,1 0 0,0 7,11M10,7A1,1 0 0,0 9,8A1,1 0 0,0 10,9A1,1 0 0,0 11,8A1,1 0 0,0 10,7M14,7A1,1 0 0,0 13,8A1,1 0 0,0 14,9A1,1 0 0,0 15,8A1,1 0 0,0 14,7M17,11A1,1 0 0,0 16,12A1,1 0 0,0 17,13A1,1 0 0,0 18,12A1,1 0 0,0 17,11Z";
+
+/** Order shown in the "Add item" menu. */
+const STATUS_ITEM_TYPES: RoomStatusItemType[] = [
+  "temperature",
+  "occupancy",
+  "brightness",
+  "volume",
+  "led",
+];
+
+/** Per-button-type metadata for headers and the "Add button" menu. */
+const BUTTON_TYPE_META: Record<string, { label: string; icon: string }> = {
+  [ROOM_BUTTON_CARD_TYPES.label]: { label: "Button", icon: "mdi:gesture-tap-button" },
+  [ROOM_BUTTON_CARD_TYPES.cover]: { label: "Cover", icon: "mdi:window-shutter" },
+  [ROOM_BUTTON_CARD_TYPES.light]: { label: "Light", icon: "mdi:lightbulb" },
+};
+
+const FIELD_LABELS: Record<string, string> = {
+  area: "Area",
+  name: "Name",
+  theme: "Visual styling",
+  brushed: "Brushed effect",
+  entity: "Entity",
+  icon: "Icon",
+  on_color: "On color",
+  off_color: "Off color",
+  colors: "State colors (advanced)",
+  title: "Section title",
+  max_rows: "Max rows (0 = unlimited)",
+};
+
+/** Minimal entity/device registry shapes used to auto-pull an area's sensors. */
+interface EntityRegistryEntry {
+  area_id?: string | null;
+  device_id?: string | null;
+}
+type HassWithRegistries = HomeAssistant & {
+  entities?: Record<string, EntityRegistryEntry>;
+  devices?: Record<string, { area_id?: string | null }>;
+};
+
+/** Find the first entity in an area matching the wanted device class(es). */
+function resolveAreaEntity(
+  hass: HomeAssistant | undefined,
+  area: string | undefined,
+  kind: "temperature" | "occupancy",
+): string | undefined {
+  if (!hass || !area) return undefined;
+  const registries = hass as HassWithRegistries;
+  const entities = registries.entities;
+  if (!entities) return undefined;
+  const want = kind === "temperature" ? ["temperature"] : ["occupancy", "motion", "presence"];
+  for (const [entityId, entry] of Object.entries(entities)) {
+    const areaId =
+      entry.area_id ?? (entry.device_id ? registries.devices?.[entry.device_id]?.area_id : undefined);
+    if (areaId !== area) continue;
+    const deviceClass = hass.states[entityId]?.attributes?.device_class;
+    if (typeof deviceClass === "string" && want.includes(deviceClass)) {
+      return entityId;
+    }
+  }
+  return undefined;
+}
+
+/** A cached embedded button-card editor element plus the config it was last given. */
+interface ButtonEditorEntry {
+  el: LovelaceCardEditor;
+  type: string;
+  json: string;
+}
 
 @customElement(ROOM_CARD_EDITOR_TYPE)
 export class TedRoomCardEditor extends LitElement implements LovelaceCardEditor {
   @property({ attribute: false }) public hass?: HomeAssistant;
   @state() private _config?: RoomCardConfig;
 
+  /** Open/closed state per expandable panel, keyed by a stable id. */
+  private _expanded: Record<string, boolean> = {};
+  /** Embedded button editors keyed by `${sectionIndex}:${buttonIndex}`. */
+  private _buttonEditors = new Map<string, ButtonEditorEntry>();
+  private _creatingEditors = new Set<string>();
+
   public setConfig(config: RoomCardConfig): void {
     this._config = config;
   }
 
-  protected render(): TemplateResult | typeof nothing {
-    if (!this.hass || !this._config) return nothing;
+  protected willUpdate(changed: PropertyValues): void {
+    if (changed.has("_config") || changed.has("hass")) {
+      this._syncButtonEditors();
+    }
+  }
 
-    // Apply defaults so the dropdowns show the current selection.
-    const data = { ...this._defaults(), ...this._config };
+  // --- Embedded button editors ---------------------------------------------
 
+  private _syncButtonEditors(): void {
+    if (!this.hass || !this._config) return;
+    const wanted = new Set<string>();
+    (this._config.sections ?? []).forEach((section, sIdx) => {
+      (section.buttons ?? []).forEach((button, bIdx) => {
+        const key = `${sIdx}:${bIdx}`;
+        wanted.add(key);
+        const entry = this._buttonEditors.get(key);
+        if (entry && entry.type === button.type) {
+          entry.el.hass = this.hass;
+          const json = JSON.stringify(button);
+          if (entry.json !== json) {
+            entry.json = json;
+            entry.el.setConfig(button as LovelaceCardConfig);
+          }
+        } else {
+          if (entry) this._buttonEditors.delete(key);
+          void this._createButtonEditor(key, button);
+        }
+      });
+    });
+    for (const key of [...this._buttonEditors.keys()]) {
+      if (!wanted.has(key)) this._buttonEditors.delete(key);
+    }
+  }
+
+  private async _createButtonEditor(key: string, button: RoomButtonConfig): Promise<void> {
+    if (this._creatingEditors.has(key)) return;
+    const tag = button.type.replace(/^custom:/, "");
+    const cardClass = customElements.get(tag) as
+      | (CustomElementConstructor & { getConfigElement?: () => Promise<LovelaceCardEditor> })
+      | undefined;
+    if (!cardClass?.getConfigElement) return;
+    this._creatingEditors.add(key);
+    try {
+      const el = await cardClass.getConfigElement();
+      el.hass = this.hass;
+      el.setConfig(button as LovelaceCardConfig);
+      el.addEventListener("config-changed", (ev: Event) => {
+        ev.stopPropagation();
+        this._onButtonConfigChanged(key, ev as CustomEvent);
+      });
+      this._buttonEditors.set(key, { el, type: button.type, json: JSON.stringify(button) });
+      this.requestUpdate();
+    } finally {
+      this._creatingEditors.delete(key);
+    }
+  }
+
+  private _onButtonConfigChanged(key: string, ev: CustomEvent): void {
+    const newButton = ev.detail?.config as RoomButtonConfig | undefined;
+    if (!newButton) return;
+    const json = JSON.stringify(newButton);
+    const entry = this._buttonEditors.get(key);
+    if (entry && entry.json === json) return;
+    if (entry) entry.json = json;
+    const [sIdx, bIdx] = key.split(":").map((part) => Number(part));
+    const sections = [...(this._config?.sections ?? [])];
+    const section = sections[sIdx];
+    if (!section) return;
+    const buttons = [...(section.buttons ?? [])];
+    buttons[bIdx] = newButton;
+    sections[sIdx] = { ...section, buttons };
+    this._commit({ ...this._config, type: this._type(), sections });
+  }
+
+  // --- Panel helpers --------------------------------------------------------
+
+  private _isExpanded(key: string, fallback: boolean): boolean {
+    return key in this._expanded ? this._expanded[key] : fallback;
+  }
+
+  private _onPanelToggle(key: string, ev: Event): void {
+    const expanded = (ev.target as { expanded?: boolean } | null)?.expanded;
+    if (typeof expanded === "boolean") {
+      this._expanded = { ...this._expanded, [key]: expanded };
+    }
+  }
+
+  private _stop = (ev: Event): void => {
+    ev.stopPropagation();
+  };
+
+  private _renderRowMenu(
+    onUp: () => void,
+    onDown: () => void,
+    onDelete: () => void,
+    upDisabled: boolean,
+    downDisabled: boolean,
+  ): TemplateResult {
     return html`
-      <ha-form
-        .hass=${this.hass}
-        .data=${data}
-        .schema=${this._schema()}
-        .computeLabel=${this._computeLabel}
-        @value-changed=${this._valueChanged}
-      ></ha-form>
+      <ha-button-menu
+        corner="BOTTOM_END"
+        menuCorner="END"
+        fixed
+        @click=${this._stop}
+        @closed=${this._stop}
+      >
+        <ha-icon-button slot="trigger" label="Options">
+          <ha-icon icon="mdi:dots-vertical"></ha-icon>
+        </ha-icon-button>
+        <mwc-list-item graphic="icon" ?disabled=${upDisabled} @click=${onUp}>
+          <ha-icon slot="graphic" icon="mdi:arrow-up"></ha-icon>Move up
+        </mwc-list-item>
+        <mwc-list-item graphic="icon" ?disabled=${downDisabled} @click=${onDown}>
+          <ha-icon slot="graphic" icon="mdi:arrow-down"></ha-icon>Move down
+        </mwc-list-item>
+        <mwc-list-item graphic="icon" class="warning" @click=${onDelete}>
+          <ha-icon slot="graphic" icon="mdi:delete"></ha-icon>Delete
+        </mwc-list-item>
+      </ha-button-menu>
     `;
   }
 
-  private _defaults(): Partial<RoomCardConfig> {
-    return {
-      theme: "ted-style",
-      brushed: false,
-    };
+  // --- Status items ---------------------------------------------------------
+
+  private _statusItemSchema(type: RoomStatusItemType): unknown[] {
+    const icon = { name: "icon", selector: { icon: {} } };
+    const name = { name: "name", selector: { text: {} } };
+    switch (type) {
+      case "temperature":
+      case "occupancy":
+        return [{ name: "entity", selector: { entity: {} } }, icon, name];
+      case "brightness":
+        return [
+          {
+            name: "entity",
+            required: true,
+            selector: {
+              entity: { filter: [{ domain: "light" }, { domain: "number" }, { domain: "input_number" }] },
+            },
+          },
+          icon,
+          name,
+        ];
+      case "volume":
+        return [
+          { name: "entity", required: true, selector: { entity: { filter: { domain: "media_player" } } } },
+          icon,
+          name,
+        ];
+      case "led":
+        return [
+          { name: "entity", required: true, selector: { entity: {} } },
+          { name: "on_color", selector: { ui_color: {} } },
+          { name: "off_color", selector: { ui_color: {} } },
+          name,
+          { name: "colors", selector: { object: {} } },
+        ];
+    }
   }
 
-  private _schema() {
+  private _newStatusItem(type: RoomStatusItemType): RoomStatusItem {
+    switch (type) {
+      case "temperature":
+        return { type, entity: resolveAreaEntity(this.hass, this._config?.area, "temperature") ?? "" };
+      case "occupancy":
+        return { type, entity: resolveAreaEntity(this.hass, this._config?.area, "occupancy") ?? "" };
+      case "brightness":
+      case "volume":
+        return { type, entity: "" };
+      case "led":
+        return { type, entity: "" };
+    }
+  }
+
+  private _renderStatusItemRow(item: RoomStatusItem, idx: number, total: number): TemplateResult {
+    const key = `status-${idx}`;
+    const subtitle = item.name ?? ("entity" in item ? item.entity : "") ?? "";
+    return html`
+      <ha-expansion-panel
+        outlined
+        .expanded=${this._isExpanded(key, false)}
+        @expanded-changed=${(ev: Event) => this._onPanelToggle(key, ev)}
+      >
+        <div slot="header" class="row-header">
+          <ha-icon icon=${STATUS_ITEM_DEFAULT_ICON[item.type]}></ha-icon>
+          <span class="row-title">${STATUS_ITEM_LABEL[item.type]}</span>
+          ${subtitle ? html`<span class="row-subtitle">${subtitle}</span>` : nothing}
+          ${this._renderRowMenu(
+            () => this._moveStatusItem(idx, -1),
+            () => this._moveStatusItem(idx, 1),
+            () => this._deleteStatusItem(idx),
+            idx === 0,
+            idx === total - 1,
+          )}
+        </div>
+        <div class="panel-content">
+          <ha-form
+            .hass=${this.hass}
+            .data=${item}
+            .schema=${this._statusItemSchema(item.type)}
+            .computeLabel=${this._computeLabel}
+            @value-changed=${(ev: CustomEvent) => this._onStatusItemChanged(idx, item.type, ev)}
+          ></ha-form>
+        </div>
+      </ha-expansion-panel>
+    `;
+  }
+
+  private _renderAddMenu(label: string, options: Array<{ value: string; label: string }>, onPick: (value: string) => void): TemplateResult {
+    return html`
+      <ha-button-menu fixed @click=${this._stop} @closed=${this._stop}>
+        <button slot="trigger" type="button" class="add-button">
+          <ha-icon icon="mdi:plus"></ha-icon><span>${label}</span>
+        </button>
+        ${options.map(
+          (option) => html`<mwc-list-item @click=${() => onPick(option.value)}>${option.label}</mwc-list-item>`,
+        )}
+      </ha-button-menu>
+    `;
+  }
+
+  // --- Button sections ------------------------------------------------------
+
+  private _renderButtonRow(
+    sIdx: number,
+    bIdx: number,
+    button: RoomButtonConfig,
+    total: number,
+  ): TemplateResult {
+    const key = `button-${sIdx}-${bIdx}`;
+    const meta = BUTTON_TYPE_META[button.type] ?? { label: button.type, icon: "mdi:card-outline" };
+    const editor = this._buttonEditors.get(`${sIdx}:${bIdx}`);
+    return html`
+      <ha-expansion-panel
+        outlined
+        .expanded=${this._isExpanded(key, false)}
+        @expanded-changed=${(ev: Event) => this._onPanelToggle(key, ev)}
+      >
+        <div slot="header" class="row-header">
+          <ha-icon icon=${meta.icon}></ha-icon>
+          <span class="row-title">${meta.label}</span>
+          ${button.name ? html`<span class="row-subtitle">${button.name}</span>` : nothing}
+          ${this._renderRowMenu(
+            () => this._moveButton(sIdx, bIdx, -1),
+            () => this._moveButton(sIdx, bIdx, 1),
+            () => this._deleteButton(sIdx, bIdx),
+            bIdx === 0,
+            bIdx === total - 1,
+          )}
+        </div>
+        <div class="panel-content">
+          ${editor ? editor.el : html`<div class="loading">Loading editor…</div>`}
+        </div>
+      </ha-expansion-panel>
+    `;
+  }
+
+  private _renderSectionRow(section: RoomButtonSection, sIdx: number, total: number): TemplateResult {
+    const key = `section-${sIdx}`;
+    const buttons = section.buttons ?? [];
+    return html`
+      <ha-expansion-panel
+        outlined
+        .expanded=${this._isExpanded(key, false)}
+        @expanded-changed=${(ev: Event) => this._onPanelToggle(key, ev)}
+      >
+        <div slot="header" class="row-header">
+          <ha-icon icon="mdi:view-grid-outline"></ha-icon>
+          <span class="row-title">${section.title || `Section ${sIdx + 1}`}</span>
+          ${this._renderRowMenu(
+            () => this._moveSection(sIdx, -1),
+            () => this._moveSection(sIdx, 1),
+            () => this._deleteSection(sIdx),
+            sIdx === 0,
+            sIdx === total - 1,
+          )}
+        </div>
+        <div class="panel-content">
+          <ha-form
+            .hass=${this.hass}
+            .data=${{ title: section.title ?? "", max_rows: section.max_rows ?? 0 }}
+            .schema=${[
+              { name: "title", selector: { text: {} } },
+              { name: "max_rows", selector: { number: { min: 0, max: 20, step: 1, mode: "box" } } },
+            ]}
+            .computeLabel=${this._computeLabel}
+            @value-changed=${(ev: CustomEvent) => this._onSectionFieldChanged(sIdx, ev)}
+          ></ha-form>
+          <div class="subgroup-label">Buttons</div>
+          <div class="row-list">
+            ${buttons.map((button, bIdx) => this._renderButtonRow(sIdx, bIdx, button, buttons.length))}
+          </div>
+          ${this._renderAddMenu(
+            "Add button",
+            [
+              { value: ROOM_BUTTON_CARD_TYPES.label, label: "Button" },
+              { value: ROOM_BUTTON_CARD_TYPES.cover, label: "Cover" },
+              { value: ROOM_BUTTON_CARD_TYPES.light, label: "Light" },
+            ],
+            (value) => this._addButton(sIdx, value),
+          )}
+        </div>
+      </ha-expansion-panel>
+    `;
+  }
+
+  // --- Render ---------------------------------------------------------------
+
+  protected render(): TemplateResult | typeof nothing {
+    if (!this.hass || !this._config) return nothing;
+
+    const data = { theme: "ted-style", brushed: false, ...this._config };
+    const statusItems = this._config.status_items ?? [];
+    const sections = this._config.sections ?? [];
+
+    return html`
+      <div class="editor">
+        <ha-form
+          .hass=${this.hass}
+          .data=${data}
+          .schema=${this._baseSchema()}
+          .computeLabel=${this._computeLabel}
+          @value-changed=${this._onBaseChanged}
+        ></ha-form>
+
+        <ha-expansion-panel
+          outlined
+          .expanded=${this._isExpanded("g-status", true)}
+          @expanded-changed=${(ev: Event) => this._onPanelToggle("g-status", ev)}
+        >
+          <div slot="header" class="panel-header">
+            <ha-icon icon="mdi:gauge"></ha-icon><span>Status items</span>
+          </div>
+          <div class="panel-content">
+            <div class="row-list">
+              ${statusItems.map((item, idx) => this._renderStatusItemRow(item, idx, statusItems.length))}
+            </div>
+            ${this._renderAddMenu(
+              "Add item",
+              STATUS_ITEM_TYPES.map((type) => ({ value: type, label: STATUS_ITEM_LABEL[type] })),
+              (value) => this._addStatusItem(value as RoomStatusItemType),
+            )}
+          </div>
+        </ha-expansion-panel>
+
+        <ha-expansion-panel
+          outlined
+          .expanded=${this._isExpanded("g-sections", true)}
+          @expanded-changed=${(ev: Event) => this._onPanelToggle("g-sections", ev)}
+        >
+          <div slot="header" class="panel-header">
+            <ha-icon icon="mdi:view-dashboard-outline"></ha-icon><span>Button sections</span>
+          </div>
+          <div class="panel-content">
+            <div class="row-list">
+              ${sections.map((section, sIdx) => this._renderSectionRow(section, sIdx, sections.length))}
+            </div>
+            <button type="button" class="add-button" @click=${this._addSection}>
+              <ha-icon icon="mdi:plus"></ha-icon><span>Add section</span>
+            </button>
+          </div>
+        </ha-expansion-panel>
+      </div>
+    `;
+  }
+
+  private _baseSchema(): unknown[] {
     return [
       {
         name: "",
         type: "expandable",
-        title: "Area Setup",
+        title: "Room",
         iconPath: AREA_ICON_PATH,
         expanded: true,
         flatten: true,
         schema: [
-          { name: "area", required: true, selector: { area: {} } },
+          { name: "area", selector: { area: {} } },
           { name: "name", selector: { text: {} } },
         ],
       },
       {
         name: "",
         type: "expandable",
-        title: "Appearance (General)",
+        title: "Appearance",
         iconPath: APPEARANCE_ICON_PATH,
         flatten: true,
         schema: [
@@ -85,36 +519,259 @@ export class TedRoomCardEditor extends LitElement implements LovelaceCardEditor 
     ];
   }
 
-  private _computeLabel = (schema: { name: string }): string => {
-    switch (schema.name) {
-      case "area":
-        return "Area";
-      case "name":
-        return "Title (optional)";
-      case "theme":
-        return "Visual styling";
-      case "brushed":
-        return "Brushed effect";
-      default:
-        return schema.name;
-    }
+  private _computeLabel = (schema: { name: string }): string =>
+    FIELD_LABELS[schema.name] ?? schema.name;
+
+  // --- Mutations ------------------------------------------------------------
+
+  private _type(): string {
+    return this._config?.type ?? `custom:${ROOM_CARD_EDITOR_TYPE.replace("-editor", "")}`;
+  }
+
+  private _onBaseChanged = (ev: CustomEvent): void => {
+    ev.stopPropagation();
+    const value = ev.detail.value as Partial<RoomCardConfig>;
+    this._commit({
+      ...this._config,
+      type: this._type(),
+      area: value.area,
+      name: value.name,
+      theme: value.theme,
+      brushed: value.brushed,
+      status_items: this._config?.status_items,
+      sections: this._config?.sections,
+    });
   };
 
-  private _valueChanged = (ev: CustomEvent): void => {
-    const config = { ...ev.detail.value } as RoomCardConfig;
-    const defaults = this._defaults();
-    // Strip values equal to their default so the saved YAML stays minimal.
-    for (const key of Object.keys(defaults) as Array<keyof RoomCardConfig>) {
-      if (config[key] === defaults[key]) {
-        delete config[key];
-      }
-    }
-    fireEvent(this, "config-changed", { config });
+  private _onStatusItemChanged(idx: number, type: RoomStatusItemType, ev: CustomEvent): void {
+    ev.stopPropagation();
+    const value = (ev.detail?.value ?? {}) as Record<string, unknown>;
+    const items = [...(this._config?.status_items ?? [])];
+    items[idx] = { ...value, type } as RoomStatusItem;
+    this._commit({ ...this._config, type: this._type(), status_items: items });
+  }
+
+  private _addStatusItem(type: RoomStatusItemType): void {
+    const items = [...(this._config?.status_items ?? []), this._newStatusItem(type)];
+    this._expanded = { ...this._expanded, [`status-${items.length - 1}`]: true };
+    this._commit({ ...this._config, type: this._type(), status_items: items });
+  }
+
+  private _moveStatusItem(idx: number, dir: -1 | 1): void {
+    const items = [...(this._config?.status_items ?? [])];
+    const target = idx + dir;
+    if (target < 0 || target >= items.length) return;
+    [items[idx], items[target]] = [items[target], items[idx]];
+    this._buttonEditors.clear();
+    this._commit({ ...this._config, type: this._type(), status_items: items });
+  }
+
+  private _deleteStatusItem(idx: number): void {
+    const items = [...(this._config?.status_items ?? [])];
+    items.splice(idx, 1);
+    this._commit({ ...this._config, type: this._type(), status_items: items });
+  }
+
+  private _onSectionFieldChanged(sIdx: number, ev: CustomEvent): void {
+    ev.stopPropagation();
+    const value = (ev.detail?.value ?? {}) as { title?: string; max_rows?: number };
+    const sections = [...(this._config?.sections ?? [])];
+    const section = sections[sIdx];
+    if (!section) return;
+    sections[sIdx] = { ...section, title: value.title, max_rows: value.max_rows };
+    this._commit({ ...this._config, type: this._type(), sections });
+  }
+
+  private _addSection = (): void => {
+    const sections = [...(this._config?.sections ?? []), { buttons: [] } as RoomButtonSection];
+    this._expanded = { ...this._expanded, [`section-${sections.length - 1}`]: true };
+    this._commit({ ...this._config, type: this._type(), sections });
   };
+
+  private _moveSection(sIdx: number, dir: -1 | 1): void {
+    const sections = [...(this._config?.sections ?? [])];
+    const target = sIdx + dir;
+    if (target < 0 || target >= sections.length) return;
+    [sections[sIdx], sections[target]] = [sections[target], sections[sIdx]];
+    this._buttonEditors.clear();
+    this._commit({ ...this._config, type: this._type(), sections });
+  }
+
+  private _deleteSection(sIdx: number): void {
+    const sections = [...(this._config?.sections ?? [])];
+    sections.splice(sIdx, 1);
+    this._buttonEditors.clear();
+    this._commit({ ...this._config, type: this._type(), sections });
+  }
+
+  private _addButton(sIdx: number, type: string): void {
+    const tag = type.replace(/^custom:/, "");
+    const cardClass = customElements.get(tag) as
+      | (CustomElementConstructor & { getStubConfig?: (hass: HomeAssistant) => Record<string, unknown> })
+      | undefined;
+    let stub: Record<string, unknown> = {};
+    try {
+      stub = cardClass?.getStubConfig ? cardClass.getStubConfig(this.hass as HomeAssistant) ?? {} : {};
+    } catch {
+      stub = {};
+    }
+    const button = { type, ...stub } as RoomButtonConfig;
+    const sections = [...(this._config?.sections ?? [])];
+    const section = sections[sIdx];
+    if (!section) return;
+    const buttons = [...(section.buttons ?? []), button];
+    sections[sIdx] = { ...section, buttons };
+    this._expanded = { ...this._expanded, [`button-${sIdx}-${buttons.length - 1}`]: true };
+    this._commit({ ...this._config, type: this._type(), sections });
+  }
+
+  private _moveButton(sIdx: number, bIdx: number, dir: -1 | 1): void {
+    const sections = [...(this._config?.sections ?? [])];
+    const section = sections[sIdx];
+    if (!section) return;
+    const buttons = [...(section.buttons ?? [])];
+    const target = bIdx + dir;
+    if (target < 0 || target >= buttons.length) return;
+    [buttons[bIdx], buttons[target]] = [buttons[target], buttons[bIdx]];
+    sections[sIdx] = { ...section, buttons };
+    this._buttonEditors.clear();
+    this._commit({ ...this._config, type: this._type(), sections });
+  }
+
+  private _deleteButton(sIdx: number, bIdx: number): void {
+    const sections = [...(this._config?.sections ?? [])];
+    const section = sections[sIdx];
+    if (!section) return;
+    const buttons = [...(section.buttons ?? [])];
+    buttons.splice(bIdx, 1);
+    sections[sIdx] = { ...section, buttons };
+    this._buttonEditors.clear();
+    this._commit({ ...this._config, type: this._type(), sections });
+  }
+
+  /** Store the working config and emit a cleaned copy to Home Assistant. */
+  private _commit(next: RoomCardConfig): void {
+    this._config = next;
+    fireEvent(this, "config-changed", { config: this._clean(next) });
+  }
+
+  private _clean(config: RoomCardConfig): RoomCardConfig {
+    const next: RoomCardConfig = { ...config };
+    if (next.theme === "ted-style") delete next.theme;
+    if (!next.brushed) delete next.brushed;
+    if (!next.area) delete next.area;
+    if (!next.name) delete next.name;
+    if (!next.status_items || next.status_items.length === 0) {
+      delete next.status_items;
+    }
+    if (!next.sections || next.sections.length === 0) {
+      delete next.sections;
+    } else {
+      next.sections = next.sections.map((section) => {
+        const clean: RoomButtonSection = { ...section, buttons: section.buttons ?? [] };
+        if (!clean.title) delete clean.title;
+        if (!clean.max_rows) delete clean.max_rows;
+        return clean;
+      });
+    }
+    return next;
+  }
 
   static styles = css`
     :host {
       display: block;
+    }
+    .editor {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    ha-form {
+      display: block;
+    }
+    ha-expansion-panel {
+      --expansion-panel-content-padding: 0;
+      border-radius: 6px;
+    }
+    .panel-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 500;
+    }
+    .panel-header ha-icon {
+      color: var(--secondary-text-color);
+    }
+    .panel-content {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 12px 16px 16px;
+    }
+    .row-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .row-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+    }
+    .row-header ha-icon {
+      color: var(--secondary-text-color);
+      flex: none;
+    }
+    .row-title {
+      font-weight: 500;
+      flex: none;
+    }
+    .row-subtitle {
+      color: var(--secondary-text-color);
+      font-size: 0.85em;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+    .row-header ha-button-menu {
+      flex: none;
+      margin: -8px 0 -8px auto;
+    }
+    .subgroup-label {
+      color: var(--secondary-text-color);
+      font-size: 0.9em;
+      font-weight: 500;
+      margin-top: 4px;
+    }
+    .add-button {
+      align-self: flex-start;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      border: 1px dashed var(--divider-color, rgba(127, 127, 127, 0.4));
+      border-radius: 6px;
+      background: none;
+      color: var(--primary-color);
+      cursor: pointer;
+      font: inherit;
+    }
+    .add-button:hover {
+      background: color-mix(in srgb, var(--primary-color) 10%, transparent);
+    }
+    .loading {
+      color: var(--secondary-text-color);
+      font-size: 0.9em;
+      padding: 8px 0;
+    }
+    mwc-list-item.warning {
+      color: var(--error-color, #db4437);
+    }
+    mwc-list-item.warning ha-icon {
+      color: var(--error-color, #db4437);
     }
   `;
 }

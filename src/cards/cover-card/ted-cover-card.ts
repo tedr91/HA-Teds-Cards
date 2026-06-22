@@ -287,7 +287,9 @@ export class TedCoverCard extends LitElement implements LovelaceCard {
             ? html`<span class="primary" style=${styleMap({ fontSize: `${(14 * nameScale) / 100}px` })}>${name}</span>`
             : nothing}
         </div>
-        <div class="divider" aria-hidden="true"></div>
+        ${this._config.rocker !== false
+          ? html`<div class="divider" aria-hidden="true"></div>`
+          : nothing}
         <div class="zone zone-bottom">
           ${showState
             ? html`<div class="info"><span class="secondary" style=${styleMap({ fontSize: `${(12 * stateScale) / 100}px` })}>${stateLabel}</span></div>`

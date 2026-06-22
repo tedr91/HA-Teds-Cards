@@ -294,6 +294,10 @@ button that reveals the rest.
 The newest entry below is used as the GitHub Release notes by the release workflow, so it shows in
 the Home Assistant / HACS **update** dialog when you update. Newest first.
 
+### v2.0.39
+
+- Light and cover cards: the divider line between the name and state now only shows while the card behaves as a rocker (hidden when **Rocker** is off).
+
 ### v2.0.38
 
 - Light and cover cards: added a **Rocker** toggle (defaults on) next to **Rocker effect** in the editor. When **Rocker** is off, the visual rocker effect is disabled, the **UP** / **DOWN** behavior options are disabled, and tapping anywhere on the card runs the **Icon** behavior — turning the card into a single button. **Breaking:** the visual-effect option moved from `rocker` to `rocker_effect`; `rocker` now controls the rocker behavior.

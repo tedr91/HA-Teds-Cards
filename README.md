@@ -294,6 +294,11 @@ button that reveals the rest.
 The newest entry below is used as the GitHub Release notes by the release workflow, so it shows in
 the Home Assistant / HACS **update** dialog when you update. Newest first.
 
+### v2.0.36
+
+- Light and cover card editors: the **Show hint bar** / **Hint bar width** options now sit directly after the indicator bar options for a more logical grouping.
+- The **Width** / **Height** fields now show helper text clarifying they only apply when the card isn't a direct item in a grid (Sections) view, and they're automatically disabled when the card is grid-sized.
+
 ### v2.0.35
 
 - Light and cover cards: added a **Show indicator bar** toggle (`show_indicator`), and the indicator bar default width is now `4px`.

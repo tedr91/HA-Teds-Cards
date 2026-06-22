@@ -56,6 +56,7 @@ export class TedLightCardEditor extends LitElement implements LovelaceCardEditor
         .data=${data}
         .schema=${this._schema()}
         .computeLabel=${this._computeLabel}
+        .computeHelper=${this._computeHelper}
         @value-changed=${this._valueChanged}
       ></ha-form>
     `;
@@ -113,6 +114,7 @@ export class TedLightCardEditor extends LitElement implements LovelaceCardEditor
   }
 
   private _schema() {
+    const inGrid = Boolean(this._config?.grid_options);
     const visual: Array<Record<string, unknown>> = [
       {
         name: "theme",
@@ -158,6 +160,19 @@ export class TedLightCardEditor extends LitElement implements LovelaceCardEditor
       visual.push({ name: "indicator_color_custom", selector: { color_rgb: {} } });
     }
     visual.push({
+      type: "grid",
+      name: "",
+      column_min_width: "100px",
+      schema: [
+        { name: "show_hint", selector: { boolean: {} } },
+        {
+          name: "hint_width",
+          disabled: this._config?.show_hint !== true,
+          selector: { number: { min: 0, max: 40, step: 1, mode: "box", unit_of_measurement: "px" } },
+        },
+      ],
+    });
+    visual.push({
       name: "icon_color",
       selector: {
         select: {
@@ -200,21 +215,8 @@ export class TedLightCardEditor extends LitElement implements LovelaceCardEditor
       name: "",
       column_min_width: "100px",
       schema: [
-        { name: "show_hint", selector: { boolean: {} } },
-        {
-          name: "hint_width",
-          disabled: this._config?.show_hint !== true,
-          selector: { number: { min: 0, max: 40, step: 1, mode: "box", unit_of_measurement: "px" } },
-        },
-      ],
-    });
-    visual.push({
-      type: "grid",
-      name: "",
-      column_min_width: "100px",
-      schema: [
-        { name: "width", disabled: this.embedded, selector: { number: { min: 80, max: 600, step: 10, mode: "box", unit_of_measurement: "px" } } },
-        { name: "height", disabled: this.embedded, selector: { number: { min: 60, max: 600, step: 10, mode: "box", unit_of_measurement: "px" } } },
+        { name: "width", disabled: this.embedded || inGrid, selector: { number: { min: 80, max: 600, step: 10, mode: "box", unit_of_measurement: "px" } } },
+        { name: "height", disabled: this.embedded || inGrid, selector: { number: { min: 60, max: 600, step: 10, mode: "box", unit_of_measurement: "px" } } },
       ],
     });
 
@@ -327,6 +329,13 @@ export class TedLightCardEditor extends LitElement implements LovelaceCardEditor
 
     return sections;
   }
+
+  private _computeHelper = (schema: { name: string }): string | undefined => {
+    if (schema.name === "width" || schema.name === "height") {
+      return "Only used when the card isn't a direct item in a grid (Sections) view.";
+    }
+    return undefined;
+  };
 
   private _computeLabel = (schema: { name: string }): string => {
     switch (schema.name) {

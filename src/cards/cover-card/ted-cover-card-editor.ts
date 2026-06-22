@@ -116,6 +116,7 @@ export class TedCoverCardEditor extends LitElement implements LovelaceCardEditor
       show_icon: true,
       icon_scale: 150,
       show_state: true,
+      state_scale: 100,
       width: this.embedded ? EMBEDDED_BUTTON_SIZE : 100,
       height: this.embedded ? EMBEDDED_BUTTON_SIZE : 120,
       memory_mode: "off",
@@ -234,7 +235,15 @@ export class TedCoverCardEditor extends LitElement implements LovelaceCardEditor
         { name: "icon_scale", disabled: this._config?.show_icon === false, selector: { number: { min: 10, max: 300, step: 5, mode: "box", unit_of_measurement: "%" } } },
       ],
     });
-    visual.push({ name: "show_state", selector: { boolean: {} } });
+    visual.push({
+      type: "grid",
+      name: "",
+      column_min_width: "100px",
+      schema: [
+        { name: "show_state", selector: { boolean: {} } },
+        { name: "state_scale", disabled: this._config?.show_state === false, selector: { number: { min: 10, max: 300, step: 5, mode: "box", unit_of_measurement: "%" } } },
+      ],
+    });
     visual.push({
       type: "grid",
       name: "",
@@ -409,6 +418,8 @@ export class TedCoverCardEditor extends LitElement implements LovelaceCardEditor
         return "Icon size";
       case "show_state":
         return "Show entity state";
+      case "state_scale":
+        return "State size";
       case "show_hint":
         return "Show hint bar";
       case "hint_width":

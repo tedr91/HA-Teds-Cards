@@ -13,8 +13,11 @@ export interface LabelButtonCardConfig extends LovelaceCardConfig {
   background?: string;
   brushed?: boolean;
   show_icon?: boolean;
+  icon_scale?: number;
   show_name?: boolean;
+  name_scale?: number;
   show_state?: boolean;
+  state_scale?: number;
 
   // Interactions
   tap_action?: ActionConfig;

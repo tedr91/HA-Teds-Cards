@@ -294,6 +294,12 @@ button that reveals the rest.
 The newest entry below is used as the GitHub Release notes by the release workflow, so it shows in
 the Home Assistant / HACS **update** dialog when you update. Newest first.
 
+### v2.0.37
+
+- Room Card sub-button editors (Light, Cover, Button) now pair each show toggle with a size control on one line: **Show name / Name size**, **Show icon / Icon size**, **Show state / State size**.
+- Added a **State size** option to the light and cover cards, and **Name / Icon / State size** options to the button (label) card; each size field is disabled when its matching show toggle is off.
+- Button (label) card: the **Hold** action now defaults to **Nothing** when no entity is selected, and **More info** once an entity is chosen.
+
 ### v2.0.36
 
 - Light and cover card editors: the **Show hint bar** / **Hint bar width** options now sit directly after the indicator bar options for a more logical grouping.

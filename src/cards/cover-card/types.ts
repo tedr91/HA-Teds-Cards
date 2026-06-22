@@ -47,6 +47,7 @@ export interface CoverCardConfig extends LovelaceCardConfig {
   show_icon?: boolean;
   icon_scale?: number;
   show_state?: boolean;
+  state_scale?: number;
   show_hint?: boolean;
   hint_width?: number;
   // Switch behavior: action bound to each region × gesture.

@@ -217,6 +217,7 @@ export class TedLightCard extends LitElement implements LovelaceCard {
     const showState = this._config.show_state !== false;
     const nameScale = typeof this._config.name_scale === "number" ? this._config.name_scale : 100;
     const iconScale = typeof this._config.icon_scale === "number" ? this._config.icon_scale : 150;
+    const stateScale = typeof this._config.state_scale === "number" ? this._config.state_scale : 100;
 
     return html`
       <ha-card
@@ -272,7 +273,7 @@ export class TedLightCard extends LitElement implements LovelaceCard {
         <div class="divider" aria-hidden="true"></div>
         <div class="zone zone-bottom">
           ${showState
-            ? html`<div class="info"><span class="secondary">${stateLabel}</span></div>`
+            ? html`<div class="info"><span class="secondary" style=${styleMap({ fontSize: `${(12 * stateScale) / 100}px` })}>${stateLabel}</span></div>`
             : nothing}
         </div>
         <button

@@ -66,8 +66,11 @@ export class TedLabelButtonCardEditor extends LitElement implements LovelaceCard
       theme: "ted-style",
       brushed: false,
       show_icon: true,
+      icon_scale: 100,
       show_name: true,
+      name_scale: 100,
       show_state: true,
+      state_scale: 100,
     };
   }
 
@@ -97,12 +100,30 @@ export class TedLabelButtonCardEditor extends LitElement implements LovelaceCard
       {
         type: "grid",
         name: "",
+        column_min_width: "100px",
         schema: [
-          { name: "show_icon", selector: { boolean: {} } },
           { name: "show_name", selector: { boolean: {} } },
+          { name: "name_scale", disabled: this._config?.show_name === false, selector: { number: { min: 10, max: 300, step: 5, mode: "box", unit_of_measurement: "%" } } },
         ],
       },
-      { name: "show_state", selector: { boolean: {} } },
+      {
+        type: "grid",
+        name: "",
+        column_min_width: "100px",
+        schema: [
+          { name: "show_icon", selector: { boolean: {} } },
+          { name: "icon_scale", disabled: this._config?.show_icon === false, selector: { number: { min: 10, max: 300, step: 5, mode: "box", unit_of_measurement: "%" } } },
+        ],
+      },
+      {
+        type: "grid",
+        name: "",
+        column_min_width: "100px",
+        schema: [
+          { name: "show_state", selector: { boolean: {} } },
+          { name: "state_scale", disabled: this._config?.show_state === false, selector: { number: { min: 10, max: 300, step: 5, mode: "box", unit_of_measurement: "%" } } },
+        ],
+      },
     ];
 
     const interactions: Array<Record<string, unknown>> = [
@@ -113,7 +134,7 @@ export class TedLabelButtonCardEditor extends LitElement implements LovelaceCard
       },
       {
         name: "hold_action",
-        selector: { ui_action: { default_action: "more-info" } },
+        selector: { ui_action: { default_action: this._defaultHoldAction() } },
         context: ACTION_CONTEXT,
       },
       {
@@ -161,6 +182,11 @@ export class TedLabelButtonCardEditor extends LitElement implements LovelaceCard
     return TOGGLE_DOMAINS.has(domain) ? "toggle" : "more-info";
   }
 
+  /** Default hold action shown in the editor: more-info when an entity is set, otherwise nothing. */
+  private _defaultHoldAction(): string {
+    return this._config?.entity ? "more-info" : "none";
+  }
+
   private _computeLabel = (schema: { name: string }): string => {
     switch (schema.name) {
       case "entity":
@@ -179,10 +205,16 @@ export class TedLabelButtonCardEditor extends LitElement implements LovelaceCard
         return "Brushed effect";
       case "show_icon":
         return "Show icon";
+      case "icon_scale":
+        return "Icon size";
       case "show_name":
         return "Show name";
+      case "name_scale":
+        return "Name size";
       case "show_state":
         return "Show entity state";
+      case "state_scale":
+        return "State size";
       case "tap_action":
       case "hold_action":
       case "double_tap_action": {

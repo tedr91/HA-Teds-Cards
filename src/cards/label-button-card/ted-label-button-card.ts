@@ -185,6 +185,9 @@ export class TedLabelButtonCard extends LitElement implements LovelaceCard {
     const showIcon = this._config.show_icon !== false;
     const showName = this._config.show_name !== false;
     const showState = this._config.show_state !== false && !!this._stateObj();
+    const iconScale = typeof this._config.icon_scale === "number" ? this._config.icon_scale : 100;
+    const nameScale = typeof this._config.name_scale === "number" ? this._config.name_scale : 100;
+    const stateScale = typeof this._config.state_scale === "number" ? this._config.state_scale : 100;
 
     const cardClasses = {
       "ted-card": true,
@@ -211,10 +214,10 @@ export class TedLabelButtonCard extends LitElement implements LovelaceCard {
         ${brushed ? brushedOverlay : nothing}
         <div class="lbc">
           ${showIcon
-            ? html`<ha-icon class="icon" style=${styleMap({ color: iconColor })} .icon=${this._icon()}></ha-icon>`
+            ? html`<ha-icon class="icon" style=${styleMap({ color: iconColor, "--mdc-icon-size": `${(32 * iconScale) / 100}px` })} .icon=${this._icon()}></ha-icon>`
             : nothing}
-          ${showName ? html`<span class="name">${this._name()}</span>` : nothing}
-          ${showState ? html`<span class="state">${this._stateLabel()}</span>` : nothing}
+          ${showName ? html`<span class="name" style=${styleMap({ fontSize: `${(16 * nameScale) / 100}px` })}>${this._name()}</span>` : nothing}
+          ${showState ? html`<span class="state" style=${styleMap({ fontSize: `${(13.6 * stateScale) / 100}px` })}>${this._stateLabel()}</span>` : nothing}
         </div>
       </ha-card>
     `;

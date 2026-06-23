@@ -53,6 +53,10 @@ jobs:
             capture { print }
           ' README.md)"
           notes="$(printf '%s\n' "$notes" | sed -e '/./,$!d' | tac | sed -e '/./,$!d' | tac)"
+          # Render as a "loose" list: a blank line between top-level bullets, so every
+          # markdown renderer (GitHub, HACS, the HA update dialog) shows them as
+          # separate items instead of lumping them into one run-on paragraph.
+          notes="$(printf '%s\n' "$notes" | awk 'NR>1 && /^[-*][ \t]/ {print ""} {print}')"
           if [ -z "$(printf '%s' "$notes" | tr -d '[:space:]')" ]; then
             echo "No changelog entry for $TAG in README.md; leaving release notes unchanged."
             exit 0

@@ -329,6 +329,10 @@ px, matching a button).
 The newest entry below is used as the GitHub Release notes by the release workflow, so it shows in
 the Home Assistant / HACS **update** dialog when you update. Newest first.
 
+### v2.0.59
+
+- Room Card: fixed the "…" overflow button still showing at full height when all the visible buttons are half height — its height now matches the visible buttons reliably.
+
 ### v2.0.58
 
 - Room Card: the "…" overflow button now centers its icon and matches the row height — it shrinks to half height when every visible button is half height.

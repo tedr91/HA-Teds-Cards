@@ -804,26 +804,22 @@ export class TedRoomCard extends LitElement implements LovelaceCard {
     if (maxRows > 0 && packedRows(sizes) > maxRows * 2) {
       overflow = true;
       const budget = maxRows * 2;
-      // Largest in-order prefix that fits alongside a "…" cell of height `oh`.
-      const prefixFor = (oh: number): number => {
-        const cell: PlacedButton = { bIdx: -1, w: 2, h: oh };
-        for (let v = buttons.length - 1; v >= 0; v -= 1) {
-          if (packedRows([...sizes.slice(0, v), cell]) <= budget) return v;
-        }
-        return 0;
-      };
-      const allHalf = (count: number): boolean =>
-        count > 0 && buttons.slice(0, count).every((b) => (b.ted_button_height ?? "normal") === "half");
-      // Default to a normal-height "…". If every visible button is half height,
-      // shrink it to match — unless doing so would pull in a taller button.
-      visibleCount = prefixFor(2);
-      if (allHalf(visibleCount)) {
-        const halfCount = prefixFor(1);
-        if (allHalf(halfCount)) {
-          overflowH = 1;
-          visibleCount = halfCount;
+      // Reserve a normal-height "…" cell when choosing the visible set so the
+      // result is stable regardless of the (cosmetic) overflow height below.
+      const overflowCell: PlacedButton = { bIdx: -1, w: 2, h: 2 };
+      visibleCount = 0;
+      for (let v = buttons.length - 1; v >= 0; v -= 1) {
+        if (packedRows([...sizes.slice(0, v), overflowCell]) <= budget) {
+          visibleCount = v;
+          break;
         }
       }
+      // Match the "…" height to its neighbours: half when every visible button
+      // is half height, otherwise normal.
+      const allHalf =
+        visibleCount > 0 &&
+        buttons.slice(0, visibleCount).every((b) => (b.ted_button_height ?? "normal") === "half");
+      overflowH = allHalf ? 1 : 2;
     }
     return html`
       <div class="button-section">

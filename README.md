@@ -329,6 +329,10 @@ px, matching a button).
 The newest entry below is used as the GitHub Release notes by the release workflow, so it shows in
 the Home Assistant / HACS **update** dialog when you update. Newest first.
 
+### v2.0.64
+
+- Room Card: the photo **State entities** option now accepts multiple entities — the photo dims/greyscales only when **all** of them are off.
+
 ### v2.0.63
 
 - Light & Cover Cards: tidied the Appearance layout — **Visual styling** + **Brushed effect** share a row, **Mode** + **Rocker effect** share a row, and **Orientation** is on its own row.

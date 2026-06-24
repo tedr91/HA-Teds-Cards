@@ -887,11 +887,19 @@ export class TedRoomCard extends LitElement implements LovelaceCard {
     const cropped = placement === "fill" || typeof height === "number";
 
     // Optional state-driven treatment: when a state entity is set and reads as
-    // "off", greyscale and/or dim the photo (with a smooth transition).
-    const stateEntity = c.photo_state_entity;
-    const stateObj = stateEntity ? this.hass?.states[stateEntity] : undefined;
+    // "off", greyscale and/or dim the photo (with a smooth transition). With
+    // multiple entities, the photo dims only when *all* of them are off.
+    const stateEntities = Array.isArray(c.photo_state_entity)
+      ? c.photo_state_entity
+      : c.photo_state_entity
+        ? [c.photo_state_entity]
+        : [];
     const isOff =
-      !!stateEntity && (!stateObj || OFF_STATES.has(String(stateObj.state).toLowerCase()));
+      stateEntities.length > 0 &&
+      stateEntities.every((id) => {
+        const s = this.hass?.states[id];
+        return !s || OFF_STATES.has(String(s.state).toLowerCase());
+      });
     const offOpacity = typeof c.photo_off_opacity === "number" ? c.photo_off_opacity : 25;
     const effectiveOpacity = isOff ? offOpacity : opacity;
     const grayscale = isOff && c.photo_off_grayscale === true;
@@ -911,7 +919,7 @@ export class TedRoomCard extends LitElement implements LovelaceCard {
       opacity: String(effectiveOpacity / 100),
       objectPosition: `center ${align}`,
     };
-    if (stateEntity) {
+    if (stateEntities.length > 0) {
       img.filter = grayscale ? "grayscale(1)" : "none";
       img.transition = "opacity 0.4s ease, filter 0.4s ease";
     }

@@ -161,8 +161,8 @@ export interface RoomCardConfig extends LovelaceCardConfig {
   photo_edge_gradient?: Array<"top" | "left" | "right" | "bottom">;
   /** Photo opacity (0–100). Defaults to 100. */
   photo_opacity?: number;
-  /** Entity whose on/off state drives the photo treatment (greyscale / opacity). */
-  photo_state_entity?: string;
+  /** Entity (or entities) whose on/off state drives the photo treatment. Dims when all are off. */
+  photo_state_entity?: string | string[];
   /** Greyscale the photo while the state entity is off. Defaults to false. */
   photo_off_grayscale?: boolean;
   /** Photo opacity (0–100) while the state entity is off. Defaults to 25. */

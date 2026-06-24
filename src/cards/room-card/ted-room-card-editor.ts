@@ -99,7 +99,7 @@ const FIELD_LABELS: Record<string, string> = {
   shift_buttons_down: "Shift buttons down",
   photo_edge_gradient: "Edge Gradient (Scrim)",
   photo_opacity: "Photo opacity",
-  photo_state_entity: "State entity (dims photo when off)",
+  photo_state_entity: "State entities (dims photo when all are off)",
   photo_off_grayscale: "Greyscale when off",
   photo_off_opacity: "Opacity when off (%)",
   entity: "Entity",
@@ -120,6 +120,11 @@ function sameEdges(a: PhotoEdge[], b: PhotoEdge[]): boolean {
   if (a.length !== b.length) return false;
   const set = new Set(a);
   return b.every((edge) => set.has(edge));
+}
+
+/** True when the photo state-entity config holds at least one entity. */
+function hasPhotoStateEntity(value: string | string[] | undefined): boolean {
+  return Array.isArray(value) ? value.length > 0 : Boolean(value);
 }
 
 /** Minimal entity/device registry shapes used to auto-pull an area's sensors. */
@@ -920,8 +925,8 @@ export class TedRoomCardEditor extends LitElement implements LovelaceCardEditor 
       name: "photo_opacity",
       selector: { number: { min: 0, max: 100, step: 1, mode: "slider" } },
     });
-    schema.push({ name: "photo_state_entity", selector: { entity: {} } });
-    if (this._config?.photo_state_entity) {
+    schema.push({ name: "photo_state_entity", selector: { entity: { multiple: true } } });
+    if (hasPhotoStateEntity(this._config?.photo_state_entity)) {
       schema.push({
         type: "grid",
         name: "",
@@ -1144,7 +1149,7 @@ export class TedRoomCardEditor extends LitElement implements LovelaceCardEditor 
     if (!next.photo_align || next.photo_align === "center") delete next.photo_align;
     if (next.shift_buttons_down !== false) delete next.shift_buttons_down;
     if (typeof next.photo_opacity !== "number" || next.photo_opacity === 100) delete next.photo_opacity;
-    if (!next.photo_state_entity) {
+    if (!hasPhotoStateEntity(next.photo_state_entity)) {
       delete next.photo_state_entity;
       delete next.photo_off_grayscale;
       delete next.photo_off_opacity;

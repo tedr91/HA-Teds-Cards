@@ -773,7 +773,8 @@ export class TedRoomCard extends LitElement implements LovelaceCard {
     } else {
       layer.left = "0";
       layer.right = "0";
-      layer.top = placement === "below_header" ? `${this._headerBottom}px` : "0";
+      // Below the header, leave the same gap between the status area and the photo.
+      layer.top = placement === "below_header" ? `${this._headerBottom + this._cardGap()}px` : "0";
       if (typeof height === "number") layer.height = `${height}px`;
     }
 
@@ -837,7 +838,7 @@ export class TedRoomCard extends LitElement implements LovelaceCard {
     // minus the header's bottom and the header→body gap, plus the card's padding.
     const CARD_PADDING = this._cardPadding();
     const HEADER_GAP = this._cardGap();
-    const photoTop = placement === "below_header" ? this._headerBottom : 0;
+    const photoTop = placement === "below_header" ? this._headerBottom + HEADER_GAP : 0;
     const bodyShift = shiftButtons
       ? Math.max(0, photoTop + this._photoHeight - this._headerBottom - HEADER_GAP + CARD_PADDING)
       : 0;

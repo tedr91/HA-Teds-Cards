@@ -329,6 +329,10 @@ px, matching a button).
 The newest entry below is used as the GitHub Release notes by the release workflow, so it shows in
 the Home Assistant / HACS **update** dialog when you update. Newest first.
 
+### v2.0.49
+
+- Room Card photo: the **Below header** photo now starts a gap below the status area (matching the header→body spacing) instead of butting right against it.
+
 ### v2.0.48
 
 - Room Card photo: the **Shift buttons down** option is now also available for the **Below header** placement (it pads the body so the buttons sit below the photo band).

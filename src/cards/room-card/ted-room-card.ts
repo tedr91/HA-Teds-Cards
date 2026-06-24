@@ -758,7 +758,7 @@ export class TedRoomCard extends LitElement implements LovelaceCard {
     `;
   }
 
-  private _renderOverflowCell(sIdx: number, total: number, fromIdx: number): TemplateResult {
+  private _renderOverflowCell(sIdx: number, total: number, fromIdx: number, heightSpan: number): TemplateResult {
     const anchorId = `rc-of-anchor-${sIdx}`;
     const popId = `rc-of-pop-${sIdx}`;
     const hidden: TemplateResult[] = [];
@@ -769,7 +769,7 @@ export class TedRoomCard extends LitElement implements LovelaceCard {
       <button
         id=${anchorId}
         class="button-cell button-overflow"
-        style=${styleMap({ gridColumn: "span 2", gridRow: "span 2" })}
+        style=${styleMap({ gridColumn: "span 2", gridRow: `span ${heightSpan}` })}
         popovertarget=${popId}
         title="Show more"
         aria-label="Show more"
@@ -800,15 +800,28 @@ export class TedRoomCard extends LitElement implements LovelaceCard {
     // largest in-order prefix that — together with the "…" cell — still fits.
     let visibleCount = buttons.length;
     let overflow = false;
+    let overflowH = 2;
     if (maxRows > 0 && packedRows(sizes) > maxRows * 2) {
       overflow = true;
       const budget = maxRows * 2;
-      const overflowCell: PlacedButton = { bIdx: -1, w: 2, h: 2 };
-      visibleCount = 0;
-      for (let v = buttons.length - 1; v >= 0; v -= 1) {
-        if (packedRows([...sizes.slice(0, v), overflowCell]) <= budget) {
-          visibleCount = v;
-          break;
+      // Largest in-order prefix that fits alongside a "…" cell of height `oh`.
+      const prefixFor = (oh: number): number => {
+        const cell: PlacedButton = { bIdx: -1, w: 2, h: oh };
+        for (let v = buttons.length - 1; v >= 0; v -= 1) {
+          if (packedRows([...sizes.slice(0, v), cell]) <= budget) return v;
+        }
+        return 0;
+      };
+      const allHalf = (count: number): boolean =>
+        count > 0 && buttons.slice(0, count).every((b) => (b.ted_button_height ?? "normal") === "half");
+      // Default to a normal-height "…". If every visible button is half height,
+      // shrink it to match — unless doing so would pull in a taller button.
+      visibleCount = prefixFor(2);
+      if (allHalf(visibleCount)) {
+        const halfCount = prefixFor(1);
+        if (allHalf(halfCount)) {
+          overflowH = 1;
+          visibleCount = halfCount;
         }
       }
     }
@@ -821,7 +834,7 @@ export class TedRoomCard extends LitElement implements LovelaceCard {
           ${buttons
             .slice(0, visibleCount)
             .map((_button, bIdx) => this._renderButtonCell(sIdx, bIdx))}
-          ${overflow ? this._renderOverflowCell(sIdx, buttons.length, visibleCount) : nothing}
+          ${overflow ? this._renderOverflowCell(sIdx, buttons.length, visibleCount, overflowH) : nothing}
         </div>
       </div>
     `;
@@ -1285,7 +1298,9 @@ export class TedRoomCard extends LitElement implements LovelaceCard {
         min-width: 0;
         min-height: 0;
       }
-      .button-cell > * {
+      /* Stretch embedded cards to fill the cell — but not the overflow button,
+         whose "…" icon is centered via its own flex layout. */
+      .button-cell:not(.button-overflow) > * {
         display: block;
         width: 100%;
         height: 100%;

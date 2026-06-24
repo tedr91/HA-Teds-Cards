@@ -329,6 +329,11 @@ px, matching a button).
 The newest entry below is used as the GitHub Release notes by the release workflow, so it shows in
 the Home Assistant / HACS **update** dialog when you update. Newest first.
 
+### v2.0.58
+
+- Room Card: the "…" overflow button now centers its icon and matches the row height — it shrinks to half height when every visible button is half height.
+- Cover Card: in **Horizontal** orientation the hint chevrons now stay as up/down arrows instead of rotating sideways.
+
 ### v2.0.57
 
 - Room Card: each button in a section now has **Width** and **Height** options — `Half`, `Normal` (default), or `Double` — so buttons can span half a cell up to a double-size block in either dimension.

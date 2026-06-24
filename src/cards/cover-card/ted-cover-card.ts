@@ -951,7 +951,7 @@ export class TedCoverCard extends LitElement implements LovelaceCard {
       left: 0;
       right: auto;
     }
-    /* Hint bar: horizontal across the top; chevrons rotate to point right (UP) / left (DOWN). */
+    /* Hint bar: horizontal across the top; chevrons stay UP (right half) / DOWN (left half). */
     ha-card.horizontal .stripe {
       left: 0;
       right: 0;
@@ -967,12 +967,12 @@ export class TedCoverCard extends LitElement implements LovelaceCard {
     ha-card.horizontal .stripe-up {
       right: 25%;
       left: auto;
-      transform: translate(50%, -50%) rotate(90deg);
+      transform: translate(50%, -50%);
     }
     ha-card.horizontal .stripe-down {
       left: 25%;
       right: auto;
-      transform: translate(-50%, -50%) rotate(90deg);
+      transform: translate(-50%, -50%);
     }
     .not-found {
       padding: 12px;

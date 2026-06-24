@@ -77,7 +77,8 @@ const FIELD_LABELS: Record<string, string> = {
   photo_url: "Photo",
   photo_placement: "Photo placement",
   photo_height: "Photo height (px)",
-  photo_align: "Photo alignment",
+  photo_align: "Photo vertical alignment",
+  shift_buttons_down: "Shift buttons down",
   photo_edge_gradient: "Edge Gradient (Scrim)",
   photo_opacity: "Photo opacity",
   entity: "Entity",
@@ -552,6 +553,7 @@ export class TedRoomCardEditor extends LitElement implements LovelaceCardEditor 
       photo: "auto",
       photo_placement: "top",
       photo_align: "center",
+      shift_buttons_down: true,
       photo_opacity: 100,
       ...this._config,
       photo_edge_gradient: this._config.photo_edge_gradient ?? defaultEdgeGradient(placement),
@@ -742,37 +744,57 @@ export class TedRoomCardEditor extends LitElement implements LovelaceCardEditor 
       });
     }
     schema.push({
-      name: "photo_placement",
-      selector: {
-        select: {
-          mode: "dropdown",
-          options: [
-            { value: "top", label: "Top of card (default)" },
-            { value: "below_header", label: "Below header" },
-            { value: "fill", label: "Fill card" },
-          ],
+      type: "grid",
+      name: "",
+      column_min_width: "100px",
+      schema: [
+        {
+          name: "photo_placement",
+          selector: {
+            select: {
+              mode: "dropdown",
+              options: [
+                { value: "top", label: "Top of card (default)" },
+                { value: "below_header", label: "Below header" },
+                { value: "fill", label: "Fill card" },
+              ],
+            },
+          },
         },
-      },
+        {
+          name: "photo_align",
+          selector: {
+            select: {
+              mode: "dropdown",
+              options: [
+                { value: "top", label: "Top" },
+                { value: "center", label: "Center (default)" },
+                { value: "bottom", label: "Bottom" },
+              ],
+            },
+          },
+        },
+      ],
     });
-    if (placement !== "fill") {
+    if (placement === "top") {
+      schema.push({
+        type: "grid",
+        name: "",
+        column_min_width: "100px",
+        schema: [
+          {
+            name: "photo_height",
+            selector: { number: { min: 0, max: 1000, step: 10, mode: "box", unit_of_measurement: "px" } },
+          },
+          { name: "shift_buttons_down", selector: { boolean: {} } },
+        ],
+      });
+    } else if (placement === "below_header") {
       schema.push({
         name: "photo_height",
         selector: { number: { min: 0, max: 1000, step: 10, mode: "box", unit_of_measurement: "px" } },
       });
     }
-    schema.push({
-      name: "photo_align",
-      selector: {
-        select: {
-          mode: "dropdown",
-          options: [
-            { value: "top", label: "Top" },
-            { value: "center", label: "Center (default)" },
-            { value: "bottom", label: "Bottom" },
-          ],
-        },
-      },
-    });
     schema.push({
       name: "photo_edge_gradient",
       selector: {
@@ -826,6 +848,7 @@ export class TedRoomCardEditor extends LitElement implements LovelaceCardEditor 
       photo_placement: value.photo_placement,
       photo_height: value.photo_height,
       photo_align: value.photo_align,
+      shift_buttons_down: value.shift_buttons_down,
       photo_edge_gradient: value.photo_edge_gradient,
       photo_opacity: value.photo_opacity,
       status_items: this._config?.status_items,
@@ -983,6 +1006,7 @@ export class TedRoomCardEditor extends LitElement implements LovelaceCardEditor 
     if (!next.photo_placement || next.photo_placement === "top") delete next.photo_placement;
     if (typeof next.photo_height !== "number") delete next.photo_height;
     if (!next.photo_align || next.photo_align === "center") delete next.photo_align;
+    if (next.shift_buttons_down !== false) delete next.shift_buttons_down;
     if (typeof next.photo_opacity !== "number" || next.photo_opacity === 100) delete next.photo_opacity;
     const placement = (next.photo_placement as PhotoPlacement) ?? "top";
     if (

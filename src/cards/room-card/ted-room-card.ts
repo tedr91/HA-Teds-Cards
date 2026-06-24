@@ -178,7 +178,9 @@ export class TedRoomCard extends LitElement implements LovelaceCard {
   @state() private _photoError = false;
   /** Measured y (px) of the header's bottom edge, for the "below header" photo. */
   @state() private _headerBottom = 0;
-  private _headerObserver?: ResizeObserver;
+  /** Measured rendered height (px) of the photo layer, for the "shift buttons" pad. */
+  @state() private _photoHeight = 0;
+  private _layoutObserver?: ResizeObserver;
 
   /** Lazily-loaded Lovelace card helpers (for embedding the button sub-cards). */
   private _helpers?: CardHelpers;
@@ -213,8 +215,8 @@ export class TedRoomCard extends LitElement implements LovelaceCard {
       window.clearTimeout(this._volumeClickTimer);
       this._volumeClickTimer = undefined;
     }
-    this._headerObserver?.disconnect();
-    this._headerObserver = undefined;
+    this._layoutObserver?.disconnect();
+    this._layoutObserver = undefined;
   }
 
   protected firstUpdated(): void {
@@ -234,24 +236,31 @@ export class TedRoomCard extends LitElement implements LovelaceCard {
   }
 
   protected updated(): void {
-    if (!this._headerObserver) this._observeHeader();
+    if (!this._layoutObserver) this._observeHeader();
   }
 
-  /** Track the header's height so the "below header" photo can sit beneath it. */
+  /** Track the header + photo sizes so dependent layout (below-header, shift) can react. */
   private _observeHeader(): void {
-    const header = this.renderRoot?.querySelector?.(".status-bar") as HTMLElement | null;
-    if (!header) return;
-    this._measureHeader(header);
+    this._measureLayout();
     if (typeof ResizeObserver === "undefined") return;
-    this._headerObserver?.disconnect();
-    this._headerObserver = new ResizeObserver(() => this._measureHeader(header));
-    this._headerObserver.observe(header);
+    if (this._layoutObserver) return;
+    this._layoutObserver = new ResizeObserver(() => this._measureLayout());
+    this._layoutObserver.observe(this);
   }
 
-  private _measureHeader(header: HTMLElement): void {
-    const bottom = header.offsetTop + header.offsetHeight;
+  private _measureLayout(): void {
+    const root = this.renderRoot as ShadowRoot | undefined;
+    const header = root?.querySelector?.(".status-bar") as HTMLElement | null;
+    const photo = root?.querySelector?.(".room-photo") as HTMLElement | null;
+    const bottom = header ? header.offsetTop + header.offsetHeight : 0;
+    const photoHeight = photo ? photo.offsetHeight : 0;
     if (bottom !== this._headerBottom) this._headerBottom = bottom;
+    if (photoHeight !== this._photoHeight) this._photoHeight = photoHeight;
   }
+
+  private _onPhotoLoad = (): void => {
+    this._measureLayout();
+  };
 
   // --- Embedded button sub-cards -------------------------------------------
 
@@ -698,6 +707,12 @@ export class TedRoomCard extends LitElement implements LovelaceCard {
     this._photoError = true;
   };
 
+  /** Resolved photo placement (defaults to "top"). */
+  private _photoPlacement(): PhotoPlacement {
+    const p = this._config?.photo_placement;
+    return p === "fill" || p === "below_header" ? p : "top";
+  }
+
   /** Resolve the configured photo to a URL (bundled CDN, custom, or auto-match). */
   private _resolvePhotoUrl(): string | undefined {
     const c = this._config;
@@ -729,8 +744,7 @@ export class TedRoomCard extends LitElement implements LovelaceCard {
     const url = this._resolvePhotoUrl();
     if (!url || this._photoError) return nothing;
 
-    const placement: PhotoPlacement =
-      c.photo_placement === "fill" || c.photo_placement === "below_header" ? c.photo_placement : "top";
+    const placement = this._photoPlacement();
     const opacity = typeof c.photo_opacity === "number" ? c.photo_opacity : 100;
     const align = c.photo_align === "top" || c.photo_align === "bottom" ? c.photo_align : "center";
     const height = typeof c.photo_height === "number" ? c.photo_height : undefined;
@@ -761,7 +775,7 @@ export class TedRoomCard extends LitElement implements LovelaceCard {
     const gradient = this._edgeGradientCss(edges);
     return html`
       <div class="room-photo" style=${styleMap(layer)} aria-hidden="true">
-        <img src=${url} alt="" style=${styleMap(img)} @error=${this._onPhotoError} />
+        <img src=${url} alt="" style=${styleMap(img)} @error=${this._onPhotoError} @load=${this._onPhotoLoad} />
         ${gradient
           ? html`<div class="photo-scrim" style=${styleMap({ background: gradient })}></div>`
           : nothing}
@@ -795,6 +809,17 @@ export class TedRoomCard extends LitElement implements LovelaceCard {
     const sections = this._config.sections ?? [];
     const hasBody = sections.length > 0;
 
+    // For a "top" photo, optionally pad the body down so the first buttons sit
+    // below the photo banner instead of overlapping it.
+    const placement = this._photoPlacement();
+    const photoShown = this._config.show_photo !== false && !!this._resolvePhotoUrl() && !this._photoError;
+    const shiftButtons =
+      photoShown && placement === "top" && this._config.shift_buttons_down !== false;
+    const bodyShift = shiftButtons
+      ? Math.max(0, this._photoHeight - this._headerBottom - 12)
+      : 0;
+    const bodyStyle = bodyShift ? { marginTop: `${bodyShift}px` } : {};
+
     return html`
       <ha-card class=${classMap(themeClasses)}>
         ${this._config.brushed ? brushedOverlay : nothing}
@@ -822,11 +847,11 @@ export class TedRoomCard extends LitElement implements LovelaceCard {
           </div>
         </div>
         ${hasBody
-          ? html`<div class="sections">
+          ? html`<div class="sections" style=${styleMap(bodyStyle)}>
               ${sections.map((section, sIdx) => this._renderSection(section, sIdx))}
             </div>`
           : statusItems.length === 0
-            ? html`<div class="placeholder">Add status items and button sections in the editor.</div>`
+            ? html`<div class="placeholder" style=${styleMap(bodyStyle)}>Add status items and button sections in the editor.</div>`
             : nothing}
       </ha-card>
     `;

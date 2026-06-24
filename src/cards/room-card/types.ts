@@ -130,6 +130,8 @@ export interface RoomCardConfig extends LovelaceCardConfig {
   photo_height?: number;
   /** Vertical focal point when the photo is cropped. Defaults to "center". */
   photo_align?: "top" | "center" | "bottom";
+  /** For "top" placement: pad the body so buttons sit below the photo. Defaults to true. */
+  shift_buttons_down?: boolean;
   /** Edges to darken with a legibility scrim. Defaults per placement. */
   photo_edge_gradient?: Array<"top" | "left" | "right" | "bottom">;
   /** Photo opacity (0–100). Defaults to 100. */

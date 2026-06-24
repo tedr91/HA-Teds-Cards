@@ -329,6 +329,10 @@ px, matching a button).
 The newest entry below is used as the GitHub Release notes by the release workflow, so it shows in
 the Home Assistant / HACS **update** dialog when you update. Newest first.
 
+### v2.0.46
+
+- Room Card photo: renamed **Photo alignment** to **Photo vertical alignment** and paired it on one line with **Photo placement**. For **Top of card** placement, added a **Shift buttons down** toggle (default on) that pads the body so the first button section sits below the photo banner instead of overlapping it.
+
 ### v2.0.45
 
 - Room Card: added a **Room Photo** — an optional photo behind the card UI (above the background, below the header/status/buttons). Choose a **bundled** photo (auto-matched to the room name) or upload a **custom** one; control **placement** (top / below header / fill), **height** + **alignment** (crop focal point), an **Edge Gradient (Scrim)** to keep text readable, and **opacity**. On by default, silently hidden when there's no name match or the image can't load.

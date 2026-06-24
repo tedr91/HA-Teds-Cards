@@ -245,6 +245,10 @@ export class TedClockWeatherCard extends LitElement implements LovelaceCard {
     this._timer = window.setInterval(() => {
       this._now = new Date();
     }, TICK_MS);
+    // Re-attach the width observer when the card is moved back into the DOM
+    // (e.g. after leaving the dashboard editor), so font sizes recompute for
+    // the restored width instead of staying stuck at the editor's width.
+    this._setupObserver();
   }
 
   public disconnectedCallback(): void {
@@ -266,16 +270,21 @@ export class TedClockWeatherCard extends LitElement implements LovelaceCard {
   }
 
   protected firstUpdated(): void {
-    const el = this.renderRoot.querySelector(".cwc") as HTMLElement | null;
-    if (el && "ResizeObserver" in window) {
-      this._ro = new ResizeObserver((entries) => {
-        const width = entries[0]?.contentRect?.width ?? 0;
-        if (Math.abs(width - this._lastWidth) < 0.5) return; // ignore height-only changes
-        this._lastWidth = width;
-        this._recompute(width);
-      });
-      this._ro.observe(el);
-    }
+    this._setupObserver();
+  }
+
+  /** Observe the card width so the clock font tracks it. Safe to call repeatedly. */
+  private _setupObserver(): void {
+    if (this._ro) return;
+    const el = this.renderRoot?.querySelector?.(".cwc") as HTMLElement | null;
+    if (!el || !("ResizeObserver" in window)) return;
+    this._ro = new ResizeObserver((entries) => {
+      const width = entries[0]?.contentRect?.width ?? 0;
+      if (Math.abs(width - this._lastWidth) < 0.5) return; // ignore height-only changes
+      this._lastWidth = width;
+      this._recompute(width);
+    });
+    this._ro.observe(el);
   }
 
   protected updated(changed: PropertyValues): void {

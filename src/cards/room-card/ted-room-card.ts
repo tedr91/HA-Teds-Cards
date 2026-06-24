@@ -280,6 +280,14 @@ export class TedRoomCard extends LitElement implements LovelaceCard {
     this._layoutObserver = undefined;
   }
 
+  public connectedCallback(): void {
+    super.connectedCallback();
+    // Re-attach the size observer when the card returns to the DOM (e.g. after
+    // leaving the dashboard editor) so the layout recomputes for the restored
+    // width instead of waiting for the next reactive update.
+    this._observeHeader();
+  }
+
   protected firstUpdated(): void {
     void this._loadHelpers();
     this._observeHeader();

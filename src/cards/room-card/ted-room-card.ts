@@ -166,7 +166,7 @@ export class TedRoomCard extends LitElement implements LovelaceCard {
   public static getStubConfig(hass: HomeAssistant): Omit<RoomCardConfig, "type"> {
     const areas = (hass as HassWithRegistries).areas ?? {};
     const firstArea = Object.keys(areas)[0];
-    return { area: firstArea ?? "" };
+    return { area: firstArea ?? "", photo_height: 135 };
   }
 
   @property({ attribute: false }) public hass?: HomeAssistant;
@@ -813,7 +813,7 @@ export class TedRoomCard extends LitElement implements LovelaceCard {
     const title = this._config.name || this._areaName();
     const showHeaderIcon = this._config.show_header_icon === true;
     const showHeaderName = this._config.show_header_name !== false;
-    const headerDivider = this._config.header_divider !== false;
+    const headerDivider = this._config.header_divider === true;
     const headerIconSize =
       typeof this._config.header_icon_size === "number" ? this._config.header_icon_size : undefined;
     const headerNameSize =
@@ -990,6 +990,7 @@ export class TedRoomCard extends LitElement implements LovelaceCard {
         display: inline-flex;
         align-items: center;
         gap: 4px;
+        min-height: 28px;
         font-size: 0.8rem;
         font-weight: 600;
         color: var(--ted-style-text);
@@ -1001,7 +1002,7 @@ export class TedRoomCard extends LitElement implements LovelaceCard {
         pointer-events: none;
       }
       .status-icon {
-        --mdc-icon-size: 16px;
+        --mdc-icon-size: 22px;
         color: var(--ted-style-muted);
         flex: none;
       }
@@ -1031,7 +1032,7 @@ export class TedRoomCard extends LitElement implements LovelaceCard {
         -webkit-tap-highlight-color: transparent;
       }
       .status-icon-button ha-icon {
-        --mdc-icon-size: 18px;
+        --mdc-icon-size: 22px;
       }
       .status-icon-button:hover {
         color: var(--ted-style-text);

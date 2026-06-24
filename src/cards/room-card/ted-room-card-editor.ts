@@ -547,7 +547,7 @@ export class TedRoomCardEditor extends LitElement implements LovelaceCardEditor 
       brushed: false,
       show_header_icon: false,
       show_header_name: true,
-      header_divider: true,
+      header_divider: false,
       show_photo: true,
       photo_source: "bundled",
       photo: "auto",
@@ -794,6 +794,7 @@ export class TedRoomCardEditor extends LitElement implements LovelaceCardEditor 
       name: "photo_edge_gradient",
       selector: {
         select: {
+          mode: "dropdown",
           multiple: true,
           options: [
             { value: "top", label: "Top" },
@@ -991,7 +992,7 @@ export class TedRoomCardEditor extends LitElement implements LovelaceCardEditor 
     if (typeof next.header_icon_size !== "number") delete next.header_icon_size;
     if (next.show_header_name !== false) delete next.show_header_name;
     if (typeof next.header_name_size !== "number") delete next.header_name_size;
-    if (next.header_divider !== false) delete next.header_divider;
+    if (next.header_divider !== true) delete next.header_divider;
     if (!next.status_align || next.status_align === "top") delete next.status_align;
     // Room photo defaults.
     if (next.show_photo !== false) delete next.show_photo;
@@ -1084,7 +1085,7 @@ export class TedRoomCardEditor extends LitElement implements LovelaceCardEditor 
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-      flex: 1 1 auto;
+      flex: 1 1 0;
       min-width: 0;
     }
     .row-actions {

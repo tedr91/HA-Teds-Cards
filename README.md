@@ -329,6 +329,13 @@ px, matching a button).
 The newest entry below is used as the GitHub Release notes by the release workflow, so it shows in
 the Home Assistant / HACS **update** dialog when you update. Newest first.
 
+### v2.0.51
+
+- Room Card: **Display header divider line** now defaults to **off**.
+- Room Card photo: new cards start with **Photo height** = `135` px (still editable; clear it for the full image), and **Edge Gradient (Scrim)** is now a multi-select dropdown.
+- Room Card editor: fixed the missing expand chevron on rows with a long entity id (e.g. occupancy) — long ids now truncate instead of pushing the chevron off-screen.
+- Room Card: status-strip icons are now a consistent **22px** and stay vertically aligned across sensor, brightness, and volume items.
+
 ### v2.0.50
 
 - Room Card: fixed the status strip **Vertical alignment** so it moves the status items (not just the header) — the items previously stayed centered regardless of the setting.

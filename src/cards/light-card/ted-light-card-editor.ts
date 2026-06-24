@@ -51,7 +51,11 @@ export class TedLightCardEditor extends LitElement implements LovelaceCardEditor
     if (!this.hass || !this._config) return nothing;
 
     // Apply defaults so the dropdowns show the current selection.
-    const data = { ...this._defaults(), ...this._config };
+    const data: Record<string, unknown> = {
+      ...this._defaults(),
+      ...this._config,
+      mode: this._config.rocker === false ? "button" : "rocker",
+    };
 
     const schema = this._schema();
     return html`
@@ -149,61 +153,77 @@ export class TedLightCardEditor extends LitElement implements LovelaceCardEditor
         },
       },
       {
-        name: "orientation",
-        selector: {
-          select: {
-            mode: "dropdown",
-            options: [
-              { value: "vertical", label: "Vertical (default)" },
-              { value: "horizontal", label: "Horizontal" },
-            ],
-          },
-        },
-      },
-      {
         type: "grid",
         name: "",
         column_min_width: "100px",
         schema: [
-          { name: "show_indicator", selector: { boolean: {} } },
           {
-            name: "indicator_width",
-            disabled: this._config?.show_indicator === false,
-            selector: { number: { min: 0, max: 40, step: 1, mode: "box", unit_of_measurement: "px" } },
+            name: "mode",
+            selector: {
+              select: {
+                mode: "dropdown",
+                options: [
+                  { value: "rocker", label: "Rocker style (default)" },
+                  { value: "button", label: "Button style" },
+                ],
+              },
+            },
+          },
+          {
+            name: "orientation",
+            selector: {
+              select: {
+                mode: "dropdown",
+                options: [
+                  { value: "vertical", label: "Vertical (default)" },
+                  { value: "horizontal", label: "Horizontal" },
+                ],
+              },
+            },
           },
         ],
       },
-      {
-        name: "indicator_color",
-        disabled: this._config?.show_indicator === false,
-        selector: {
-          select: {
-            mode: "dropdown",
-            options: [
-              { value: "theme", label: "Theme color (default)" },
-              { value: "light", label: "Light color" },
-              { value: "other", label: "Custom color" },
-            ],
-          },
-        },
-      },
     ];
-    if (this._config?.indicator_color === "other") {
-      visual.push({ name: "indicator_color_custom", selector: { color_rgb: {} } });
+    // Indicator bar: the show toggle is on its own row; width + color appear
+    // only when it's enabled.
+    visual.push({ name: "show_indicator", selector: { boolean: {} } });
+    if (this._config?.show_indicator !== false) {
+      visual.push({
+        type: "grid",
+        name: "",
+        column_min_width: "100px",
+        schema: [
+          {
+            name: "indicator_width",
+            selector: { number: { min: 0, max: 40, step: 1, mode: "box", unit_of_measurement: "px" } },
+          },
+          {
+            name: "indicator_color",
+            selector: {
+              select: {
+                mode: "dropdown",
+                options: [
+                  { value: "theme", label: "Theme color (default)" },
+                  { value: "light", label: "Light color" },
+                  { value: "other", label: "Custom color" },
+                ],
+              },
+            },
+          },
+        ],
+      });
+      if (this._config?.indicator_color === "other") {
+        visual.push({ name: "indicator_color_custom", selector: { color_rgb: {} } });
+      }
     }
-    visual.push({
-      type: "grid",
-      name: "",
-      column_min_width: "100px",
-      schema: [
-        { name: "show_hint", selector: { boolean: {} } },
-        {
-          name: "hint_width",
-          disabled: this._config?.show_hint !== true,
-          selector: { number: { min: 0, max: 40, step: 1, mode: "box", unit_of_measurement: "px" } },
-        },
-      ],
-    });
+    // Hint bar: the show toggle is on its own row; width appears only when on.
+    visual.push({ name: "show_hint", selector: { boolean: {} } });
+    if (this._config?.show_hint === true) {
+      visual.push({
+        name: "hint_width",
+        selector: { number: { min: 0, max: 40, step: 1, mode: "box", unit_of_measurement: "px" } },
+      });
+    }
     visual.push({
       name: "icon_color",
       selector: {
@@ -226,11 +246,10 @@ export class TedLightCardEditor extends LitElement implements LovelaceCardEditor
       name: "",
       column_min_width: "100px",
       schema: [
-        { name: "rocker", selector: { boolean: {} } },
+        { name: "brushed", selector: { boolean: {} } },
         { name: "rocker_effect", disabled: rockerOff, selector: { boolean: {} } },
       ],
     });
-    visual.push({ name: "brushed", selector: { boolean: {} } });
     visual.push({
       type: "grid",
       name: "",
@@ -369,6 +388,8 @@ export class TedLightCardEditor extends LitElement implements LovelaceCardEditor
         return "Icon (optional)";
       case "theme":
         return "Visual styling";
+      case "mode":
+        return "Mode";
       case "orientation":
         return "Orientation";
       case "indicator_color":
@@ -440,7 +461,12 @@ export class TedLightCardEditor extends LitElement implements LovelaceCardEditor
 
   /** Strip values equal to their default and fire config-changed. */
   private _commit(raw: LightCardConfig): void {
-    const config = { ...raw } as LightCardConfig;
+    const config = { ...raw } as LightCardConfig & { mode?: string };
+    // "Mode" is a friendlier dropdown over the boolean `rocker` field.
+    if (typeof config.mode === "string") {
+      config.rocker = config.mode !== "button";
+      delete config.mode;
+    }
     const defaults = this._defaults();
     for (const key of Object.keys(defaults) as Array<keyof LightCardConfig>) {
       if (config[key] === defaults[key]) {

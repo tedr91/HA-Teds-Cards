@@ -270,6 +270,7 @@ export class TedCoverCard extends LitElement implements LovelaceCard {
           open: isOpen,
           unavailable: isUnavailable,
           horizontal,
+          single: this._config.rocker === false,
           ...themeClasses,
         })}
         style=${styleMap(cardStyle)}
@@ -311,20 +312,32 @@ export class TedCoverCard extends LitElement implements LovelaceCard {
         <div class=${classMap({ content: true, [`count-${visible.length}`]: true })}>
           ${visible.map((el) => tpls[el])}
         </div>
-        <button
-          type="button"
-          class="region region-top"
-          aria-label=${`${name} — top half`}
-          ?disabled=${isUnavailable}
-          @click=${this._onTopClick}
-        ></button>
-        <button
-          type="button"
-          class="region region-bottom"
-          aria-label=${`${name} — bottom half`}
-          ?disabled=${isUnavailable}
-          @click=${this._onBottomClick}
-        ></button>
+        ${this._config.rocker !== false
+          ? html`
+              <button
+                type="button"
+                class="region region-top"
+                aria-label=${`${name} — top half`}
+                ?disabled=${isUnavailable}
+                @click=${this._onTopClick}
+              ></button>
+              <button
+                type="button"
+                class="region region-bottom"
+                aria-label=${`${name} — bottom half`}
+                ?disabled=${isUnavailable}
+                @click=${this._onBottomClick}
+              ></button>
+            `
+          : html`
+              <button
+                type="button"
+                class="region region-full"
+                aria-label=${name}
+                ?disabled=${isUnavailable}
+                @click=${this._onTopClick}
+              ></button>
+            `}
       </ha-card>
     `;
   }
@@ -644,6 +657,7 @@ export class TedCoverCard extends LitElement implements LovelaceCard {
     for (const el of ev.composedPath()) {
       if (!(el instanceof HTMLElement)) continue;
       if (el.classList.contains("icon-shape")) return "icon";
+      if (el.classList.contains("region-full")) return "icon";
       if (el.classList.contains("region-top")) return "up";
       if (el.classList.contains("region-bottom")) return "down";
       if (el === this) return undefined;
@@ -782,6 +796,16 @@ export class TedCoverCard extends LitElement implements LovelaceCard {
     }
     .region-bottom {
       bottom: 0;
+    }
+    /* Rocker off: a single continuous click surface covering the whole card. */
+    .region-full {
+      top: 0;
+      bottom: 0;
+      height: 100%;
+    }
+    ha-card.single .icon-shape {
+      pointer-events: none;
+      cursor: default;
     }
     .region:focus-visible {
       box-shadow: inset 0 0 0 2px var(--ted-style-accent);
@@ -935,6 +959,11 @@ export class TedCoverCard extends LitElement implements LovelaceCard {
     }
     ha-card.horizontal .region-bottom {
       left: 0;
+    }
+    ha-card.horizontal .region-full {
+      left: 0;
+      right: 0;
+      width: 100%;
     }
     /* Indicator bar: horizontal across the bottom, fills left → right. */
     ha-card.horizontal .position {

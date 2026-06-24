@@ -951,6 +951,10 @@ export class TedRoomCard extends LitElement implements LovelaceCard {
       typeof this._config.header_icon_size === "number" ? this._config.header_icon_size : undefined;
     const headerNameSize =
       typeof this._config.header_name_size === "number" ? this._config.header_name_size : undefined;
+    const headerAlign =
+      this._config.header_align === "middle" || this._config.header_align === "bottom"
+        ? this._config.header_align
+        : "top";
     const statusAlign =
       this._config.status_align === "middle" || this._config.status_align === "bottom"
         ? this._config.status_align
@@ -984,7 +988,7 @@ export class TedRoomCard extends LitElement implements LovelaceCard {
         ${this._config.brushed ? brushedOverlay : nothing}
         ${this._renderPhoto()}
         <div
-          class="status-bar align-${statusAlign}${headerDivider ? "" : " no-divider"}"
+          class="status-bar align-${statusAlign} header-align-${headerAlign}${headerDivider ? "" : " no-divider"}"
           style=${styleMap({ "--rc-status-icon-size": `${statusIconSize}px` })}
         >
           <div class="status-heading">
@@ -1064,7 +1068,7 @@ export class TedRoomCard extends LitElement implements LovelaceCard {
         position: relative;
         z-index: 1;
         display: flex;
-        align-items: center;
+        align-items: stretch;
         justify-content: space-between;
         gap: 12px;
         min-height: 24px;
@@ -1075,17 +1079,17 @@ export class TedRoomCard extends LitElement implements LovelaceCard {
         border-bottom: none;
         padding-bottom: 0;
       }
-      .status-bar.align-top {
+      /* The heading and the status items each stretch to the strip's height and
+         align their own content independently (header_align vs status_align). */
+      .status-bar.header-align-top .status-heading {
         align-items: flex-start;
       }
-      .status-bar.align-middle {
+      .status-bar.header-align-middle .status-heading {
         align-items: center;
       }
-      .status-bar.align-bottom {
+      .status-bar.header-align-bottom .status-heading {
         align-items: flex-end;
       }
-      /* Keep the status items vertically aligned to match (their own box can be
-         the tallest element, so the parent alignment alone won't move them). */
       .status-bar.align-top .status-items {
         align-items: flex-start;
       }

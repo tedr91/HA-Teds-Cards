@@ -329,6 +329,12 @@ px, matching a button).
 The newest entry below is used as the GitHub Release notes by the release workflow, so it shows in
 the Home Assistant / HACS **update** dialog when you update. Newest first.
 
+### v2.0.62
+
+- Light & Cover Cards: when **Mode** is set to **Button style** (Rocker off), the whole card is now a single continuous click surface instead of separate up/down/icon zones.
+- Light & Cover Cards: the "Rocker" toggle is now a **Mode** dropdown (`Rocker style` / `Button style`) sitting next to **Orientation**, and the **Show indicator bar** / **Show hint bar** options now hide their width/color settings until they're turned on.
+- Room Card: the status strip **Vertical alignment** now only moves the status items; the **Header** section has its own separate **Vertical alignment** for the name/icon.
+
 ### v2.0.61
 
 - Room Card: the photo **State entity** option now reads "dims photo when off", and its defaults are **Greyscale when off = off** and **Opacity when off = 25%**.

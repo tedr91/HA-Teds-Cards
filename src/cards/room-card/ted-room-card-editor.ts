@@ -86,6 +86,7 @@ const FIELD_LABELS: Record<string, string> = {
   show_header_name: "Display name in header",
   header_name_size: "Name size override (px)",
   header_divider: "Display header divider line",
+  header_align: "Vertical alignment",
   status_align: "Vertical alignment",
   status_icon_size: "Status icon size (px)",
   show_photo: "Show photo",
@@ -622,6 +623,7 @@ export class TedRoomCardEditor extends LitElement implements LovelaceCardEditor 
       show_header_icon: false,
       show_header_name: true,
       header_divider: false,
+      header_align: "top",
       show_photo: true,
       photo_source: "bundled",
       photo: "auto",
@@ -802,6 +804,19 @@ export class TedRoomCardEditor extends LitElement implements LovelaceCardEditor 
             ],
           },
           { name: "header_divider", selector: { boolean: {} } },
+          {
+            name: "header_align",
+            selector: {
+              select: {
+                mode: "dropdown",
+                options: [
+                  { value: "top", label: "Top (default)" },
+                  { value: "middle", label: "Middle" },
+                  { value: "bottom", label: "Bottom" },
+                ],
+              },
+            },
+          },
         ],
       },
       {
@@ -949,6 +964,7 @@ export class TedRoomCardEditor extends LitElement implements LovelaceCardEditor 
       show_header_name: value.show_header_name,
       header_name_size: value.header_name_size,
       header_divider: value.header_divider,
+      header_align: value.header_align,
       show_photo: value.show_photo,
       photo_source: value.photo_source,
       photo: value.photo,
@@ -1116,6 +1132,7 @@ export class TedRoomCardEditor extends LitElement implements LovelaceCardEditor 
     if (next.show_header_name !== false) delete next.show_header_name;
     if (typeof next.header_name_size !== "number") delete next.header_name_size;
     if (next.header_divider !== true) delete next.header_divider;
+    if (!next.header_align || next.header_align === "top") delete next.header_align;
     if (!next.status_align || next.status_align === "top") delete next.status_align;
     if (typeof next.status_icon_size !== "number" || next.status_icon_size === 16) delete next.status_icon_size;
     // Room photo defaults.

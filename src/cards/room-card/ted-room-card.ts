@@ -825,18 +825,21 @@ export class TedRoomCard extends LitElement implements LovelaceCard {
     const sections = this._config.sections ?? [];
     const hasBody = sections.length > 0;
 
-    // For a "top" photo, optionally pad the body down so the first buttons sit
-    // below the photo banner instead of overlapping it.
+    // For a "top" or "below header" photo, optionally pad the body down so the
+    // first buttons sit below the photo instead of overlapping it.
     const placement = this._photoPlacement();
     const photoShown = this._config.show_photo !== false && !!this._resolvePhotoUrl() && !this._photoError;
     const shiftButtons =
-      photoShown && placement === "top" && this._config.shift_buttons_down !== false;
-    // Push the body to the bottom of the photo: photo height, minus the header's
-    // bottom and the header→body gap, plus the card's top padding.
+      photoShown &&
+      (placement === "top" || placement === "below_header") &&
+      this._config.shift_buttons_down !== false;
+    // Push the body to the bottom of the photo: photo top offset + photo height,
+    // minus the header's bottom and the header→body gap, plus the card's padding.
     const CARD_PADDING = this._cardPadding();
     const HEADER_GAP = this._cardGap();
+    const photoTop = placement === "below_header" ? this._headerBottom : 0;
     const bodyShift = shiftButtons
-      ? Math.max(0, this._photoHeight - this._headerBottom - HEADER_GAP + CARD_PADDING)
+      ? Math.max(0, photoTop + this._photoHeight - this._headerBottom - HEADER_GAP + CARD_PADDING)
       : 0;
     const bodyStyle = bodyShift ? { marginTop: `${bodyShift}px` } : {};
 

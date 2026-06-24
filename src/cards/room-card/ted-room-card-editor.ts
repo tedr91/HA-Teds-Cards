@@ -776,7 +776,7 @@ export class TedRoomCardEditor extends LitElement implements LovelaceCardEditor 
         },
       ],
     });
-    if (placement === "top") {
+    if (placement === "top" || placement === "below_header") {
       schema.push({
         type: "grid",
         name: "",
@@ -788,11 +788,6 @@ export class TedRoomCardEditor extends LitElement implements LovelaceCardEditor 
           },
           { name: "shift_buttons_down", selector: { boolean: {} } },
         ],
-      });
-    } else if (placement === "below_header") {
-      schema.push({
-        name: "photo_height",
-        selector: { number: { min: 0, max: 1000, step: 10, mode: "box", unit_of_measurement: "px" } },
       });
     }
     schema.push({

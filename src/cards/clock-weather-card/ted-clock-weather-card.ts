@@ -291,6 +291,8 @@ export class TedClockWeatherCard extends LitElement implements LovelaceCard {
         return 0.6;
       case "medium":
         return 0.8;
+      case "extra_large":
+        return 1.2;
       case "custom":
         return (this._config?.clock_size_custom ?? 100) / 100;
       case "large":

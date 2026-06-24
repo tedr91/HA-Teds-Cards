@@ -140,9 +140,10 @@ export class TedClockWeatherCardEditor extends LitElement implements LovelaceCar
           select: {
             mode: "dropdown",
             options: [
-              { value: "small", label: "Small" },
-              { value: "medium", label: "Medium" },
-              { value: "large", label: "Large (default)" },
+              { value: "small", label: "Small (60%)" },
+              { value: "medium", label: "Medium (80%)" },
+              { value: "large", label: "Large (100%) - default" },
+              { value: "extra_large", label: "Extra Large (120%)" },
               { value: "custom", label: "Custom" },
             ],
           },

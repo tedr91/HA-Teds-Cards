@@ -1,7 +1,7 @@
 import type { LovelaceCardConfig } from "custom-card-helpers";
 import type { TedStyleTheme } from "../../shared/types";
 
-export type ClockSize = "small" | "medium" | "large" | "custom";
+export type ClockSize = "small" | "medium" | "large" | "extra_large" | "custom";
 export type IconStyle = "basic" | "cool" | "fancy";
 export type TimeFormat = "auto" | "12h" | "24h" | "custom";
 export type DateSize = "standard" | "custom";

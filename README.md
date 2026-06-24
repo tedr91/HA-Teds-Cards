@@ -329,6 +329,11 @@ px, matching a button).
 The newest entry below is used as the GitHub Release notes by the release workflow, so it shows in
 the Home Assistant / HACS **update** dialog when you update. Newest first.
 
+### v2.0.56
+
+- Room Card: the **Name (override)** and **Icon (override)** fields (renamed from Name / Icon) now sit side by side in the editor.
+- Room Card: when the **Icon (override)** is left empty, the header now falls back to the selected area's own icon (before defaulting to the house icon).
+
 ### v2.0.55
 
 - Light & Cover Cards: the **Name / Icon / State** layout section now appears directly below **Appearance (general)** in the editor instead of at the bottom.

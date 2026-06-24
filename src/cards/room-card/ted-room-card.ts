@@ -37,6 +37,7 @@ import type {
 interface AreaEntry {
   area_id: string;
   name: string;
+  icon?: string | null;
 }
 
 /** Entity registry entry — used to map entities to an area. */
@@ -325,6 +326,14 @@ export class TedRoomCard extends LitElement implements LovelaceCard {
     if (!areaId) return undefined;
     const areas = (this.hass as HassWithRegistries | undefined)?.areas;
     return areas?.[areaId]?.name ?? areaId;
+  }
+
+  /** Resolve the configured area's registry icon, if any. */
+  private _areaIcon(): string | undefined {
+    const areaId = this._config?.area;
+    if (!areaId) return undefined;
+    const areas = (this.hass as HassWithRegistries | undefined)?.areas;
+    return areas?.[areaId]?.icon ?? undefined;
   }
 
   /** Find the first entity in the card's area matching the wanted device class(es). */
@@ -858,7 +867,7 @@ export class TedRoomCard extends LitElement implements LovelaceCard {
             ${showHeaderIcon
               ? html`<ha-icon
                   class="status-heading-icon"
-                  .icon=${this._config.icon || "mdi:home"}
+                  .icon=${this._config.icon || this._areaIcon() || "mdi:home"}
                   style=${styleMap(headerIconSize ? { "--mdc-icon-size": `${headerIconSize}px` } : {})}
                 ></ha-icon>`
               : nothing}

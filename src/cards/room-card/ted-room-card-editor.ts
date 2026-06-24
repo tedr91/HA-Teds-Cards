@@ -61,8 +61,8 @@ const BUTTON_TYPE_META: Record<string, { label: string; icon: string }> = {
 
 const FIELD_LABELS: Record<string, string> = {
   area: "Area",
-  name: "Name",
-  icon: "Icon",
+  name: "Name (override)",
+  icon: "Icon (override)",
   theme: "Visual styling",
   brushed: "Brushed effect",
   show_header_icon: "Display icon in header",
@@ -660,8 +660,15 @@ export class TedRoomCardEditor extends LitElement implements LovelaceCardEditor 
         flatten: true,
         schema: [
           { name: "area", selector: { area: {} } },
-          { name: "name", selector: { text: {} } },
-          { name: "icon", selector: { icon: {} } },
+          {
+            type: "grid",
+            name: "",
+            column_min_width: "100px",
+            schema: [
+              { name: "name", selector: { text: {} } },
+              { name: "icon", selector: { icon: {} } },
+            ],
+          },
         ],
       },
       {

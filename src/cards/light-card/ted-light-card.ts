@@ -298,7 +298,7 @@ export class TedLightCard extends LitElement implements LovelaceCard {
               <span class="stripe-symbol stripe-minus" aria-hidden="true">−</span>
             `
           : nothing}
-        ${this._config.rocker !== false
+        ${rockerMode && !neumorphic
           ? html`<div class="divider" aria-hidden="true"></div>`
           : nothing}
         <div class=${classMap({ content: true, [`count-${visible.length}`]: true })}>
@@ -784,6 +784,7 @@ export class TedLightCard extends LitElement implements LovelaceCard {
       outline: none;
       pointer-events: auto;
       transition: color 180ms ease;
+      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4));
       -webkit-tap-highlight-color: transparent;
     }
     .icon-shape:focus-visible {

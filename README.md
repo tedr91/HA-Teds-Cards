@@ -329,6 +329,10 @@ px, matching a button).
 The newest entry below is used as the GitHub Release notes by the release workflow, so it shows in
 the Home Assistant / HACS **update** dialog when you update. Newest first.
 
+### v2.0.72
+
+- Credits: formally acknowledge [Clooos' Bubble Card](https://github.com/Clooos/Bubble-Card) as the loose inspiration for the Room Card, and add donation/support links for the projects this collection builds on.
+
 ### v2.0.71
 
 - All cards now appear in Home Assistant's **"Add to dashboard → By entity"** suggestions: pick a light/cover/remote/weather entity (or any entity for the Button card) and the matching Ted card is offered pre-filled. Picking an entity also suggests a **Room Card** for that entity's area.
@@ -555,10 +559,12 @@ The GitHub Actions workflow at `.github/workflows/release.yml` automatically bui
 
 ## Credits
 
-The Clock Weather Card was inspired by [pkissling/clock-weather-card](https://github.com/pkissling/clock-weather-card) and its fork [samuelgoodell/clock-weather-card-hui-icons](https://github.com/samuelgoodell/clock-weather-card-hui-icons) (both MIT).
+The Clock Weather Card was inspired by [pkissling's](https://github.com/pkissling) [clock-weather-card](https://github.com/pkissling/clock-weather-card). His card is great and has more weather info and such so I recommend you check it out!
 
-- **"Fancy" animated weather icons** — [Meteocons](https://github.com/basmilius/weather-icons) by [Bas Milius](https://github.com/basmilius), [MIT](./src/cards/clock-weather-card/icons/LICENSE). Bundled and mapped to Home Assistant conditions following pkissling/clock-weather-card.
-- **"Cool" weather icons** — the Home Assistant frontend weather SVGs, ported from [samuelgoodell/clock-weather-card-hui-icons](https://github.com/samuelgoodell/clock-weather-card-hui-icons) ([MIT](./src/cards/clock-weather-card/icons/LICENSE-hui-icons)), which adapts them from [home-assistant/frontend](https://github.com/home-assistant/frontend).
+- **"Fancy" animated weather icons** — [Meteocons](https://github.com/basmilius/meteocons) by [Bas Milius](https://github.com/basmilius). If you'd like to support Bas' work: [GitHub Sponsors](https://github.com/sponsors/basmilius).
+- **"Cool" weather icons** — the Home Assistant frontend weather SVGs, ported from [samuelgoodell/clock-weather-card-hui-icons](https://github.com/samuelgoodell/clock-weather-card-hui-icons), which adapts them from [home-assistant/frontend](https://github.com/home-assistant/frontend).
+
+The Room Card was loosely inspired by [Clooos/Bubble-Card](https://github.com/Clooos/Bubble-Card), whose button-driven layout shaped how my card came together. Clooos' BubbleCard is simply amazing and very feature-rich. If you'd like to support Clooos' work: [Buy Me a Coffee](https://www.buymeacoffee.com/clooos) · [GitHub Sponsors](https://github.com/sponsors/Clooos) · [Patreon](https://www.patreon.com/Clooos).
 
 ## License
 

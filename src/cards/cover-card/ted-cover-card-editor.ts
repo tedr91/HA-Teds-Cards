@@ -184,14 +184,6 @@ export class TedCoverCardEditor extends LitElement implements LovelaceCardEditor
               },
             },
           },
-          { name: "brushed", selector: { boolean: {} } },
-        ],
-      },
-      {
-        type: "grid",
-        name: "",
-        column_min_width: "100px",
-        schema: [
           {
             name: "mode",
             selector: {
@@ -204,7 +196,15 @@ export class TedCoverCardEditor extends LitElement implements LovelaceCardEditor
               },
             },
           },
-          { name: "rocker_effect", disabled: rockerOff, selector: { boolean: {} } },
+        ],
+      },
+      {
+        type: "grid",
+        name: "",
+        column_min_width: "100px",
+        schema: [
+          { name: "brushed", selector: { boolean: {} } },
+          { name: "rocker_effect", selector: { boolean: {} } },
         ],
       },
       {
@@ -445,7 +445,7 @@ export class TedCoverCardEditor extends LitElement implements LovelaceCardEditor
       case "rocker":
         return "Rocker";
       case "rocker_effect":
-        return "Rocker effect";
+        return "Neumorphic effect";
       case "show_name":
         return "Show name";
       case "name_scale":

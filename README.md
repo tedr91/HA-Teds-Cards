@@ -329,6 +329,11 @@ px, matching a button).
 The newest entry below is used as the GitHub Release notes by the release workflow, so it shows in
 the Home Assistant / HACS **update** dialog when you update. Newest first.
 
+### v2.0.68
+
+- Light & Cover Cards: the **Rocker effect** is now the **Neumorphic effect** and works in both modes — **Rocker style** shows two split paddles (one lit/raised, one sunken, flipping with state), while **Button style** raises the whole card when off and presses it in when on. The tints are translucent so they work over colored/brushed/photo backgrounds.
+- Light & Cover Cards: tidied the Appearance rows — **Visual styling** + **Mode** share a row, and **Brushed effect** + **Neumorphic effect** share the next.
+
 ### v2.0.67
 
 - Light & Cover Cards: the **Rocker effect** now has a softer, neumorphic-style depth — a lit highlight along the raised half and a gentle recess on the pressed half (both orientations).

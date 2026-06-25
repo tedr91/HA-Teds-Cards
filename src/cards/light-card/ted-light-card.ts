@@ -227,8 +227,10 @@ export class TedLightCard extends LitElement implements LovelaceCard {
     const nameScale = typeof this._config.name_scale === "number" ? this._config.name_scale : 100;
     const iconScale = typeof this._config.icon_scale === "number" ? this._config.icon_scale : 150;
     const stateScale = typeof this._config.state_scale === "number" ? this._config.state_scale : 100;
-    // The visual rocker effect only shows while the card behaves as a rocker.
-    const showRockerEffect = this._config.rocker !== false && this._config.rocker_effect !== false;
+    // Neumorphic effect: rocker style splits into two paddles (one raised, one
+    // pressed, flipping with state); button style is a single raised/pressed tile.
+    const neumorphic = this._config.rocker_effect !== false;
+    const rockerMode = this._config.rocker !== false;
 
     // The three content elements, laid out in the configured order. Visible
     // elements fill the card (no forced top/bottom-half clipping); the middle
@@ -269,8 +271,13 @@ export class TedLightCard extends LitElement implements LovelaceCard {
         @pointerleave=${this._onCardPointerUp}
       >
         ${this._config.brushed ? brushedOverlay : nothing}
-        ${showRockerEffect
-          ? html`<div class="ted-rocker${isOn ? " is-bottom" : ""}" aria-hidden="true"></div>`
+        ${neumorphic
+          ? rockerMode
+            ? html`
+                <div class="ted-neu top ${isOn ? "pressed" : "raised"}" aria-hidden="true"></div>
+                <div class="ted-neu bottom ${isOn ? "raised" : "pressed"}" aria-hidden="true"></div>
+              `
+            : html`<div class="ted-neu full ${isOn ? "pressed" : "raised"}" aria-hidden="true"></div>`
           : nothing}
         ${this._config.show_indicator !== false
           ? html`<div class="brightness" aria-hidden="true">

@@ -1,25 +1,52 @@
-# Ted's Cards
-
-A collection of custom Lovelace cards for [Home Assistant](https://www.home-assistant.io/), inspired by [Mushroom Cards](https://github.com/piitaya/lovelace-mushroom).
-
-![Ted's Cards — light and cover cards](images/showcase.png)
+[![hacs_badge](https://img.shields.io/badge/HACS-Default-orange.svg)](https://github.com/hacs/integration) ![GitHub Release](https://img.shields.io/github/v/release/tedr91/HA-Teds-Cards) ![GitHub Issues or Pull Requests](https://img.shields.io/github/issues/tedr91/HA-Teds-Cards) ![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/tedr91/HA-Teds-Cards/total) ![GitHub Repo stars](https://img.shields.io/github/stars/tedr91/HA-Teds-Cards) [![GitHub License](https://img.shields.io/github/license/tedr91/HA-Teds-Cards)](LICENSE)
 
 > **⚠️ Interim release — testing only.** This is a pre-release build published for testing purposes only and is not intended for production use. Features may change or break without notice.
 
+# Ted's Cards
+
+This is my collection of custom Lovelace cards for [Home Assistant](https://www.home-assistant.io/) that I use for my HA wall panels and handheld devices so I could achieve a consistent look and feel without a ton of styling overrides cluttering up my YAML files. 😊
+
+It all started with the Light Card -- after spending countless hours across multiple years in an attempt to find an "on/off/brightness" switch that I liked.  
+
 > **Status:** early development. Includes `ted-light-card`, `ted-cover-card`, `ted-remote-card`, and `ted-room-card`; more are planned.
 
-## Cards
+---
+
+## ✨ Card Types
 
 | Card | Type | Description |
 | --- | --- | --- |
 | Light Card | `custom:ted-light-card` | Light tile with click-to-dim halves and an indicator bar. |
 | Cover Card | `custom:ted-cover-card` | Cover tile with click-to-position halves and an indicator bar. |
-| Remote Card | `custom:ted-remote-card` | Remote control for Apple TV and Kaleidescape devices. |
+| Label / Button Card | `custom:ted-label-button-card` | Label or button tile with an optional entity, icon, and tap/hold actions. |
+| Clock Weather Card | `custom:ted-clock-weather-card` | A large clock with the date and current weather. |
+| Remote Card | `custom:ted-remote-card` | Remote control for media devices (e.g. Apple TV and Kaleidescape). |
 | Room Card | `custom:ted-room-card` | Overview card for a Home Assistant area. |
 
-## Installation
+---
 
-### HACS (recommended)
+## 📸 Screenshots
+![Ted's Cards — light and cover cards](images/showcase.png)
+
+---
+
+## 🔧 Requirements
+
+* Home Assistant
+* One or more calendar entities (e.g. `calendar.family`, `calendar.work`)
+
+---
+
+## 🚀 Installation
+
+### Recommended: Install via HACS
+
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=tedr91&repository=ha-teds-card&category=frontend)
+
+OR
+
+<details>
+<summary>Add custom repository</summary>
 
 1. Open HACS in Home Assistant.
 2. Go to **Frontend** → menu (⋮) → **Custom repositories**.
@@ -27,7 +54,17 @@ A collection of custom Lovelace cards for [Home Assistant](https://www.home-assi
 4. Search for **Ted's Cards** and install.
 5. Refresh your browser.
 
-### Manual
+</details>
+
+👉 If you don’t have HACS yet, follow: [https://hacs.xyz/docs/use/](https://hacs.xyz/docs/use/)
+
+---
+
+### Manual Installation
+
+<details>
+
+<summary>Without HACS</summary>
 
 1. Download `ted-cards.js` from the [latest release](https://github.com/tedr91/HA-Teds-Cards/releases/latest).
 2. Copy it to `<config>/www/community/ted-cards/ted-cards.js`.
@@ -37,9 +74,16 @@ A collection of custom Lovelace cards for [Home Assistant](https://www.home-assi
    - Type: **JavaScript Module**
 4. Refresh your browser.
 
-## Usage
+💡 After updates, bump the version (`?v=2`) to avoid caching issues.
 
-### Light Card
+</details>
+
+
+---
+
+## 📖 Usage
+
+### 💡 Light Card
 
 A compact light tile split into two clickable halves by a subtle divider. Supports `light`
 entities only. Brightness is shown on a thin vertical indicator bar on the card's left edge.
@@ -58,6 +102,10 @@ Available actions: **Increase brightness**, **Decrease brightness**, **Full on (
 
 For **toggle-only** lights (no brightness support), the upper-half single tap defaults to **Full on** and the lower-half single tap to **Turn off**; the left indicator bar shows full when on and empty when off.
 
+<p align="center">
+  <img src="images/cards/light-card.png" alt="Light Card preview" width="220" />
+</p>
+
 Minimal config:
 
 ```yaml
@@ -65,7 +113,8 @@ type: custom:ted-light-card
 entity: light.living_room
 ```
 
-All options:
+<details>
+<summary><b>Detailed options</b></summary>
 
 ```yaml
 type: custom:ted-light-card
@@ -103,7 +152,7 @@ The icon is centered in the card and lights up when the light is on. `icon_color
 
 Also in the **Appearance** section: `show_name`, `show_icon`, and `show_state` (all default **on**) toggle the name, centered icon, and the state/brightness label; `name_scale`, `icon_scale`, and `state_scale` (percent, default `100`) scale the name text, icon, and state label. `width` and `height` (px, default `100` × `120` vertical, `240` × `80` horizontal) set the card's fixed size when it is **not** a direct item in a grid (Sections) view — e.g. inside a stack, masonry, or panel view. As a direct grid item the card honors the grid cell size instead.
 
-### Switch Behavior
+**Switch Behavior**
 
 The editor's **Switch Behavior** section lets you reassign the action for every region × gesture. It contains three groups — **UP behavior**, **DOWN behavior**, and **Icon behavior** — each exposing a **Single tap**, **Double tap**, and **Long press** action picker. The config keys are `up_tap` / `up_double_tap` / `up_hold`, `down_tap` / `down_double_tap` / `down_hold`, and `icon_tap` / `icon_double_tap` / `icon_hold`. Any option left at its default is omitted from the saved YAML.
 
@@ -113,7 +162,7 @@ down_double_tap: toggle
 icon_hold: none
 ```
 
-### Memory (dimmable lights)
+**Memory (dimmable lights)**
 
 For dimmable lights you can choose the brightness the light turns **on** to. The editor shows a **Memory** section (only for brightness-capable lights) with three modes:
 - `off` (default): turn on at the light's last brightness (standard Home Assistant behavior).
@@ -128,7 +177,9 @@ memory_mode: helper
 memory_entity: input_number.living_room_brightness
 ```
 
-### Cover Card
+</details>
+
+### 🪟 Cover Card
 
 A compact cover tile split into two clickable halves by a subtle divider. Supports `cover`
 entities only (blinds, shades, shutters, curtains, garage doors, …). The current position is
@@ -156,6 +207,10 @@ For **open/close-only** covers (no position support), the upper-half single tap 
 open** and the lower-half to **Fully closed**. Tilt-only covers use their tilt position as the
 primary value driven by the up/down regions.
 
+<p align="center">
+  <img src="images/cards/cover-card.png" alt="Cover Card preview" width="220" />
+</p>
+
 Minimal config:
 
 ```yaml
@@ -163,7 +218,8 @@ type: custom:ted-cover-card
 entity: cover.living_room_blinds
 ```
 
-All options:
+<details>
+<summary><b>Detailed options</b></summary>
 
 ```yaml
 type: custom:ted-cover-card
@@ -195,7 +251,7 @@ cover's current position.
 
 Also in the **Appearance** section: `show_name`, `show_icon`, and `show_state` (all default **on**) toggle the name, centered icon, and the state/position label; `name_scale`, `icon_scale`, and `state_scale` (percent, default `100`) scale the name text, icon, and state label. `width` and `height` (px, default `100` × `120` vertical, `240` × `80` horizontal) set the card's fixed size when it is **not** a direct item in a grid (Sections) view — e.g. inside a stack, masonry, or panel view. As a direct grid item the card honors the grid cell size instead.
 
-### Switch Behavior (cover)
+**Switch Behavior**
 
 The **Switch Behavior** section reassigns the action for every region × gesture, grouped into **UP
 behavior**, **DOWN behavior**, and **Icon behavior**. Config keys are `up_tap` / `up_double_tap` /
@@ -207,7 +263,7 @@ up_tap: open_step          # open_step | close_step | open | close | toggle | st
 icon_hold: stop
 ```
 
-### Memory (position-capable covers)
+**Memory (position-capable covers)**
 
 For covers that support `set_cover_position` you can choose the position the cover **opens** to. The
 editor shows a **Memory** section (only for position-capable covers) with three modes:
@@ -224,12 +280,232 @@ memory_mode: helper
 memory_entity: input_number.blinds_position
 ```
 
-### Room Card
+</details>
+
+### 🏷️👆 Label / Button Card
+
+A small, versatile tile that works as either a **label** or a **button**. The entity is optional: with
+no entity it's a static label (or an action button via the tap/hold actions); with an entity it shows
+the entity's state and toggles (or opens more-info) by default. It's also the button type used inside
+**Room Card** sections.
+
+<p align="center">
+  <img src="images/cards/label-button-card.png" alt="Label / Button Card preview" width="220" />
+</p>
+
+Minimal config (button bound to an entity):
+
+```yaml
+type: custom:ted-label-button-card
+entity: light.living_room
+```
+
+Minimal config (plain label):
+
+```yaml
+type: custom:ted-label-button-card
+name: Scene
+```
+
+<details>
+<summary><b>Detailed options</b></summary>
+
+```yaml
+type: custom:ted-label-button-card
+entity: light.living_room   # optional, the entity to control / show
+name: Living Room           # optional label text, defaults to the entity friendly name
+icon: mdi:lightbulb         # optional, defaults to the entity icon
+theme: ted-style            # optional, visual styling: ted-style (default) | ha
+icon_color: amber           # optional icon color (theme color name or #RRGGBB)
+background: '#1c1c1c'        # optional background color override
+brushed: false              # optional brushed-metal sheen over the background
+neumorphic: true            # raised tile when off/idle, pressed when the entity is active
+show_name: true             # show the name/label
+name_scale: 100             # name text size, % (10–300)
+show_icon: true             # show the icon
+icon_scale: 100             # icon size, % (10–300)
+show_state: true            # show the entity state under the name
+state_scale: 100            # state text size, % (10–300)
+tap_action:                 # optional, see Interactions below
+  action: toggle
+hold_action:
+  action: more-info
+double_tap_action:
+  action: none
+```
+
+`theme` and `brushed` work as in the other cards (see the Light Card section). `icon_color` and
+`background` are picked with the editor's color picker; leave them unset to follow the theme.
+
+`neumorphic` (default **on**, in the **Appearance** section): a soft "neumorphic" effect — the tile
+looks **raised** when the entity is off/idle (or has no entity) and **pressed in** when the entity is
+active (e.g. a light `on`, a cover `open`, a media player `playing`, a lock `unlocked`).
+
+In the **Appearance** section, `show_name` / `show_icon` / `show_state` (all default **on**) toggle the
+label, icon, and the entity-state line, and `name_scale` / `icon_scale` / `state_scale` (percent,
+default `100`) scale each of them.
+
+**Interactions** — the editor's **Interactions** section sets `tap_action`, `hold_action`, and (under
+**Add interaction**) `double_tap_action`, using Home Assistant's standard action picker (toggle,
+more-info, navigate, call-service, etc.). Defaults adapt to the entity: **tap** is `toggle` for
+toggleable domains (light, switch, fan, cover, lock, climate, media_player, …) and `more-info`
+otherwise; **hold** is `more-info` when an entity is set. With no entity, both default to nothing.
+
+</details>
+
+### 🕒⛅ Clock Weather Card
+
+A large clock with the current date and weather, designed to sit transparently on top of a dashboard
+background. The clock, date, and weather can each be shown or hidden and positioned independently.
+
+<p align="center">
+  <img src="images/cards/clock-weather-card.png" alt="Clock Weather Card preview" width="420" />
+</p>
+
+Minimal config:
+
+```yaml
+type: custom:ted-clock-weather-card
+weather_entity: weather.home
+```
+
+<details>
+<summary><b>Detailed options</b></summary>
+
+```yaml
+type: custom:ted-clock-weather-card
+theme: ted-style            # optional, visual styling: ted-style (default) | ha
+force_transparent: true     # transparent card background (default true)
+background: '#1c1c1c'        # background color override (only used when force_transparent: false)
+brushed: false              # optional brushed-metal sheen over the background
+# Clock
+show_clock: true
+clock_size: large           # small (60%) | medium (80%) | large (100%, default) | extra_large (120%) | custom
+clock_size_custom: 100      # size %, used when clock_size: custom (10–400)
+clock_offset: 0             # horizontal position: 0 = left, 50 = center, 100 = right
+time_format: auto           # auto (default) | 12h | 24h | custom
+time_format_custom: 'H:MM'  # token string, used when time_format: custom
+# Date
+show_date: true
+date_size: standard         # standard (default) | custom
+date_size_custom: 100       # size %, used when date_size: custom
+date_format: standard       # standard (default) | custom
+date_format_custom: 'dddd, MMMM D'   # token string, used when date_format: custom
+date_below_clock: false     # stack the date directly under the clock
+date_offset: 100            # horizontal position: 0 = left, 50 = center, 100 = right
+# Weather
+show_weather: true
+weather_entity: weather.home   # a weather entity
+weather_size: standard      # standard (default) | custom
+weather_size_custom: 100    # size %, used when weather_size: custom
+show_weather_icon: false    # show the condition icon next to the temperature
+show_current_temp: true     # show the current temperature
+weather_above_clock: false  # place the weather above the clock instead of below
+weather_offset: 100         # horizontal position: 0 = left, 50 = center, 100 = right
+icon_style: fancy           # basic | cool | fancy (default)
+```
+
+`theme` and `brushed` work as in the other cards (see the Light Card section). `force_transparent`
+(default **on**) drops the card background so the clock floats over your dashboard; turn it **off** to
+use the theme background or a `background` color override.
+
+The editor groups the rest into **Clock Settings**, **Date Settings**, **Weather Settings**, and a
+**Layout** section:
+
+- **Sizes** — `clock_size`, `date_size`, and `weather_size` use preset percentages, or set them to
+  **Custom** to enter an exact percent (`*_size_custom`).
+- **Time / date format** — `time_format` (`auto` follows your Home Assistant locale) and `date_format`
+  both offer a **Custom** mode where you supply a token string (`time_format_custom`,
+  `date_format_custom`).
+- **Layout** — `show_clock` / `show_date` / `show_weather` toggle each element, and `clock_offset`,
+  `date_offset`, and `weather_offset` slide each one horizontally (0 left ↔ 50 center ↔ 100 right).
+  `date_below_clock` stacks the date under the clock, and `weather_above_clock` moves the weather
+  above it.
+
+**Weather icon styles** (`icon_style`): **Basic** (Material Design weather icons), **Cool** (the Home
+Assistant frontend weather SVGs), or **Fancy** (animated Meteocons — the default). See
+[Credits](#credits) for icon attribution.
+
+</details>
+
+### 🎛️ Remote Card
+
+A remote-control card for **Apple TV** and **Kaleidescape** players. The device family is auto-detected
+from the remote entity's integration — Apple TV uses the built-in `apple_tv` integration, while
+Kaleidescape uses the custom [`kaleidescape_strato`](https://github.com/tedr91/HA-kaleidescape-strato)
+integration (note: **not** the built-in Kaleidescape integration). Buttons send `remote.send_command`
+calls to the selected entity.
+
+<p align="center">
+  <img src="images/cards/remote-card.png" alt="Remote Card preview" width="260" />
+</p>
+
+Minimal config:
+
+```yaml
+type: custom:ted-remote-card
+remote_entity: remote.living_room_apple_tv
+```
+
+<details>
+<summary><b>Detailed options</b></summary>
+
+```yaml
+type: custom:ted-remote-card
+remote_entity: remote.living_room_apple_tv             # required, the remote. entity (Apple TV or Kaleidescape)
+media_player_entity: media_player.living_room_apple_tv  # recommended, drives state + play/pause + power
+name: Living Room            # optional header name
+theme: manufacturer          # visual styling: manufacturer (default) | ted-style | ha
+background: '#1c1c1c'         # optional background color override
+brushed: false               # optional brushed-metal sheen over the background
+show_icon: true              # show the device icon in the header
+icon_scale: 100              # icon size, % (10–300)
+show_name: false             # show the name in the header
+name_scale: 100              # name size, % (10–300)
+scale: 100                   # overall card scale, % (50–200)
+show_status_indicator: false # on/off/playing status dot in the header
+# Apple TV only — quick-launch app buttons (each value is a media_player source name)
+app_launch_1: Netflix
+app_launch_2: Disney+
+app_launch_3: YouTube
+# Kaleidescape only — where the Home button navigates
+kaleidescape_home: home      # home (default) | movie_covers | movie_list | movie_collections | system_status
+```
+
+`remote_entity` (required) is the `remote.*` entity that receives the button commands. The entity
+pickers are limited to the two supported integrations, and the **device family is detected
+automatically** from your selection — there's no family dropdown.
+
+`media_player_entity` (recommended) is a matching `media_player.*` entity used to show the current
+state and to make the **power** and **play/pause** buttons state-aware. When you pick the remote, the
+card tries to auto-fill the matching media player (an entity on the same device first, then by name).
+
+`theme` (in the **Appearance** section) offers **Manufacturer's Style** (default — a per-device look
+resembling the real remote), **Ted's Style** (the self-contained "Ted's Home Theater" look), or
+**Home Assistant theme**. `background` and `brushed` work as in the other cards (see the Light Card
+section). The header is controlled by `show_icon` / `icon_scale`, `show_name` / `name_scale`, and
+`show_status_indicator`; `scale` resizes the whole remote (50–200%).
+
+**App Launchers** (Apple TV only) — up to six quick-launch buttons. Each `app_launch_N` is a
+media_player **source** name; when a media player is configured the editor offers a dropdown of its
+available sources.
+
+**Home button target** (Kaleidescape only) — `kaleidescape_home` chooses where the **Home** button
+navigates: **Home** (default), **Movie covers**, **Movie list**, **Movie collections**, or **System
+status**.
+
+</details>
+
+### 🏠 Room Card
 
 An overview card for a Home Assistant **area**, with a compact **status bar** along the top edge and
 one or more **button sections** below it. The area is the card's primary selection, made in the
 editor's **Room** section (an Area picker fed by your Home Assistant areas); it also seeds default
 temperature/occupancy entities for new status items.
+
+<p align="center">
+  <img src="images/cards/room-card.png" alt="Room Card preview" width="420" />
+</p>
 
 Minimal config:
 
@@ -238,7 +514,8 @@ type: custom:ted-room-card
 area: living_room
 ```
 
-All options:
+<details>
+<summary><b>Detailed options</b></summary>
 
 ```yaml
 type: custom:ted-room-card
@@ -323,8 +600,11 @@ non-interactive placeholder whose only option is its **Size** in px. Status-stri
 horizontal gap (default `24` px); button-section spacers reserve an empty square cell (default `100`
 px, matching a button).
 
+</details>
 
-## Changelog
+---
+
+## 📋 Changelog
 
 The newest entry below is used as the GitHub Release notes by the release workflow, so it shows in
 the Home Assistant / HACS **update** dialog when you update. Newest first.
@@ -336,6 +616,9 @@ the Home Assistant / HACS **update** dialog when you update. Newest first.
 ### v2.0.71
 
 - All cards now appear in Home Assistant's **"Add to dashboard → By entity"** suggestions: pick a light/cover/remote/weather entity (or any entity for the Button card) and the matching Ted card is offered pre-filled. Picking an entity also suggests a **Room Card** for that entity's area.
+
+<details>
+<summary>Previous Releases</summary>
 
 ### v2.0.70
 
@@ -541,6 +824,7 @@ the Home Assistant / HACS **update** dialog when you update. Newest first.
 
 - Built out the Room Card: a top **status bar** (temperature, occupancy, brightness slider, volume slider, and status LEDs) and configurable **button sections** (label, cover, and light buttons laid out 5 per row, with a max-rows cap and an overflow button).
 
+</details>
 
 ## Development
 
@@ -553,18 +837,42 @@ npm run typecheck  # tsc --noEmit
 
 To test against a running Home Assistant instance, copy `dist/ted-cards.js` into `<config>/www/` and add it as a Lovelace resource (type: JavaScript Module).
 
-## Releasing
+---
 
-The GitHub Actions workflow at `.github/workflows/release.yml` automatically builds `ted-cards.js` and attaches it to any GitHub Release. To cut a release: add a `### vX.Y.Z` entry to the [Changelog](#changelog), bump the version in `package.json`, push a `vX.Y.Z` tag, and publish a release. The workflow builds and attaches the asset and sets the GitHub Release notes from the matching changelog entry, so those notes appear in the Home Assistant / HACS update dialog. HACS picks up the new asset.
+## 💪 Support
 
-## Credits
+If you'd like to support future development, simply following and starring the projects you enjoy is more than enough. ❤️
 
-The Clock Weather Card was inspired by [pkissling's](https://github.com/pkissling) [clock-weather-card](https://github.com/pkissling/clock-weather-card). His card is great and has more weather info and such so I recommend you check it out!
+But please take a look in the Acknowledgements section below and consider supporting those amazing creators instead!
 
-- **"Fancy" animated weather icons** — [Meteocons](https://github.com/basmilius/meteocons) by [Bas Milius](https://github.com/basmilius). If you'd like to support Bas' work: [GitHub Sponsors](https://github.com/sponsors/basmilius).
-- **"Cool" weather icons** — the Home Assistant frontend weather SVGs, ported from [samuelgoodell/clock-weather-card-hui-icons](https://github.com/samuelgoodell/clock-weather-card-hui-icons), which adapts them from [home-assistant/frontend](https://github.com/home-assistant/frontend).
+---
 
-The Room Card was loosely inspired by [Clooos/Bubble-Card](https://github.com/Clooos/Bubble-Card), whose button-driven layout shaped how my card came together. Clooos' BubbleCard is simply amazing and very feature-rich. If you'd like to support Clooos' work: [Buy Me a Coffee](https://www.buymeacoffee.com/clooos) · [GitHub Sponsors](https://github.com/sponsors/Clooos) · [Patreon](https://www.patreon.com/Clooos).
+## 💕 Acknowledgements
+
+The **Clock Weather Card** was inspired by [Patrick Kissling](https://github.com/pkissling)'s [clock-weather-card](https://github.com/pkissling/clock-weather-card). 
+- His card is fantastic and has more weather info and such so I recommend you check it out!
+
+
+The **"Fancy"** animated weather icons I used are from [Meteocons](https://github.com/basmilius/meteocons) by [Bas Milius](https://github.com/basmilius). 
+  - If you'd like to support **Bas**' work: 
+
+    [![GitHub Sponsors](https://img.shields.io/badge/Sponsor-GitHub%20Sponsors-pink?style=for-the-badge&logo=github)](https://github.com/sponsors/basmilius)
+
+
+The **Remote Card** was heavily inspired by the *outstanding* [Firemote](https://github.com/PRProd/HA-Firemote) card by Doug Nelson ([PRProd](https://github.com/PRProd)). Firemote supports so many devices/remotes and is very well done! My remote card pales in comparison and only really exists because of the specific look/feel I want for my home theater control panels. 
+  - Please consider supporting **PRProd**'s work: 
+
+    [![Buy me a coffee](https://img.shields.io/badge/Donate-Buy%20me%20a%20coffee-yellow?style=for-the-badge&logo=buy-me-a-coffee)](https://www.buymeacoffee.com/prprod) 
+
+
+The **Room Card** was loosely inspired by [Clooos](https://github.com/Clooos)'s [Bubble-Card](https://github.com/Clooos/Bubble-Card), whose button-driven layout shaped how my card came together. Bubble-Card is simply amazing and *very* feature-rich! 
+- If you'd like to support **Clooos**' work: 
+
+  [![Buy me a beer](https://img.shields.io/badge/Donate-Buy%20me%20a%20beer-yellow?style=for-the-badge&logo=buy-me-a-coffee)](https://www.buymeacoffee.com/clooos) 
+  [![PayPal](https://img.shields.io/badge/Donate-PayPal-blue?logo=paypal&style=for-the-badge)](https://www.paypal.com/donate/?business=MRVBV9PLT9ZPL&no_recurring=0&item_name=Hi%2C+I%27m+Clooos+the+creator+of+Bubble+Card.+Thank+you+for+supporting+me+and+my+passion.+You+are+awesome%21+%F0%9F%8D%BB&currency_code=EUR) 
+  [![Patreon Clooos](https://img.shields.io/badge/Patreon-Clooos-orange?logo=patreon&style=for-the-badge)](https://www.patreon.com/Clooos)
+
+--- 
 
 ## License
 

@@ -215,6 +215,14 @@ registerCustomCard({
   description: ROOM_CARD_DESCRIPTION,
   preview: true,
   documentationURL: "https://github.com/tedr91/HA-Teds-Cards#room-card",
+  // Suggest a Room Card for the area that the picked entity belongs to.
+  getEntitySuggestion: (hass, entityId) => {
+    const h = hass as HassWithRegistries;
+    const entry = h.entities?.[entityId];
+    const areaId =
+      entry?.area_id ?? (entry?.device_id ? h.devices?.[entry.device_id]?.area_id : undefined);
+    return areaId ? { config: { type: `custom:${ROOM_CARD_TYPE}`, area: areaId } } : null;
+  },
 });
 
 @customElement(ROOM_CARD_TYPE)

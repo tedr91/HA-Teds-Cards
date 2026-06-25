@@ -79,6 +79,10 @@ registerCustomCard({
   description: LIGHT_CARD_DESCRIPTION,
   preview: true,
   documentationURL: "https://github.com/tedr91/HA-Teds-Cards#light-card",
+  getEntitySuggestion: (_hass, entityId) =>
+    entityId.startsWith("light.")
+      ? { config: { type: `custom:${LIGHT_CARD_TYPE}`, entity: entityId } }
+      : null,
 });
 
 @customElement(LIGHT_CARD_TYPE)

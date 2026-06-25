@@ -114,6 +114,9 @@ registerCustomCard({
   description: LABEL_BUTTON_CARD_DESCRIPTION,
   preview: true,
   documentationURL: "https://github.com/tedr91/HA-Teds-Cards#label--button-card",
+  getEntitySuggestion: (_hass, entityId) => ({
+    config: { type: `custom:${LABEL_BUTTON_CARD_TYPE}`, entity: entityId },
+  }),
 });
 
 @customElement(LABEL_BUTTON_CARD_TYPE)

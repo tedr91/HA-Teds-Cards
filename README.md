@@ -329,6 +329,10 @@ px, matching a button).
 The newest entry below is used as the GitHub Release notes by the release workflow, so it shows in
 the Home Assistant / HACS **update** dialog when you update. Newest first.
 
+### v2.0.71
+
+- All cards now appear in Home Assistant's **"Add to dashboard → By entity"** suggestions: pick a light/cover/remote/weather entity (or any entity for the Button card) and the matching Ted card is offered pre-filled. Picking an entity also suggests a **Room Card** for that entity's area.
+
 ### v2.0.70
 
 - Button Card: added the **Neumorphic effect** (on by default) — a raised tile that presses in when the bound entity is active — plus a subtle drop shadow behind the icon.

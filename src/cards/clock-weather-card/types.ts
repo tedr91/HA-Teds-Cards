@@ -47,6 +47,4 @@ export interface ClockWeatherCardConfig extends LovelaceCardConfig {
   /** Horizontal position offset, 0 (left) – 100 (right). */
   weather_offset?: number;
   icon_style?: IconStyle;
-  /** @deprecated replaced by `icon_style`. */
-  fancy_icons?: boolean;
 }

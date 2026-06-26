@@ -8,8 +8,6 @@ This is my collection of custom Lovelace cards for [Home Assistant](https://www.
 
 It all started with the Light Card -- after spending countless hours across multiple years in an attempt to find an "on/off/brightness" switch that I liked.  
 
-> **Status:** early development. Includes `ted-light-card`, `ted-cover-card`, `ted-remote-card`, and `ted-room-card`; more are planned.
-
 ---
 
 ## ✨ Card Types
@@ -304,7 +302,7 @@ Minimal config (plain label):
 
 ```yaml
 type: custom:ted-label-button-card
-name: Scene
+name: Hello, world!
 ```
 
 <details>
@@ -398,11 +396,11 @@ show_weather: true
 weather_entity: weather.home   # a weather entity
 weather_size: standard      # standard (default) | custom
 weather_size_custom: 100    # size %, used when weather_size: custom
-show_weather_icon: false    # show the condition icon next to the temperature
+show_weather_icon: true     # show the condition icon (default true)
+icon_style: fancy           # fancy (default) | cool | basic
 show_current_temp: true     # show the current temperature
 weather_above_clock: false  # place the weather above the clock instead of below
 weather_offset: 100         # horizontal position: 0 = left, 50 = center, 100 = right
-icon_style: fancy           # basic | cool | fancy (default)
 ```
 
 `theme` and `brushed` work as in the other cards (see the Light Card section). `force_transparent`
@@ -422,9 +420,9 @@ The editor groups the rest into **Clock Settings**, **Date Settings**, **Weather
   `date_below_clock` stacks the date under the clock, and `weather_above_clock` moves the weather
   above it.
 
-**Weather icon styles** (`icon_style`): **Basic** (Material Design weather icons), **Cool** (the Home
-Assistant frontend weather SVGs), or **Fancy** (animated Meteocons — the default). See
-[Credits](#credits) for icon attribution.
+**Weather icon styles** (`icon_style`, shown when **Show weather icon** is on): **Fancy** (animated
+Meteocons — the default), **Cool** (the Home Assistant frontend weather SVGs), or **Basic** (Material
+Design weather icons). See [Credits](#credits) for icon attribution.
 
 </details>
 
@@ -609,16 +607,21 @@ px, matching a button).
 The newest entry below is used as the GitHub Release notes by the release workflow, so it shows in
 the Home Assistant / HACS **update** dialog when you update. Newest first.
 
+### v2.0.73
+
+- Clock Weather Card: **Show weather icon** now defaults to on, and the **Weather icon style** picker is disabled while the icon is hidden. The weather entity auto-fills only when the card is first added (editing an existing card no longer overrides it), and the Weather Settings editor is tidied (Weather size sits directly under the entity).
+- Docs: every card now has a preview image and a collapsible **Detailed options** section in the README, and the Room Card credits [Clooos' Bubble Card](https://github.com/Clooos/Bubble-Card).
+
 ### v2.0.72
 
 - Credits: formally acknowledge [Clooos' Bubble Card](https://github.com/Clooos/Bubble-Card) as the loose inspiration for the Room Card, and add donation/support links for the projects this collection builds on.
 
+<details>
+<summary>Previous release notes</summary>
+
 ### v2.0.71
 
 - All cards now appear in Home Assistant's **"Add to dashboard → By entity"** suggestions: pick a light/cover/remote/weather entity (or any entity for the Button card) and the matching Ted card is offered pre-filled. Picking an entity also suggests a **Room Card** for that entity's area.
-
-<details>
-<summary>Previous Releases</summary>
 
 ### v2.0.70
 

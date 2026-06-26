@@ -61,9 +61,6 @@ export class TedClockWeatherCardEditor extends LitElement implements LovelaceCar
   }
 
   private _defaults(): Partial<ClockWeatherCardConfig> {
-    const weatherEntity = this.hass
-      ? Object.keys(this.hass.states).find((id) => id.startsWith("weather."))
-      : undefined;
     return {
       theme: "ted-style",
       force_transparent: true,
@@ -84,12 +81,11 @@ export class TedClockWeatherCardEditor extends LitElement implements LovelaceCar
       show_weather: true,
       weather_size: "standard",
       weather_size_custom: 100,
-      show_weather_icon: false,
+      show_weather_icon: true,
       show_current_temp: true,
       weather_above_clock: false,
       weather_offset: 100,
       icon_style: "fancy",
-      weather_entity: weatherEntity,
     };
   }
 
@@ -209,27 +205,6 @@ export class TedClockWeatherCardEditor extends LitElement implements LovelaceCar
     const weather: Array<Record<string, unknown>> = [
       { name: "weather_entity", selector: { entity: { domain: "weather" } } },
       {
-        type: "grid",
-        name: "",
-        schema: [
-          { name: "show_weather_icon", selector: { boolean: {} } },
-          { name: "show_current_temp", selector: { boolean: {} } },
-        ],
-      },
-      {
-        name: "icon_style",
-        selector: {
-          select: {
-            mode: "dropdown",
-            options: [
-              { value: "basic", label: "Basic" },
-              { value: "cool", label: "Cool" },
-              { value: "fancy", label: "Fancy (default)" },
-            ],
-          },
-        },
-      },
-      {
         name: "weather_size",
         selector: {
           select: {
@@ -245,6 +220,24 @@ export class TedClockWeatherCardEditor extends LitElement implements LovelaceCar
     if (cfg.weather_size === "custom") {
       weather.push({ name: "weather_size_custom", selector: this._scaleSelector() });
     }
+    weather.push(
+      { name: "show_weather_icon", selector: { boolean: {} } },
+      {
+        name: "icon_style",
+        disabled: cfg.show_weather_icon === false,
+        selector: {
+          select: {
+            mode: "dropdown",
+            options: [
+              { value: "fancy", label: "Fancy (default)" },
+              { value: "cool", label: "Cool" },
+              { value: "basic", label: "Basic" },
+            ],
+          },
+        },
+      },
+      { name: "show_current_temp", selector: { boolean: {} } },
+    );
 
     return [
       {
@@ -396,7 +389,7 @@ export class TedClockWeatherCardEditor extends LitElement implements LovelaceCar
       case "weather_entity":
         return "Weather entity";
       case "icon_style":
-        return "Icon style";
+        return "Weather icon style";
       case "show_weather_icon":
         return "Show weather icon";
       case "show_current_temp":

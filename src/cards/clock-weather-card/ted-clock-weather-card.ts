@@ -430,7 +430,6 @@ export class TedClockWeatherCard extends LitElement implements LovelaceCard {
     const showClock = this._config.show_clock !== false;
     const showDate = this._config.show_date !== false;
     const showWeather = this._config.show_weather !== false;
-    const showIcon = this._config.show_weather_icon === true; // default false
     const showTemp = this._config.show_current_temp !== false; // default true
 
     const cardClasses = {
@@ -452,8 +451,8 @@ export class TedClockWeatherCard extends LitElement implements LovelaceCard {
     const { main: timeMain, suffix: timeSuffix } = this._timeParts();
     const dateText = this._dateText();
     const temp = this._tempText();
-    const iconStyle =
-      this._config.icon_style ?? (this._config.fancy_icons === false ? "basic" : "fancy");
+    const iconStyle = this._config.icon_style ?? "fancy";
+    const showIcon = this._config.show_weather_icon !== false;
     const icon = this._weatherIcon();
     const weatherVisible = showWeather && (showIcon || (showTemp && temp != null));
 
@@ -468,11 +467,11 @@ export class TedClockWeatherCard extends LitElement implements LovelaceCard {
     const dateBelow = this._config.date_below_clock === true || !canOverlay(dateOff);
 
     let iconEl;
-    if (iconStyle === "basic") {
+    if (showIcon && iconStyle === "basic") {
       iconEl = html`<ha-icon class="wicon" .icon=${icon}></ha-icon>`;
-    } else if (iconStyle === "cool") {
+    } else if (showIcon && iconStyle === "cool") {
       iconEl = html`<span class="wicon wicon-cool">${unsafeSVG(coolWeatherIcon(this._weatherCondition()))}</span>`;
-    } else {
+    } else if (showIcon) {
       iconEl = html`<span class="wicon wicon-fancy">${unsafeSVG(this._fancyWeatherIcon())}</span>`;
     }
     const weatherInner = html`

@@ -254,7 +254,7 @@ const CARDS = [
       {
         tag: "ted-clock-weather-card",
         frame: { width: "340px", height: "auto" },
-        config: { weather_entity: "weather.home", show_weather_icon: true, show_current_temp: true },
+        config: { weather_entity: "weather.home", show_current_temp: true },
         states: {
           "weather.home": {
             entity_id: "weather.home",

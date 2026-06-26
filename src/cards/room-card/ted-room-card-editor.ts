@@ -15,6 +15,7 @@ import {
   ROOM_BUTTON_CARD_TYPES,
   ROOM_CARD_EDITOR_TYPE,
   STATUS_ITEM_DEFAULT_ICON,
+  STATUS_ITEM_DEFAULT_DISPLAY,
   STATUS_ITEM_LABEL,
 } from "./const";
 import type {
@@ -79,6 +80,7 @@ const FIELD_LABELS: Record<string, string> = {
   area: "Area",
   name: "Name (override)",
   icon: "Icon (override)",
+  display: "Display",
   theme: "Visual styling",
   brushed: "Brushed effect",
   show_header_icon: "Display icon in header",
@@ -348,13 +350,32 @@ export class TedRoomCardEditor extends LitElement implements LovelaceCardEditor 
 
   // --- Status items ---------------------------------------------------------
 
+  /** Form data for a status item, with the per-type default display filled in. */
+  private _statusItemData(item: RoomStatusItem): Record<string, unknown> {
+    if (item.type === "spacer") return { ...item };
+    return { ...item, display: item.display ?? STATUS_ITEM_DEFAULT_DISPLAY[item.type] };
+  }
+
   private _statusItemSchema(type: RoomStatusItemType): unknown[] {
     const icon = { name: "icon", selector: { icon: {} } };
     const name = { name: "name", selector: { text: {} } };
+    const display = {
+      name: "display",
+      selector: {
+        select: {
+          mode: "dropdown",
+          options: [
+            { value: "both", label: "Both" },
+            { value: "icon", label: "Icon only" },
+            { value: "state", label: "State only" },
+          ],
+        },
+      },
+    };
     switch (type) {
       case "temperature":
       case "occupancy":
-        return [{ name: "entity", selector: { entity: {} } }, icon, name];
+        return [{ name: "entity", selector: { entity: {} } }, display, icon, name];
       case "brightness":
         return [
           {
@@ -364,18 +385,21 @@ export class TedRoomCardEditor extends LitElement implements LovelaceCardEditor 
               entity: { filter: [{ domain: "light" }, { domain: "number" }, { domain: "input_number" }] },
             },
           },
+          display,
           icon,
           name,
         ];
       case "volume":
         return [
           { name: "entity", required: true, selector: { entity: { filter: { domain: "media_player" } } } },
+          display,
           icon,
           name,
         ];
       case "led":
         return [
           { name: "entity", required: true, selector: { entity: {} } },
+          display,
           { name: "on_color", selector: { ui_color: {} } },
           { name: "off_color", selector: { ui_color: {} } },
           name,
@@ -437,7 +461,7 @@ export class TedRoomCardEditor extends LitElement implements LovelaceCardEditor 
         <div class="panel-content">
           <ha-form
             .hass=${this.hass}
-            .data=${item}
+            .data=${this._statusItemData(item)}
             .schema=${this._statusItemSchema(item.type)}
             .computeLabel=${this._computeLabel}
             @value-changed=${(ev: CustomEvent) => this._onStatusItemChanged(idx, item.type, ev)}
@@ -1010,8 +1034,10 @@ export class TedRoomCardEditor extends LitElement implements LovelaceCardEditor 
   private _onStatusItemChanged(idx: number, type: RoomStatusItemType, ev: CustomEvent): void {
     ev.stopPropagation();
     const value = (ev.detail?.value ?? {}) as Record<string, unknown>;
+    const next = { ...value, type } as RoomStatusItem;
+    if (next.display === STATUS_ITEM_DEFAULT_DISPLAY[type]) delete next.display;
     const items = [...(this._config?.status_items ?? [])];
-    items[idx] = { ...value, type } as RoomStatusItem;
+    items[idx] = next;
     this._commit({ ...this._config, type: this._type(), status_items: items });
   }
 

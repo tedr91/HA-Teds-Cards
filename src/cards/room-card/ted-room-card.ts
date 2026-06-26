@@ -23,6 +23,7 @@ import {
   ROOM_CARD_NAME,
   ROOM_CARD_TYPE,
   STATUS_ITEM_DEFAULT_ICON,
+  STATUS_ITEM_DEFAULT_DISPLAY,
 } from "./const";
 import type {
   ButtonSize,
@@ -522,15 +523,31 @@ export class TedRoomCard extends LitElement implements LovelaceCard {
     return unit ? `${stateObj.state} ${unit}` : capitalize(stateObj.state);
   }
 
+  /** Resolve whether a status item shows its icon and/or its state value. */
+  private _itemDisplay(item: RoomStatusItem): { icon: boolean; state: boolean } {
+    const display = item.display ?? STATUS_ITEM_DEFAULT_DISPLAY[item.type];
+    return { icon: display !== "state", state: display !== "icon" };
+  }
+
+  /** Inline state text for a brightness/volume item ("61%", "Muted", "—"). */
+  private _sliderStateText(model: SliderModel): string {
+    if (!model.available) return "—";
+    if (model.muted) return "Muted";
+    return model.kind === "number" ? `${Math.round(model.value)}${model.unit}` : `${Math.round(model.value)}%`;
+  }
+
   private _renderSensorItem(item: RoomSensorStatusItem): TemplateResult {
     const entityId = item.entity ?? this._resolveAreaEntity(item.type);
     const stateObj = entityId ? this.hass?.states[entityId] : undefined;
     const icon = item.icon ?? STATUS_ITEM_DEFAULT_ICON[item.type];
     const label = String(item.name ?? stateObj?.attributes?.friendly_name ?? entityId ?? "");
+    const show = this._itemDisplay(item);
     return html`
       <div class="status-item" title=${label}>
-        <ha-icon class="status-icon" .icon=${icon}></ha-icon>
-        <span class="status-text">${this._formatSensor(stateObj, item.type)}</span>
+        ${show.icon ? html`<ha-icon class="status-icon" .icon=${icon}></ha-icon>` : nothing}
+        ${show.state
+          ? html`<span class="status-text">${this._formatSensor(stateObj, item.type)}</span>`
+          : nothing}
       </div>
     `;
   }
@@ -556,12 +573,19 @@ export class TedRoomCard extends LitElement implements LovelaceCard {
     const stateObj = this.hass?.states[item.entity];
     const color = this._ledColor(item, stateObj);
     const label = String(item.name ?? stateObj?.attributes?.friendly_name ?? item.entity);
+    const show = this._itemDisplay(item);
     return html`
-      <span
-        class="status-led"
-        style=${styleMap({ background: color, boxShadow: `0 0 6px ${color}` })}
-        title=${label}
-      ></span>
+      <div class="status-item" title=${label}>
+        ${show.icon
+          ? html`<span
+              class="status-led"
+              style=${styleMap({ background: color, boxShadow: `0 0 6px ${color}` })}
+            ></span>`
+          : nothing}
+        ${show.state
+          ? html`<span class="status-text">${stateObj ? capitalize(stateObj.state) : "—"}</span>`
+          : nothing}
+      </div>
     `;
   }
 
@@ -573,18 +597,24 @@ export class TedRoomCard extends LitElement implements LovelaceCard {
     const icon = item.icon ?? STATUS_ITEM_DEFAULT_ICON.brightness;
     const anchorId = `rc-bri-anchor-${index}`;
     const popId = `rc-bri-pop-${index}`;
+    const show = this._itemDisplay(item);
     return html`
-      <button
-        id=${anchorId}
-        class="status-icon-button"
-        popovertarget=${popId}
-        ?disabled=${!model.available}
-        title=${String(item.name ?? "Brightness")}
-        aria-label="Brightness"
-      >
-        <ha-icon .icon=${icon}></ha-icon>
-      </button>
-      ${this._renderSliderPopover(popId, anchorId, `bri-${index}`, item, model, icon)}
+      <div class="status-item">
+        ${show.icon
+          ? html`<button
+              id=${anchorId}
+              class="status-icon-button"
+              popovertarget=${popId}
+              ?disabled=${!model.available}
+              title=${String(item.name ?? "Brightness")}
+              aria-label="Brightness"
+            >
+              <ha-icon .icon=${icon}></ha-icon>
+            </button>`
+          : nothing}
+        ${show.state ? html`<span class="status-text">${this._sliderStateText(model)}</span>` : nothing}
+      </div>
+      ${show.icon ? this._renderSliderPopover(popId, anchorId, `bri-${index}`, item, model, icon) : nothing}
     `;
   }
 
@@ -596,18 +626,24 @@ export class TedRoomCard extends LitElement implements LovelaceCard {
     const icon = item.icon ?? STATUS_ITEM_DEFAULT_ICON.volume;
     const anchorId = `rc-vol-anchor-${index}`;
     const popId = `rc-vol-pop-${index}`;
+    const show = this._itemDisplay(item);
     return html`
-      <button
-        id=${anchorId}
-        class=${classMap({ "status-icon-button": true, "is-active": model.muted })}
-        ?disabled=${!model.available}
-        @click=${() => this._onVolumeAnchorClick(index, item.entity)}
-        title="Volume — double-tap to mute"
-        aria-label="Volume"
-      >
-        <ha-icon .icon=${model.muted ? "mdi:volume-off" : icon}></ha-icon>
-      </button>
-      ${this._renderSliderPopover(popId, anchorId, `vol-${index}`, item, model, icon)}
+      <div class="status-item">
+        ${show.icon
+          ? html`<button
+              id=${anchorId}
+              class=${classMap({ "status-icon-button": true, "is-active": model.muted })}
+              ?disabled=${!model.available}
+              @click=${() => this._onVolumeAnchorClick(index, item.entity)}
+              title="Volume — double-tap to mute"
+              aria-label="Volume"
+            >
+              <ha-icon .icon=${model.muted ? "mdi:volume-off" : icon}></ha-icon>
+            </button>`
+          : nothing}
+        ${show.state ? html`<span class="status-text">${this._sliderStateText(model)}</span>` : nothing}
+      </div>
+      ${show.icon ? this._renderSliderPopover(popId, anchorId, `vol-${index}`, item, model, icon) : nothing}
     `;
   }
 
@@ -1177,8 +1213,8 @@ export class TedRoomCard extends LitElement implements LovelaceCard {
       }
       .status-led {
         flex: none;
-        width: 10px;
-        height: 10px;
+        width: 8px;
+        height: 8px;
         border-radius: 50%;
       }
       .status-icon-button {

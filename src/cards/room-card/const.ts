@@ -1,5 +1,5 @@
 import { NAMESPACE } from "../../shared/const";
-import type { RoomStatusItemType } from "./types";
+import type { RoomStatusItemType, RoomStatusDisplay } from "./types";
 
 export const ROOM_CARD_TYPE = `${NAMESPACE}-room-card`;
 export const ROOM_CARD_EDITOR_TYPE = `${ROOM_CARD_TYPE}-editor`;
@@ -33,6 +33,16 @@ export const STATUS_ITEM_LABEL: Record<RoomStatusItemType, string> = {
   volume: "Volume control",
   led: "Status LED",
   spacer: "Spacer",
+};
+
+/** Default display mode per status item type (icon + state / icon only / state only). */
+export const STATUS_ITEM_DEFAULT_DISPLAY: Record<RoomStatusItemType, RoomStatusDisplay> = {
+  temperature: "both",
+  occupancy: "both",
+  brightness: "icon",
+  volume: "icon",
+  led: "icon",
+  spacer: "both",
 };
 
 // --- Room photo -----------------------------------------------------------

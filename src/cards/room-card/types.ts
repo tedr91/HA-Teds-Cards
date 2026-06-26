@@ -18,11 +18,16 @@ export type RoomStatusItemType =
   | "led"
   | "spacer";
 
+/** How a status item displays: icon + state, just the icon, or just the state. */
+export type RoomStatusDisplay = "both" | "icon" | "state";
+
 /** Fields shared by every status item. */
 interface RoomStatusItemBase {
   type: RoomStatusItemType;
   /** Optional label (tooltip / a11y); falls back to the entity's friendly name. */
   name?: string;
+  /** Icon + state, icon only, or state only. Defaults per type. Unused by spacer. */
+  display?: RoomStatusDisplay;
 }
 
 /**

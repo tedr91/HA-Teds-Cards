@@ -607,18 +607,22 @@ px, matching a button).
 The newest entry below is used as the GitHub Release notes by the release workflow, so it shows in
 the Home Assistant / HACS **update** dialog when you update. Newest first.
 
+### v2.0.84
+
+- Room Card: each status item now has a **Display** option — **Both**, **Icon only**, or **State only** — so you can show just the icon, just the value, or both. Defaults: Temperature & Occupancy show both; Brightness, Volume & Status LED show the icon only.
+
 ### v2.0.83
 
 - Room Card: the header **Name size** and **Icon size** overrides and the **Status icon size** are now **percentage-based** (100% = default), consistent with the size controls on the other Ted cards. (If you'd previously set one of these in pixels, re-set it as a percentage.)
+
+<details>
+<summary>Previous release notes</summary>
 
 ### v2.0.82
 
 - Clock Weather, Light, Cover & Button Cards: the text/icon shadow is now genuinely subtle and **turns off cleanly for dark text and icons**, plus a new **Subtle shadow for improved contrast** toggle in each card's Appearance settings to switch it off.
 - Room Card: status item headers now show the entity's **friendly name** instead of the raw entity id.
 - Room Card: fixed the expand **chevron** being clipped on a status item with a long entity.
-
-<details>
-<summary>Previous release notes</summary>
 
 ### v2.0.81
 

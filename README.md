@@ -609,18 +609,22 @@ px, matching a button).
 The newest entry below is used as the GitHub Release notes by the release workflow, so it shows in
 the Home Assistant / HACS **update** dialog when you update. Newest first.
 
+### v2.0.88
+
+- Room Card: buttons in a section now **pack more tightly** — a shorter button (e.g. a half-height one) tucks into the vertical gap next to a taller neighbour instead of leaving a hole, while keeping your configured order.
+
 ### v2.0.87
 
 - Room Card: you can now **drag to reorder** status items, button sections, and the buttons within a section — grab the handle on the left of any row (replaces the up / down arrows).
 - Light, Cover & Button Cards: the **Name / Icon / State** editor section now starts **collapsed**, with each element's **Show** toggle in its header (so it's there whether the row is open or not) and the **size and color** controls side by side when expanded.
 
+<details>
+<summary>Previous release notes</summary>
+
 ### v2.0.86
 
 - Light, Cover & Button Cards: the **Icon** color picker now works like Home Assistant's built-in Button card — choose **No color**, **State color (default)**, or any color. A chosen color still shows only while the entity is on / open / active.
 - Light, Cover & Button Cards: redesigned the **Name / Icon / State** editor section — each element is now a collapsible card you can **drag to reorder** by its handle, with a chevron to fold it away (replaces the up / down arrows).
-
-<details>
-<summary>Previous release notes</summary>
 
 ### v2.0.85
 

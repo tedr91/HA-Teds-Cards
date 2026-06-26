@@ -142,49 +142,85 @@ function buttonSpans(button: RoomButtonConfig | undefined): { w: number; h: numb
   };
 }
 
+/** Width of the overflow popover grid in half-unit columns (matches the CSS). */
+const OVERFLOW_COLS = 8;
+
 interface PlacedButton {
   bIdx: number;
   w: number;
   h: number;
 }
 
+/** A packed top-left position in half-unit grid coordinates (0-based). */
+interface GridPos {
+  col: number;
+  row: number;
+}
+
 /**
- * Simulate CSS Grid `auto-flow: row dense` placement to know how many grid rows a
- * set of sized buttons occupies. Each button is placed in the first (topmost,
- * left-most) free w×h slot, scanning from row 0 — matching the browser's dense
- * packing. Returns the total number of half-unit rows used.
+ * Order-preserving 2-D packing of sized buttons into the half-unit grid.
+ *
+ * Buttons keep their configured order, but a button shorter than the current
+ * packed height is tucked into the left-most vertical gap — so, e.g., two
+ * half-height buttons next to a normal-height neighbour stack over/under to fill
+ * its height instead of spreading out and leaving a hole. A button only extends
+ * the grid downward when it can't fit inside the current height.
+ *
+ * Returns each button's placement plus the total number of half-unit rows used.
  */
-function packedRows(buttons: PlacedButton[], cols = GRID_COLS): number {
+function packButtons(
+  items: { w: number; h: number }[],
+  cols = GRID_COLS,
+): { placements: GridPos[]; rows: number } {
   const occupied: boolean[][] = [];
-  const row = (r: number): boolean[] => {
+  const rowAt = (r: number): boolean[] => {
     while (occupied.length <= r) occupied.push(new Array(cols).fill(false));
     return occupied[r];
   };
   const fits = (r: number, c: number, w: number, h: number): boolean => {
     if (c + w > cols) return false;
     for (let dr = 0; dr < h; dr += 1) {
-      const line = row(r + dr);
+      const line = rowAt(r + dr);
       for (let dc = 0; dc < w; dc += 1) if (line[c + dc]) return false;
     }
     return true;
   };
-  let used = 0;
-  for (const { w, h } of buttons) {
-    let placed = false;
-    for (let r = 0; !placed; r += 1) {
-      for (let c = 0; c + w <= cols; c += 1) {
-        if (!fits(r, c, w, h)) continue;
-        for (let dr = 0; dr < h; dr += 1) {
-          const line = row(r + dr);
-          for (let dc = 0; dc < w; dc += 1) line[c + dc] = true;
+  const occupy = (r: number, c: number, w: number, h: number): void => {
+    for (let dr = 0; dr < h; dr += 1) {
+      const line = rowAt(r + dr);
+      for (let dc = 0; dc < w; dc += 1) line[c + dc] = true;
+    }
+  };
+  const placements: GridPos[] = [];
+  let frontier = 0;
+  for (const { w, h } of items) {
+    let pos: GridPos | undefined;
+    // 1) Fill a gap within the current height — left-most column first, then
+    //    top-most row — so short buttons tuck under taller neighbours.
+    for (let c = 0; c + w <= cols && !pos; c += 1) {
+      for (let r = 0; r + h <= frontier; r += 1) {
+        if (fits(r, c, w, h)) {
+          pos = { col: c, row: r };
+          break;
         }
-        used = Math.max(used, r + h);
-        placed = true;
-        break;
       }
     }
+    // 2) Otherwise grow downward: the first (top-most, then left-most) free slot.
+    if (!pos) {
+      for (let r = 0; !pos; r += 1) {
+        for (let c = 0; c + w <= cols; c += 1) {
+          if (fits(r, c, w, h)) {
+            pos = { col: c, row: r };
+            break;
+          }
+        }
+      }
+    }
+    occupy(pos.row, pos.col, w, h);
+    frontier = Math.max(frontier, pos.row + h);
+    placements.push(pos);
   }
-  return used;
+  return { placements, rows: frontier };
 }
 
 /** Convert HA brightness (0–255) to a 1–100% scale. */
@@ -796,32 +832,46 @@ export class TedRoomCard extends LitElement implements LovelaceCard {
 
   // --- Button sections ------------------------------------------------------
 
-  private _renderButtonCell(sIdx: number, bIdx: number): TemplateResult {
+  private _renderButtonCell(sIdx: number, bIdx: number, pos?: GridPos): TemplateResult {
     const entry = this._buttonEls.get(`${sIdx}:${bIdx}`);
     const button = this._config?.sections?.[sIdx]?.buttons?.[bIdx];
     const { w, h } = buttonSpans(button);
     return html`
       <div
         class="button-cell"
-        style=${styleMap({ gridColumn: `span ${w}`, gridRow: `span ${h}` })}
+        style=${styleMap({
+          gridColumn: pos ? `${pos.col + 1} / span ${w}` : `span ${w}`,
+          gridRow: pos ? `${pos.row + 1} / span ${h}` : `span ${h}`,
+        })}
       >
         ${entry ? entry.el : html`<div class="button-cell__placeholder"></div>`}
       </div>
     `;
   }
 
-  private _renderOverflowCell(sIdx: number, total: number, fromIdx: number, heightSpan: number): TemplateResult {
+  private _renderOverflowCell(
+    sIdx: number,
+    total: number,
+    fromIdx: number,
+    heightSpan: number,
+    pos: GridPos,
+  ): TemplateResult {
     const anchorId = `rc-of-anchor-${sIdx}`;
     const popId = `rc-of-pop-${sIdx}`;
+    const buttons = this._config?.sections?.[sIdx]?.buttons ?? [];
+    // Pack the hidden buttons for the popover's (narrower, 8-col) grid.
+    const hiddenSizes: { w: number; h: number }[] = [];
+    for (let bIdx = fromIdx; bIdx < total; bIdx += 1) hiddenSizes.push(buttonSpans(buttons[bIdx]));
+    const { placements } = packButtons(hiddenSizes, OVERFLOW_COLS);
     const hidden: TemplateResult[] = [];
-    for (let bIdx = fromIdx; bIdx < total; bIdx += 1) {
-      hidden.push(this._renderButtonCell(sIdx, bIdx));
+    for (let i = 0, bIdx = fromIdx; bIdx < total; bIdx += 1, i += 1) {
+      hidden.push(this._renderButtonCell(sIdx, bIdx, placements[i]));
     }
     return html`
       <button
         id=${anchorId}
         class="button-cell button-overflow"
-        style=${styleMap({ gridColumn: "span 2", gridRow: `span ${heightSpan}` })}
+        style=${styleMap({ gridColumn: `${pos.col + 1} / span 2`, gridRow: `${pos.row + 1} / span ${heightSpan}` })}
         popovertarget=${popId}
         title="Show more"
         aria-label="Show more"
@@ -853,7 +903,7 @@ export class TedRoomCard extends LitElement implements LovelaceCard {
     let visibleCount = buttons.length;
     let overflow = false;
     let overflowH = 2;
-    if (maxRows > 0 && packedRows(sizes) > maxRows * 2) {
+    if (maxRows > 0 && packButtons(sizes).rows > maxRows * 2) {
       overflow = true;
       const budget = maxRows * 2;
       // Reserve a normal-height "…" cell when choosing the visible set so the
@@ -861,7 +911,7 @@ export class TedRoomCard extends LitElement implements LovelaceCard {
       const overflowCell: PlacedButton = { bIdx: -1, w: 2, h: 2 };
       visibleCount = 0;
       for (let v = buttons.length - 1; v >= 0; v -= 1) {
-        if (packedRows([...sizes.slice(0, v), overflowCell]) <= budget) {
+        if (packButtons([...sizes.slice(0, v), overflowCell]).rows <= budget) {
           visibleCount = v;
           break;
         }
@@ -873,6 +923,13 @@ export class TedRoomCard extends LitElement implements LovelaceCard {
         buttons.slice(0, visibleCount).every((b) => (b.ted_button_height ?? "normal") === "half");
       overflowH = allHalf ? 1 : 2;
     }
+
+    // Pack the visible buttons (plus the "…" cell, if any) so short buttons tuck
+    // into vertical gaps instead of leaving holes — preserving the editor order.
+    const layout: PlacedButton[] = sizes.slice(0, visibleCount);
+    if (overflow) layout.push({ bIdx: -1, w: 2, h: overflowH });
+    const { placements } = packButtons(layout);
+
     return html`
       <div class="button-section">
         ${section.title && section.show_title === true
@@ -881,8 +938,8 @@ export class TedRoomCard extends LitElement implements LovelaceCard {
         <div class="button-grid">
           ${buttons
             .slice(0, visibleCount)
-            .map((_button, bIdx) => this._renderButtonCell(sIdx, bIdx))}
-          ${overflow ? this._renderOverflowCell(sIdx, buttons.length, visibleCount, overflowH) : nothing}
+            .map((_button, bIdx) => this._renderButtonCell(sIdx, bIdx, placements[bIdx]))}
+          ${overflow ? this._renderOverflowCell(sIdx, buttons.length, visibleCount, overflowH, placements[visibleCount]) : nothing}
         </div>
       </div>
     `;

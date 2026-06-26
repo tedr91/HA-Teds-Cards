@@ -215,7 +215,15 @@ export class TedClockWeatherCardEditor extends LitElement implements LovelaceCar
       weather.push({ name: "weather_size_custom", selector: this._scaleSelector() });
     }
     weather.push(
-      { name: "show_weather_icon", selector: { boolean: {} } },
+      {
+        type: "grid",
+        name: "",
+        column_min_width: "100px",
+        schema: [
+          { name: "show_weather_icon", selector: { boolean: {} } },
+          { name: "show_current_temp", selector: { boolean: {} } },
+        ],
+      },
       {
         name: "icon_style",
         disabled: cfg.show_weather_icon === false,
@@ -230,7 +238,6 @@ export class TedClockWeatherCardEditor extends LitElement implements LovelaceCar
           },
         },
       },
-      { name: "show_current_temp", selector: { boolean: {} } },
     );
 
     return html`

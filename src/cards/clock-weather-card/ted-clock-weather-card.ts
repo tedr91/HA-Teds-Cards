@@ -30,7 +30,7 @@ const DATE_WEIGHT = "500";
 /** "12:22" should occupy this fraction of the card width at the default (Large) size. */
 const CLOCK_WIDTH_FRACTION = 0.6;
 /** "Saturday, June 22" should occupy this fraction of the card width at the default size. */
-const DATE_WIDTH_FRACTION = 0.2625;
+const DATE_WIDTH_FRACTION = 0.328125;
 /** Temperature font-size as a fraction of the clock font-size. */
 const TEMP_CLOCK_RATIO = 0.3;
 /** AM/PM suffix font-size as a fraction of the clock font-size. */
@@ -657,44 +657,42 @@ export class TedClockWeatherCard extends LitElement implements LovelaceCard {
         white-space: nowrap;
       }
 
-      .weather .wicon {
-        --mdc-icon-size: var(--cwc-icon-size, 1.4rem);
-        width: var(--cwc-icon-size, 1.4rem);
-        height: var(--cwc-icon-size, 1.4rem);
-        color: var(--ted-style-text);
-      }
-
-      /* Animated "fancy" icons render slightly larger to match their inner padding. */
+      /* All weather icon styles share one fixed box (= the temperature text
+         size) so switching styles never shifts the layout. The padded SVG sets
+         (cool/fancy) are scaled inside that box so every style's visible glyph
+         reads at the same size as the temperature. */
+      .weather .wicon,
+      .weather .wicon-cool,
       .weather .wicon-fancy {
-        --fancy-size: calc(var(--cwc-icon-size, 1.4rem) * 1.5);
+        flex: none;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        width: var(--fancy-size);
-        height: var(--fancy-size);
-        margin: calc(var(--cwc-icon-size, 1.4rem) * -0.25) 0;
+        width: var(--cwc-icon-size, 1.4rem);
+        height: var(--cwc-icon-size, 1.4rem);
       }
 
+      .weather .wicon {
+        --mdc-icon-size: calc(var(--cwc-icon-size, 1.4rem) * 1.4);
+        color: var(--ted-style-text);
+      }
+
+      .weather .wicon-cool svg,
       .weather .wicon-fancy svg {
         width: 100%;
         height: 100%;
         display: block;
       }
 
-      /* HA-frontend ("cool") weather icons. */
-      .weather .wicon-cool {
-        --cool-size: calc(var(--cwc-icon-size, 1.4rem) * 1.35);
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: var(--cool-size);
-        height: var(--cool-size);
+      /* The Material (basic), HA-frontend (cool) and Meteocons (fancy) glyphs
+         each fill a different fraction of their viewBox; these factors bring
+         every style's visible glyph to roughly the temperature-text height. */
+      .weather .wicon-fancy svg {
+        transform: scale(1.4);
       }
 
       .weather .wicon-cool svg {
-        width: 100%;
-        height: 100%;
-        display: block;
+        transform: scale(1.35);
       }
 
       .weather .wicon-cool .rain {

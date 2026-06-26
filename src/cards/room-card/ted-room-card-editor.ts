@@ -326,21 +326,9 @@ export class TedRoomCardEditor extends LitElement implements LovelaceCardEditor 
     ev.stopPropagation();
   };
 
-  private _renderRowMenu(
-    onUp: () => void,
-    onDown: () => void,
-    onDelete: () => void,
-    upDisabled: boolean,
-    downDisabled: boolean,
-  ): TemplateResult {
+  private _renderRowMenu(onDelete: () => void): TemplateResult {
     return html`
       <div class="row-actions" @click=${this._stop}>
-        <ha-icon-button label="Move up" ?disabled=${upDisabled} @click=${onUp}>
-          <ha-icon icon="mdi:arrow-up"></ha-icon>
-        </ha-icon-button>
-        <ha-icon-button label="Move down" ?disabled=${downDisabled} @click=${onDown}>
-          <ha-icon icon="mdi:arrow-down"></ha-icon>
-        </ha-icon-button>
         <ha-icon-button label="Delete" class="warning" @click=${onDelete}>
           <ha-icon icon="mdi:delete"></ha-icon>
         </ha-icon-button>
@@ -431,7 +419,7 @@ export class TedRoomCardEditor extends LitElement implements LovelaceCardEditor 
     }
   }
 
-  private _renderStatusItemRow(item: RoomStatusItem, idx: number, total: number): TemplateResult {
+  private _renderStatusItemRow(item: RoomStatusItem, idx: number): TemplateResult {
     const key = `status-${idx}`;
     // Header subtitle: an explicit name override, else the entity's friendly name,
     // and only fall back to the raw entity_id when neither is available.
@@ -447,16 +435,13 @@ export class TedRoomCardEditor extends LitElement implements LovelaceCardEditor 
         @expanded-changed=${(ev: Event) => this._onPanelToggle(key, ev)}
       >
         <div slot="header" class="row-header">
+          <div class="drag-handle" @click=${this._stop} title="Drag to reorder">
+            <ha-icon icon="mdi:drag"></ha-icon>
+          </div>
           <ha-icon icon=${STATUS_ITEM_DEFAULT_ICON[item.type]}></ha-icon>
           <span class="row-title">${STATUS_ITEM_LABEL[item.type]}</span>
           ${subtitle ? html`<span class="row-subtitle">${subtitle}</span>` : nothing}
-          ${this._renderRowMenu(
-            () => this._moveStatusItem(idx, -1),
-            () => this._moveStatusItem(idx, 1),
-            () => this._deleteStatusItem(idx),
-            idx === 0,
-            idx === total - 1,
-          )}
+          ${this._renderRowMenu(() => this._deleteStatusItem(idx))}
         </div>
         <div class="panel-content">
           <ha-form
@@ -519,12 +504,7 @@ export class TedRoomCardEditor extends LitElement implements LovelaceCardEditor 
 
   // --- Button sections ------------------------------------------------------
 
-  private _renderButtonRow(
-    sIdx: number,
-    bIdx: number,
-    button: RoomButtonConfig,
-    total: number,
-  ): TemplateResult {
+  private _renderButtonRow(sIdx: number, bIdx: number, button: RoomButtonConfig): TemplateResult {
     const key = `button-${sIdx}-${bIdx}`;
     const meta = BUTTON_TYPE_META[button.type] ?? { label: button.type, icon: "mdi:card-outline" };
     const editor = this._buttonEditors.get(`${sIdx}:${bIdx}`);
@@ -535,16 +515,13 @@ export class TedRoomCardEditor extends LitElement implements LovelaceCardEditor 
         @expanded-changed=${(ev: Event) => this._onPanelToggle(key, ev)}
       >
         <div slot="header" class="row-header">
+          <div class="drag-handle" @click=${this._stop} title="Drag to reorder">
+            <ha-icon icon="mdi:drag"></ha-icon>
+          </div>
           <ha-icon icon=${meta.icon}></ha-icon>
           <span class="row-title">${meta.label}</span>
           ${button.name ? html`<span class="row-subtitle">${button.name}</span>` : nothing}
-          ${this._renderRowMenu(
-            () => this._moveButton(sIdx, bIdx, -1),
-            () => this._moveButton(sIdx, bIdx, 1),
-            () => this._deleteButton(sIdx, bIdx),
-            bIdx === 0,
-            bIdx === total - 1,
-          )}
+          ${this._renderRowMenu(() => this._deleteButton(sIdx, bIdx))}
         </div>
         <div class="panel-content">
           <ha-form
@@ -573,7 +550,7 @@ export class TedRoomCardEditor extends LitElement implements LovelaceCardEditor 
     `;
   }
 
-  private _renderSectionRow(section: RoomButtonSection, sIdx: number, total: number): TemplateResult {
+  private _renderSectionRow(section: RoomButtonSection, sIdx: number): TemplateResult {
     const key = `section-${sIdx}`;
     const buttons = section.buttons ?? [];
     return html`
@@ -583,15 +560,12 @@ export class TedRoomCardEditor extends LitElement implements LovelaceCardEditor 
         @expanded-changed=${(ev: Event) => this._onPanelToggle(key, ev)}
       >
         <div slot="header" class="row-header">
+          <div class="drag-handle section-drag-handle" @click=${this._stop} title="Drag to reorder">
+            <ha-icon icon="mdi:drag"></ha-icon>
+          </div>
           <ha-icon icon="mdi:view-grid-outline"></ha-icon>
           <span class="row-title">${section.title || `Section ${sIdx + 1}`}</span>
-          ${this._renderRowMenu(
-            () => this._moveSection(sIdx, -1),
-            () => this._moveSection(sIdx, 1),
-            () => this._deleteSection(sIdx),
-            sIdx === 0,
-            sIdx === total - 1,
-          )}
+          ${this._renderRowMenu(() => this._deleteSection(sIdx))}
         </div>
         <div class="panel-content">
           <ha-form
@@ -627,9 +601,11 @@ export class TedRoomCardEditor extends LitElement implements LovelaceCardEditor 
             @value-changed=${(ev: CustomEvent) => this._onSectionFieldChanged(sIdx, ev)}
           ></ha-form>
           <div class="subgroup-label">Buttons</div>
-          <div class="row-list">
-            ${buttons.map((button, bIdx) => this._renderButtonRow(sIdx, bIdx, button, buttons.length))}
-          </div>
+          <ha-sortable handle-selector=".drag-handle" @item-moved=${(ev: CustomEvent) => this._buttonMoved(sIdx, ev)}>
+            <div class="row-list">
+              ${buttons.map((button, bIdx) => this._renderButtonRow(sIdx, bIdx, button))}
+            </div>
+          </ha-sortable>
           ${this._renderAddMenu(
             `add-button-${sIdx}`,
             "Add button",
@@ -728,9 +704,11 @@ export class TedRoomCardEditor extends LitElement implements LovelaceCardEditor 
               .computeLabel=${this._computeLabel}
               @value-changed=${this._onStatusSettingsChanged}
             ></ha-form>
-            <div class="row-list">
-              ${statusItems.map((item, idx) => this._renderStatusItemRow(item, idx, statusItems.length))}
-            </div>
+            <ha-sortable handle-selector=".drag-handle" @item-moved=${this._statusItemMoved}>
+              <div class="row-list">
+                ${statusItems.map((item, idx) => this._renderStatusItemRow(item, idx))}
+              </div>
+            </ha-sortable>
             ${this._renderAddMenu(
               "add-status",
               "Add item",
@@ -749,9 +727,11 @@ export class TedRoomCardEditor extends LitElement implements LovelaceCardEditor 
             <ha-icon icon="mdi:view-dashboard-outline"></ha-icon><span>Button sections</span>
           </div>
           <div class="panel-content">
-            <div class="row-list">
-              ${sections.map((section, sIdx) => this._renderSectionRow(section, sIdx, sections.length))}
-            </div>
+            <ha-sortable handle-selector=".section-drag-handle" @item-moved=${this._sectionMoved}>
+              <div class="row-list">
+                ${sections.map((section, sIdx) => this._renderSectionRow(section, sIdx))}
+              </div>
+            </ha-sortable>
             <button type="button" class="add-button" @click=${this._addSection}>
               <ha-icon icon="mdi:plus"></ha-icon><span>Add section</span>
             </button>
@@ -1047,14 +1027,15 @@ export class TedRoomCardEditor extends LitElement implements LovelaceCardEditor 
     this._commit({ ...this._config, type: this._type(), status_items: items });
   }
 
-  private _moveStatusItem(idx: number, dir: -1 | 1): void {
+  private _statusItemMoved = (ev: CustomEvent): void => {
+    ev.stopPropagation();
+    const { oldIndex, newIndex } = ev.detail as { oldIndex: number; newIndex: number };
     const items = [...(this._config?.status_items ?? [])];
-    const target = idx + dir;
-    if (target < 0 || target >= items.length) return;
-    [items[idx], items[target]] = [items[target], items[idx]];
+    if (oldIndex < 0 || oldIndex >= items.length) return;
+    items.splice(newIndex, 0, items.splice(oldIndex, 1)[0]);
     this._buttonEditors.clear();
     this._commit({ ...this._config, type: this._type(), status_items: items });
-  }
+  };
 
   private _deleteStatusItem(idx: number): void {
     const items = [...(this._config?.status_items ?? [])];
@@ -1089,14 +1070,15 @@ export class TedRoomCardEditor extends LitElement implements LovelaceCardEditor 
     this._commit({ ...this._config, type: this._type(), sections });
   };
 
-  private _moveSection(sIdx: number, dir: -1 | 1): void {
+  private _sectionMoved = (ev: CustomEvent): void => {
+    ev.stopPropagation();
+    const { oldIndex, newIndex } = ev.detail as { oldIndex: number; newIndex: number };
     const sections = [...(this._config?.sections ?? [])];
-    const target = sIdx + dir;
-    if (target < 0 || target >= sections.length) return;
-    [sections[sIdx], sections[target]] = [sections[target], sections[sIdx]];
+    if (oldIndex < 0 || oldIndex >= sections.length) return;
+    sections.splice(newIndex, 0, sections.splice(oldIndex, 1)[0]);
     this._buttonEditors.clear();
     this._commit({ ...this._config, type: this._type(), sections });
-  }
+  };
 
   private _deleteSection(sIdx: number): void {
     const sections = [...(this._config?.sections ?? [])];
@@ -1126,14 +1108,15 @@ export class TedRoomCardEditor extends LitElement implements LovelaceCardEditor 
     this._commit({ ...this._config, type: this._type(), sections });
   }
 
-  private _moveButton(sIdx: number, bIdx: number, dir: -1 | 1): void {
+  private _buttonMoved(sIdx: number, ev: CustomEvent): void {
+    ev.stopPropagation();
+    const { oldIndex, newIndex } = ev.detail as { oldIndex: number; newIndex: number };
     const sections = [...(this._config?.sections ?? [])];
     const section = sections[sIdx];
     if (!section) return;
     const buttons = [...(section.buttons ?? [])];
-    const target = bIdx + dir;
-    if (target < 0 || target >= buttons.length) return;
-    [buttons[bIdx], buttons[target]] = [buttons[target], buttons[bIdx]];
+    if (oldIndex < 0 || oldIndex >= buttons.length) return;
+    buttons.splice(newIndex, 0, buttons.splice(oldIndex, 1)[0]);
     sections[sIdx] = { ...section, buttons };
     this._buttonEditors.clear();
     this._commit({ ...this._config, type: this._type(), sections });
@@ -1264,6 +1247,19 @@ export class TedRoomCardEditor extends LitElement implements LovelaceCardEditor 
     .row-header ha-icon {
       color: var(--secondary-text-color);
       flex: none;
+    }
+    .row-header .drag-handle {
+      display: flex;
+      align-items: center;
+      flex: none;
+      margin: -6px 2px -6px -6px;
+      padding: 6px 2px;
+      cursor: grab;
+      touch-action: none;
+      color: var(--secondary-text-color);
+    }
+    .row-header .drag-handle ha-icon {
+      pointer-events: none;
     }
     .row-title {
       font-weight: 500;

@@ -48,8 +48,9 @@ export class TedLightCardEditor extends LitElement implements LovelaceCardEditor
   /** Set by the room card when this editor is embedded as a fixed-size button. */
   @property({ attribute: false }) public embedded = false;
   @state() private _config?: LightCardConfig;
-  /** Element chips currently collapsed in the reorder section (UI-only state). */
-  @state() private _collapsed = new Set<CardElement>();
+  /** Element chips currently expanded in the reorder section (UI-only state;
+   *  chips start collapsed). */
+  @state() private _expanded = new Set<CardElement>();
 
   public setConfig(config: LightCardConfig): void {
     this._config = config;
@@ -526,11 +527,17 @@ export class TedLightCardEditor extends LitElement implements LovelaceCardEditor
     this._commit({ ...this._config, element_order: order } as LightCardConfig);
   };
 
-  private _toggleCollapse(el: CardElement): void {
-    const next = new Set(this._collapsed);
+  private _toggleExpand(el: CardElement): void {
+    const next = new Set(this._expanded);
     if (next.has(el)) next.delete(el);
     else next.add(el);
-    this._collapsed = next;
+    this._expanded = next;
+  }
+
+  private _toggleShow(showKey: keyof LightCardConfig, ev: Event): void {
+    ev.stopPropagation();
+    const checked = (ev.target as HTMLInputElement).checked;
+    this._commit({ ...this._config, [showKey]: checked } as LightCardConfig);
   }
 
   private _onElementChanged = (ev: CustomEvent): void => {
@@ -564,53 +571,60 @@ export class TedLightCardEditor extends LitElement implements LovelaceCardEditor
                 const m = meta[el];
                 const show = this._config?.[m.showKey] !== false;
                 const size = typeof this._config?.[m.sizeKey] === "number" ? this._config[m.sizeKey] : m.defSize;
-                const collapsed = this._collapsed.has(el);
+                const expanded = this._expanded.has(el);
                 return html`
-                  <div class="element-chip ${collapsed ? "collapsed" : ""}">
+                  <div class="element-chip ${expanded ? "" : "collapsed"}">
                     <div class="chip-head">
                       <div class="drag-handle" title="Drag to reorder">
                         <ha-svg-icon .path=${GRIP_ICON_PATH}></ha-svg-icon>
                       </div>
-                      <button type="button" class="chip-headmain" @click=${() => this._toggleCollapse(el)}>
+                      <button type="button" class="chip-titlebtn" @click=${() => this._toggleExpand(el)}>
                         <span class="chip-title">${m.label}</span>
+                      </button>
+                      <ha-switch .checked=${show} @change=${(ev: Event) => this._toggleShow(m.showKey, ev)}></ha-switch>
+                      <button
+                        type="button"
+                        class="chip-collapsebtn"
+                        aria-label="Expand or collapse"
+                        @click=${() => this._toggleExpand(el)}
+                      >
                         <ha-svg-icon class="chip-chevron" .path=${CHEVRON_ICON_PATH}></ha-svg-icon>
                       </button>
                     </div>
-                    ${collapsed
-                      ? nothing
-                      : html`
+                    ${expanded
+                      ? html`
                           <div class="chip-body">
                             <ha-form
                               .hass=${this.hass}
-                              .data=${{ [m.showKey]: show, [m.sizeKey]: size, [m.colorKey]: this._config?.[m.colorKey] }}
+                              .data=${{ [m.sizeKey]: size, [m.colorKey]: this._config?.[m.colorKey] }}
                               .schema=${[
                                 {
                                   type: "grid",
                                   name: "",
-                                  column_min_width: "120px",
+                                  column_min_width: "140px",
                                   schema: [
-                                    { name: m.showKey, selector: { boolean: {} } },
                                     {
                                       name: m.sizeKey,
                                       disabled: !show,
                                       selector: { number: { min: 10, max: 300, step: 5, mode: "box", unit_of_measurement: "%" } },
                                     },
+                                    {
+                                      name: m.colorKey,
+                                      disabled: !show,
+                                      selector:
+                                        el === "icon"
+                                          ? { ui_color: { default_color: "state", include_state: true, include_none: true } }
+                                          : { ui_color: {} },
+                                    },
                                   ],
-                                },
-                                {
-                                  name: m.colorKey,
-                                  disabled: !show,
-                                  selector:
-                                    el === "icon"
-                                      ? { ui_color: { default_color: "state", include_state: true, include_none: true } }
-                                      : { ui_color: {} },
                                 },
                               ]}
                               .computeLabel=${this._computeLabel}
                               @value-changed=${this._onElementChanged}
                             ></ha-form>
                           </div>
-                        `}
+                        `
+                      : nothing}
                   </div>
                 `;
               },
@@ -658,6 +672,8 @@ export class TedLightCardEditor extends LitElement implements LovelaceCardEditor
     .chip-head {
       display: flex;
       align-items: center;
+      gap: 4px;
+      padding-right: 8px;
     }
     .element-chip:not(.collapsed) .chip-head {
       border-bottom: 1px solid var(--divider-color, rgba(255, 255, 255, 0.12));
@@ -665,7 +681,7 @@ export class TedLightCardEditor extends LitElement implements LovelaceCardEditor
     .drag-handle {
       display: flex;
       align-items: center;
-      padding: 8px 4px 8px 10px;
+      padding: 10px 4px 10px 10px;
       color: var(--secondary-text-color);
       cursor: grab;
       touch-action: none;
@@ -673,12 +689,11 @@ export class TedLightCardEditor extends LitElement implements LovelaceCardEditor
     .drag-handle > * {
       pointer-events: none;
     }
-    .chip-headmain {
+    .chip-titlebtn {
       display: flex;
       align-items: center;
       flex: 1 1 auto;
-      gap: 8px;
-      padding: 10px 12px 10px 4px;
+      padding: 10px 4px;
       background: none;
       border: none;
       color: inherit;
@@ -687,11 +702,22 @@ export class TedLightCardEditor extends LitElement implements LovelaceCardEditor
       cursor: pointer;
     }
     .chip-title {
-      flex: 1 1 auto;
       font-weight: 500;
     }
-    .chip-chevron {
+    .chip-head ha-switch {
+      flex: none;
+    }
+    .chip-collapsebtn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6px;
+      background: none;
+      border: none;
       color: var(--secondary-text-color);
+      cursor: pointer;
+    }
+    .chip-chevron {
       transition: transform 0.18s ease;
     }
     .element-chip.collapsed .chip-chevron {

@@ -28,11 +28,11 @@ const TICK_MS = 1000;
 const CLOCK_WEIGHT = "600";
 const DATE_WEIGHT = "500";
 /** "12:22" should occupy this fraction of the card width at the default (Large) size. */
-const CLOCK_WIDTH_FRACTION = 0.6;
+const CLOCK_WIDTH_FRACTION = 0.65;
 /** "Saturday, June 22" should occupy this fraction of the card width at the default size. */
 const DATE_WIDTH_FRACTION = 0.328125;
-/** Temperature font-size as a fraction of the clock font-size. */
-const TEMP_CLOCK_RATIO = 0.3;
+/** The weather block (icon + temperature) should occupy this fraction of the card width at the default size. */
+const WEATHER_WIDTH_FRACTION = 0.328125;
 /** AM/PM suffix font-size as a fraction of the clock font-size. */
 const AMPM_SCALE = 1 / 3;
 /**
@@ -362,6 +362,15 @@ export class TedClockWeatherCard extends LitElement implements LovelaceCard {
     return `${Math.round(temp)}${unit}`;
   }
 
+  /** A fixed two-digit reference temperature (e.g. "88°F") used only for size
+   * measurement so the weather never resizes as the live temperature changes,
+   * matching how the clock/date use a reference. */
+  private _tempRefText(): string {
+    const live = this._tempText();
+    if (!live) return "88°";
+    return `88${live.replace(/^-?\d+/, "")}`;
+  }
+
   private _weatherIcon(): string {
     const id = this._weatherEntityId();
     const condition = id ? this.hass?.states[id]?.state : undefined;
@@ -412,7 +421,14 @@ export class TedClockWeatherCard extends LitElement implements LovelaceCard {
     const dateW = this._widthPer1px(this._dateText(REFERENCE_DATE), DATE_WEIGHT, family);
     const datePx = dateW > 0 ? (width * DATE_WIDTH_FRACTION * this._dateFactor()) / dateW : 0;
 
-    const tempPx = clockPx * TEMP_CLOCK_RATIO * this._weatherFactor();
+    // Weather (icon + temperature) is sized off the card width like the clock and
+    // date, independent of the clock size. Width per 1px of the temp font is the
+    // icon box (1em) + the 0.25em gap + the reference temperature text.
+    const showIcon = this._config?.show_weather_icon !== false;
+    const showTemp = this._config?.show_current_temp !== false;
+    const tempTextW = showTemp ? this._widthPer1px(this._tempRefText(), "600", family) : 0;
+    const weatherW = (showIcon ? 1 : 0) + (showIcon && showTemp ? 0.25 : 0) + tempTextW;
+    const tempPx = weatherW > 0 ? (width * WEATHER_WIDTH_FRACTION * this._weatherFactor()) / weatherW : 0;
 
     el.style.setProperty("--cwc-clock-size", `${clockPx}px`);
     el.style.setProperty("--cwc-date-size", `${datePx}px`);
@@ -643,6 +659,7 @@ export class TedClockWeatherCard extends LitElement implements LovelaceCard {
         align-items: center;
         gap: 0.25em;
         line-height: 1;
+        font-size: var(--cwc-temp-size, 1.2rem);
       }
 
       .weather.weather-abs {

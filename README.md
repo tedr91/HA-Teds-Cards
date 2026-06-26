@@ -607,16 +607,20 @@ px, matching a button).
 The newest entry below is used as the GitHub Release notes by the release workflow, so it shows in
 the Home Assistant / HACS **update** dialog when you update. Newest first.
 
+### v2.0.76
+
+- Clock Weather Card: the **weather size no longer changes with the clock size** — the clock, date, and weather are each sized from the card width independently (clock fills ~65%, date and weather ~33% each), and the weather stays a constant size regardless of the live temperature.
+
 ### v2.0.75
 
 - Clock Weather Card: the weather icon is now a consistent fixed size across all icon styles (Basic / Cool / Fancy), matched to the temperature text; the date is a little larger by default; and **Show weather icon** / **Show current temp** sit side-by-side in the editor.
 
+<details>
+<summary>Previous release notes</summary>
+
 ### v2.0.74
 
 - Clock Weather Card editor: the layout controls are now their own top-level **Card Layout** section (no longer tucked inside Appearance), each **Show …** toggle sits beside its **… position** slider, and every section now has consistent spacing.
-
-<details>
-<summary>Previous release notes</summary>
 
 ### v2.0.73
 

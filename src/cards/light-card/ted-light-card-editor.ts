@@ -103,6 +103,7 @@ export class TedLightCardEditor extends LitElement implements LovelaceCardEditor
       hint_width: 8,
       icon_color: "light",
       brushed: false,
+      shadow: true,
       rocker: true,
       rocker_effect: true,
       up_tap: dimmable ? "increase" : "full_on",
@@ -180,6 +181,7 @@ export class TedLightCardEditor extends LitElement implements LovelaceCardEditor
           { name: "rocker_effect", selector: { boolean: {} } },
         ],
       },
+      { name: "shadow", selector: { boolean: {} } },
       {
         name: "orientation",
         selector: {
@@ -412,6 +414,8 @@ export class TedLightCardEditor extends LitElement implements LovelaceCardEditor
         return "Rocker";
       case "rocker_effect":
         return "Neumorphic effect";
+      case "shadow":
+        return "Subtle shadow for improved contrast";
       case "show_name":
         return "Show name";
       case "name_scale":

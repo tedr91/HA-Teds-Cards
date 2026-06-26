@@ -213,6 +213,7 @@ export class TedLabelButtonCard extends LitElement implements LovelaceCard {
     // Neumorphic effect: a single raised tile (off/idle) that presses in when the
     // bound entity is active. On by default.
     const neumorphic = this._config.neumorphic !== false;
+    const shadow = this._config.shadow !== false; // default true
     const stateObj = this._stateObj();
     const isActive = !!stateObj && ON_STATES.has(String(stateObj.state).toLowerCase());
 
@@ -220,6 +221,7 @@ export class TedLabelButtonCard extends LitElement implements LovelaceCard {
       "ted-card": true,
       [tedCardThemeClass(theme)]: true,
       clickable: this._hasInteractions(),
+      "no-shadow": !shadow,
     };
 
     const cardStyle: Record<string, string> = {};
@@ -410,7 +412,11 @@ export class TedLabelButtonCard extends LitElement implements LovelaceCard {
            fades out for dark icon colors instead of looking muddy. Older browsers fall
            back to the plain dark shadow. */
         filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
-        filter: drop-shadow(0 1px 2px hsl(from currentColor 0 0% 0% / calc(l * 0.2)));
+        filter: drop-shadow(0 1px 2px hsl(from currentColor 0 0% 0% / max(0, (l - 50) * 0.004)));
+      }
+
+      ha-card.no-shadow .icon {
+        filter: none;
       }
 
       .name {

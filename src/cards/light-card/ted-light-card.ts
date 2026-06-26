@@ -235,6 +235,7 @@ export class TedLightCard extends LitElement implements LovelaceCard {
     // pressed, flipping with state); button style is a single raised/pressed tile.
     const neumorphic = this._config.rocker_effect !== false;
     const rockerMode = this._config.rocker !== false;
+    const shadow = this._config.shadow !== false; // default true
 
     // The three content elements, laid out in the configured order. Visible
     // elements fill the card (no forced top/bottom-half clipping); the middle
@@ -266,6 +267,7 @@ export class TedLightCard extends LitElement implements LovelaceCard {
           unavailable: isUnavailable,
           horizontal,
           single: this._config.rocker === false,
+          "no-shadow": !shadow,
           ...themeClasses,
         })}
         style=${styleMap(cardStyle)}
@@ -792,8 +794,11 @@ export class TedLightCard extends LitElement implements LovelaceCard {
          fades out for dark icon colors instead of looking muddy. Older browsers fall
          back to the plain dark shadow. */
       filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
-      filter: drop-shadow(0 1px 2px hsl(from currentColor 0 0% 0% / calc(l * 0.2)));
+      filter: drop-shadow(0 1px 2px hsl(from currentColor 0 0% 0% / max(0, (l - 50) * 0.004)));
       -webkit-tap-highlight-color: transparent;
+    }
+    ha-card.no-shadow .icon-shape {
+      filter: none;
     }
     .icon-shape:focus-visible {
       box-shadow: 0 0 0 2px var(--ted-style-accent);

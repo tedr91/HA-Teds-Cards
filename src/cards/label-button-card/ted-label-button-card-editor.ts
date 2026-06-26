@@ -45,6 +45,7 @@ export class TedLabelButtonCardEditor extends LitElement implements LovelaceCard
     return {
       theme: "ted-style",
       brushed: false,
+      shadow: true,
       neumorphic: true,
       show_icon: true,
       icon_scale: 100,
@@ -86,6 +87,7 @@ export class TedLabelButtonCardEditor extends LitElement implements LovelaceCard
           { name: "neumorphic", selector: { boolean: {} } },
         ],
       },
+      { name: "shadow", selector: { boolean: {} } },
       {
         type: "grid",
         name: "",
@@ -191,6 +193,8 @@ export class TedLabelButtonCardEditor extends LitElement implements LovelaceCard
         return "Brushed effect";
       case "neumorphic":
         return "Neumorphic effect";
+      case "shadow":
+        return "Subtle shadow for improved contrast";
       case "show_icon":
         return "Show icon";
       case "icon_scale":

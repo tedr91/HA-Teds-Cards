@@ -59,6 +59,7 @@ export class TedClockWeatherCardEditor extends LitElement implements LovelaceCar
       theme: "ted-style",
       force_transparent: true,
       brushed: false,
+      shadow: true,
       show_clock: true,
       clock_size: "large",
       clock_size_custom: 100,
@@ -116,6 +117,7 @@ export class TedClockWeatherCardEditor extends LitElement implements LovelaceCar
         ],
       },
       { name: "brushed", selector: { boolean: {} } },
+      { name: "shadow", selector: { boolean: {} } },
     ];
   }
 
@@ -371,6 +373,8 @@ export class TedClockWeatherCardEditor extends LitElement implements LovelaceCar
         return "Background color override";
       case "brushed":
         return "Brushed effect";
+      case "shadow":
+        return "Subtle shadow for improved contrast";
       case "clock_size":
         return "Clock size";
       case "clock_size_custom":

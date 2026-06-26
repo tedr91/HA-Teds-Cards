@@ -16,6 +16,7 @@ export interface ClockWeatherCardConfig extends LovelaceCardConfig {
   force_transparent?: boolean;
   background?: string;
   brushed?: boolean;
+  shadow?: boolean;
 
   // Clock
   show_clock?: boolean;

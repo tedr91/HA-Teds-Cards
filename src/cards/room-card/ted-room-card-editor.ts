@@ -409,7 +409,13 @@ export class TedRoomCardEditor extends LitElement implements LovelaceCardEditor 
 
   private _renderStatusItemRow(item: RoomStatusItem, idx: number, total: number): TemplateResult {
     const key = `status-${idx}`;
-    const subtitle = item.name ?? ("entity" in item ? item.entity : "") ?? "";
+    // Header subtitle: an explicit name override, else the entity's friendly name,
+    // and only fall back to the raw entity_id when neither is available.
+    const entityId = "entity" in item ? item.entity : undefined;
+    const friendlyName = entityId
+      ? (this.hass?.states[entityId]?.attributes?.friendly_name as string | undefined)
+      : undefined;
+    const subtitle = item.name || friendlyName || entityId || "";
     return html`
       <ha-expansion-panel
         outlined
@@ -1222,7 +1228,12 @@ export class TedRoomCardEditor extends LitElement implements LovelaceCardEditor 
       display: flex;
       align-items: center;
       gap: 10px;
-      width: 100%;
+      /* The panel renders its chevron as a flex sibling AFTER this slot inside an
+         overflow:hidden summary. flex:1 + min-width:0 lets the header (and its
+         clipping subtitle) shrink so the chevron always keeps its space; a plain
+         width:100% here could let long header content push the chevron out. */
+      flex: 1;
+      min-width: 0;
     }
     .row-header ha-icon {
       color: var(--secondary-text-color);

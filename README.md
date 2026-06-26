@@ -607,18 +607,24 @@ px, matching a button).
 The newest entry below is used as the GitHub Release notes by the release workflow, so it shows in
 the Home Assistant / HACS **update** dialog when you update. Newest first.
 
+### v2.0.82
+
+- Clock Weather, Light, Cover & Button Cards: the text/icon shadow is now genuinely subtle and **turns off cleanly for dark text and icons**, plus a new **Subtle shadow for improved contrast** toggle in each card's Appearance settings to switch it off.
+- Room Card: status item headers now show the entity's **friendly name** instead of the raw entity id.
+- Room Card: fixed the expand **chevron** being clipped on a status item with a long entity.
+
 ### v2.0.81
 
 - Clock Weather, Light, Cover & Button Cards: made the subtle shadow behind the text and icons **even more subtle**.
+
+<details>
+<summary>Previous release notes</summary>
 
 ### v2.0.80
 
 - Label / Button Card: tapping a card that has an entity now **toggles** the entity by default (instead of opening more-info), matching Home Assistant's button card.
 - Label / Button Card: **Show entity state** now defaults to off.
 - Clock Weather, Light, Cover & Button Cards: the subtle shadow behind the text and icons now **fades out for dark colours**, so black text and dark icon colours no longer get a muddy shadow.
-
-<details>
-<summary>Previous release notes</summary>
 
 ### v2.0.79
 

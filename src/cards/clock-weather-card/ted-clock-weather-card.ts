@@ -466,6 +466,7 @@ export class TedClockWeatherCard extends LitElement implements LovelaceCard {
     const theme = this._config.theme === "ha" ? "ha" : "ted-style";
     const forceTransparent = this._config.force_transparent !== false; // default true
     const brushed = this._config.brushed === true;
+    const shadow = this._config.shadow !== false; // default true
 
     const showClock = this._config.show_clock !== false;
     const showDate = this._config.show_date !== false;
@@ -476,6 +477,7 @@ export class TedClockWeatherCard extends LitElement implements LovelaceCard {
       "ted-card": true,
       [tedCardThemeClass(theme)]: true,
       "is-transparent": forceTransparent,
+      "no-shadow": !shadow,
     };
 
     const cardStyle: Record<string, string> = {};
@@ -668,7 +670,13 @@ export class TedClockWeatherCard extends LitElement implements LovelaceCard {
       .date,
       .weather {
         filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
-        filter: drop-shadow(0 1px 2px hsl(from currentColor 0 0% 0% / calc(l * 0.2)));
+        filter: drop-shadow(0 1px 2px hsl(from currentColor 0 0% 0% / max(0, (l - 50) * 0.004)));
+      }
+
+      ha-card.no-shadow .clock,
+      ha-card.no-shadow .date,
+      ha-card.no-shadow .weather {
+        filter: none;
       }
 
       .clock {

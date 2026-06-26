@@ -607,17 +607,21 @@ px, matching a button).
 The newest entry below is used as the GitHub Release notes by the release workflow, so it shows in
 the Home Assistant / HACS **update** dialog when you update. Newest first.
 
+### v2.0.74
+
+- Clock Weather Card editor: the layout controls are now their own top-level **Card Layout** section (no longer tucked inside Appearance), each **Show …** toggle sits beside its **… position** slider, and every section now has consistent spacing.
+
 ### v2.0.73
 
 - Clock Weather Card: **Show weather icon** now defaults to on, and the **Weather icon style** picker is disabled while the icon is hidden. The weather entity auto-fills only when the card is first added (editing an existing card no longer overrides it), and the Weather Settings editor is tidied (Weather size sits directly under the entity).
 - Docs: every card now has a preview image and a collapsible **Detailed options** section in the README, and the Room Card credits [Clooos' Bubble Card](https://github.com/Clooos/Bubble-Card).
 
+<details>
+<summary>Previous release notes</summary>
+
 ### v2.0.72
 
 - Credits: formally acknowledge [Clooos' Bubble Card](https://github.com/Clooos/Bubble-Card) as the loose inspiration for the Room Card, and add donation/support links for the projects this collection builds on.
-
-<details>
-<summary>Previous release notes</summary>
 
 ### v2.0.71
 

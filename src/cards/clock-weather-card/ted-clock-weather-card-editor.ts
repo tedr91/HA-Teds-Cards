@@ -47,16 +47,10 @@ export class TedClockWeatherCardEditor extends LitElement implements LovelaceCar
             .computeLabel=${this._computeLabel}
             @value-changed=${this._valueChanged}
           ></ha-form>
-          ${this._renderLayout(data)}
         </div>
       </ha-expansion-panel>
-      <ha-form
-        .hass=${this.hass}
-        .data=${data}
-        .schema=${this._settingsSchema()}
-        .computeLabel=${this._computeLabel}
-        @value-changed=${this._valueChanged}
-      ></ha-form>
+      ${this._renderLayout(data)}
+      ${this._renderSettings(data)}
     `;
   }
 
@@ -125,7 +119,7 @@ export class TedClockWeatherCardEditor extends LitElement implements LovelaceCar
     ];
   }
 
-  private _settingsSchema() {
+  private _renderSettings(data: ClockWeatherCardConfig): TemplateResult {
     const cfg = this._config ?? ({} as ClockWeatherCardConfig);
 
     // Clock Settings (show + position live under the Layout section)
@@ -239,32 +233,36 @@ export class TedClockWeatherCardEditor extends LitElement implements LovelaceCar
       { name: "show_current_temp", selector: { boolean: {} } },
     );
 
-    return [
-      {
-        name: "",
-        type: "expandable",
-        title: "Clock Settings",
-        iconPath: CLOCK_ICON_PATH,
-        flatten: true,
-        schema: clock,
-      },
-      {
-        name: "",
-        type: "expandable",
-        title: "Date Settings",
-        iconPath: DATE_ICON_PATH,
-        flatten: true,
-        schema: date,
-      },
-      {
-        name: "",
-        type: "expandable",
-        title: "Weather Settings",
-        iconPath: WEATHER_ICON_PATH,
-        flatten: true,
-        schema: weather,
-      },
-    ];
+    return html`
+      ${this._settingsPanel("Clock Settings", CLOCK_ICON_PATH, clock, data)}
+      ${this._settingsPanel("Date Settings", DATE_ICON_PATH, date, data)}
+      ${this._settingsPanel("Weather Settings", WEATHER_ICON_PATH, weather, data)}
+    `;
+  }
+
+  /** Render one top-level settings panel, matching the Appearance panel layout so
+   * every section shares the editor's uniform expansion-panel spacing. */
+  private _settingsPanel(
+    title: string,
+    iconPath: string,
+    schema: Array<Record<string, unknown>>,
+    data: ClockWeatherCardConfig,
+  ): TemplateResult {
+    return html`
+      <ha-expansion-panel outlined .leftChevron=${true}>
+        <ha-svg-icon slot="leading-icon" .path=${iconPath}></ha-svg-icon>
+        <span slot="header">${title}</span>
+        <div class="appearance-content">
+          <ha-form
+            .hass=${this.hass}
+            .data=${data}
+            .schema=${schema}
+            .computeLabel=${this._computeLabel}
+            @value-changed=${this._valueChanged}
+          ></ha-form>
+        </div>
+      </ha-expansion-panel>
+    `;
   }
 
   // The Layout section is rendered by hand (rather than via ha-form) so the
@@ -277,24 +275,20 @@ export class TedClockWeatherCardEditor extends LitElement implements LovelaceCar
     return html`
       <ha-expansion-panel outlined .leftChevron=${true}>
         <ha-svg-icon slot="leading-icon" .path=${LAYOUT_ICON_PATH}></ha-svg-icon>
-        <span slot="header">Layout</span>
+        <span slot="header">Card Layout</span>
         <div class="layout-content">
-          ${this._toggleRow("show_clock", "Show clock", Boolean(data.show_clock))}
-          ${this._offsetRow("clock_offset", "Clock position", off("clock_offset", 0))}
-          ${this._toggleRow("show_date", "Show date", Boolean(data.show_date))}
-          ${this._offsetRow("date_offset", "Date position", off("date_offset", 100))}
-          ${this._toggleRow(
-            "date_below_clock",
-            "Position date below clock",
-            Boolean(data.date_below_clock),
-          )}
-          ${this._toggleRow("show_weather", "Show weather", Boolean(data.show_weather))}
-          ${this._offsetRow("weather_offset", "Weather position", off("weather_offset", 100))}
-          ${this._toggleRow(
-            "weather_above_clock",
-            "Position weather above clock",
-            Boolean(data.weather_above_clock),
-          )}
+          <div class="layout-row">
+            ${this._toggleRow("show_clock", "Show clock", Boolean(data.show_clock))}
+            ${this._offsetRow("clock_offset", "Clock position", off("clock_offset", 0))}
+          </div>
+          <div class="layout-row">
+            ${this._toggleRow("show_date", "Show date", Boolean(data.show_date))}
+            ${this._offsetRow("date_offset", "Date position", off("date_offset", 100))}
+          </div>
+          <div class="layout-row">
+            ${this._toggleRow("show_weather", "Show weather", Boolean(data.show_weather))}
+            ${this._offsetRow("weather_offset", "Weather position", off("weather_offset", 100))}
+          </div>
         </div>
       </ha-expansion-panel>
     `;
@@ -465,6 +459,19 @@ export class TedClockWeatherCardEditor extends LitElement implements LovelaceCar
       align-items: center;
       justify-content: space-between;
       gap: 12px;
+    }
+
+    /* Pair a "Show X" toggle and its "X position" slider on one row. */
+    .layout-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px 20px;
+    }
+
+    .layout-row > * {
+      flex: 1 1 160px;
+      min-width: 0;
     }
 
     .offset-field {

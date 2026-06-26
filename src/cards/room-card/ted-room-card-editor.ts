@@ -58,6 +58,7 @@ const BUTTON_TYPE_META: Record<string, { label: string; icon: string }> = {
   [ROOM_BUTTON_CARD_TYPES.label]: { label: "Button", icon: "mdi:gesture-tap-button" },
   [ROOM_BUTTON_CARD_TYPES.cover]: { label: "Cover", icon: "mdi:window-shutter" },
   [ROOM_BUTTON_CARD_TYPES.light]: { label: "Light", icon: "mdi:lightbulb" },
+  [ROOM_BUTTON_CARD_TYPES.camera]: { label: "Camera", icon: "mdi:cctv" },
   [ROOM_BUTTON_CARD_TYPES.spacer]: { label: "Spacer", icon: "mdi:arrow-expand-horizontal" },
 };
 
@@ -95,6 +96,9 @@ const FIELD_LABELS: Record<string, string> = {
   photo_source: "Photo source",
   photo: "Select photo",
   photo_url: "Photo",
+  photo_camera_entity: "Camera entity",
+  photo_camera_view: "Camera view",
+  photo_camera_fit: "Fit mode",
   photo_placement: "Photo placement",
   photo_height: "Photo height (px)",
   photo_align: "Photo vertical alignment",
@@ -613,6 +617,7 @@ export class TedRoomCardEditor extends LitElement implements LovelaceCardEditor 
               { value: ROOM_BUTTON_CARD_TYPES.label, label: "Button" },
               { value: ROOM_BUTTON_CARD_TYPES.cover, label: "Cover" },
               { value: ROOM_BUTTON_CARD_TYPES.light, label: "Light" },
+              { value: ROOM_BUTTON_CARD_TYPES.camera, label: "Camera" },
               { value: ROOM_BUTTON_CARD_TYPES.spacer, label: "Spacer" },
             ],
             (value) => this._addButton(sIdx, value),
@@ -856,6 +861,7 @@ export class TedRoomCardEditor extends LitElement implements LovelaceCardEditor 
             options: [
               { value: "bundled", label: "Bundled photos" },
               { value: "custom", label: "Custom photo" },
+              { value: "camera", label: "Camera feed" },
             ],
           },
         },
@@ -863,6 +869,40 @@ export class TedRoomCardEditor extends LitElement implements LovelaceCardEditor 
     ];
     if (this._config?.photo_source === "custom") {
       schema.push({ name: "photo_url", selector: { image: {} } });
+    } else if (this._config?.photo_source === "camera") {
+      schema.push({ name: "photo_camera_entity", selector: { entity: { domain: "camera" } } });
+      schema.push({
+        type: "grid",
+        name: "",
+        column_min_width: "100px",
+        schema: [
+          {
+            name: "photo_camera_view",
+            selector: {
+              select: {
+                mode: "dropdown",
+                options: [
+                  { value: "auto", label: "Auto thumbnail (default)" },
+                  { value: "live", label: "Live stream" },
+                ],
+              },
+            },
+          },
+          {
+            name: "photo_camera_fit",
+            selector: {
+              select: {
+                mode: "dropdown",
+                options: [
+                  { value: "cover", label: "Cover (default)" },
+                  { value: "contain", label: "Contain" },
+                  { value: "fill", label: "Fill" },
+                ],
+              },
+            },
+          },
+        ],
+      });
     } else {
       schema.push({
         name: "photo",
@@ -983,6 +1023,9 @@ export class TedRoomCardEditor extends LitElement implements LovelaceCardEditor 
       photo_source: value.photo_source,
       photo: value.photo,
       photo_url: value.photo_url,
+      photo_camera_entity: value.photo_camera_entity,
+      photo_camera_view: value.photo_camera_view,
+      photo_camera_fit: value.photo_camera_fit,
       photo_placement: value.photo_placement,
       photo_height: value.photo_height,
       photo_align: value.photo_align,
@@ -1156,8 +1199,16 @@ export class TedRoomCardEditor extends LitElement implements LovelaceCardEditor 
     if (typeof next.status_icon_size !== "number" || next.status_icon_size === 100) delete next.status_icon_size;
     // Room photo defaults.
     if (next.show_photo !== false) delete next.show_photo;
-    if (next.photo_source !== "custom") delete next.photo_source;
+    if (next.photo_source !== "custom" && next.photo_source !== "camera") delete next.photo_source;
     if (next.photo_source !== "custom" || !next.photo_url) delete next.photo_url;
+    // Camera photo fields only persist for the camera source.
+    if (next.photo_source !== "camera" || !next.photo_camera_entity) delete next.photo_camera_entity;
+    if (next.photo_source !== "camera" || !next.photo_camera_view || next.photo_camera_view === "auto") {
+      delete next.photo_camera_view;
+    }
+    if (next.photo_source !== "camera" || !next.photo_camera_fit || next.photo_camera_fit === "cover") {
+      delete next.photo_camera_fit;
+    }
     if (!next.photo || next.photo === "auto") delete next.photo;
     if (!next.photo_placement || next.photo_placement === "top") delete next.photo_placement;
     if (typeof next.photo_height !== "number") delete next.photo_height;

@@ -12,6 +12,7 @@ export const ROOM_BUTTON_CARD_TYPES = {
   label: `custom:${NAMESPACE}-label-button-card`,
   cover: `custom:${NAMESPACE}-cover-card`,
   light: `custom:${NAMESPACE}-light-card`,
+  camera: `custom:${NAMESPACE}-camera-card`,
   spacer: `custom:${NAMESPACE}-spacer-card`,
 } as const;
 

@@ -1,6 +1,8 @@
 import { LovelaceCardConfig } from "custom-card-helpers";
 
+import type { CameraView, FitMode } from "../../shared/camera";
 import type { TedStyleTheme } from "../../shared/types";
+import type { CameraCardConfig } from "../camera-card/types";
 import type { CoverCardConfig } from "../cover-card/types";
 import type { LightCardConfig } from "../light-card/types";
 import type { LabelButtonCardConfig } from "../label-button-card/types";
@@ -88,6 +90,7 @@ export type RoomButtonConfig = (
   | LabelButtonCardConfig
   | CoverCardConfig
   | LightCardConfig
+  | CameraCardConfig
   | SpacerCardConfig
 ) &
   RoomButtonSizing;
@@ -149,11 +152,17 @@ export interface RoomCardConfig extends LovelaceCardConfig {
   /** Show the room photo behind the card UI. Defaults to true. */
   show_photo?: boolean;
   /** Where the photo comes from. Defaults to "bundled". */
-  photo_source?: "bundled" | "custom";
+  photo_source?: "bundled" | "custom" | "camera";
   /** Bundled photo key, or "auto" to match the room name. Defaults to "auto". */
   photo?: string;
   /** Custom photo path/URL (from the HA image selector) when source is "custom". */
   photo_url?: string;
+  /** Camera entity used as the photo when source is "camera". */
+  photo_camera_entity?: string;
+  /** Camera view mode for a camera photo. Defaults to "auto" (thumbnail). */
+  photo_camera_view?: CameraView;
+  /** Fit mode for a camera photo. Defaults to "cover". */
+  photo_camera_fit?: FitMode;
   /** Where the photo sits in the card. Defaults to "top". */
   photo_placement?: "top" | "below_header" | "fill";
   /** Cropped photo height in px (top/below_header). Empty = full natural image. */

@@ -21,6 +21,7 @@ After spending months attempting to find an "on/off/brightness" switch that I li
 | Clock Weather Card | `custom:ted-clock-weather-card` | A large clock with the date and current weather. |
 | Remote Card | `custom:ted-remote-card` | Remote control for media devices (e.g. Apple TV and Kaleidescape). |
 | Room Card | `custom:ted-room-card` | Overview card for a Home Assistant area. |
+| Camera Card | `custom:ted-camera-card` | Camera feed (auto thumbnail or live stream), like Home Assistant's picture-glance. |
 
 ---
 
@@ -558,7 +559,9 @@ header, status, and buttons). In the editor's **Room Photo** section:
 
 - **Show photo** (default on).
 - **Photo source** — **Bundled** (a curated set served from a CDN; pick one or leave **Auto** to match
-  the room name) or **Custom** (upload your own via the HA image picker).
+  the room name), **Custom** (upload your own via the HA image picker), or **Camera feed** (pick a
+  `camera` entity, then choose its **Camera view** — Auto thumbnail (default) / Live stream — and
+  **Fit mode** — Cover / Contain / Fill).
 - **Photo placement** — **Top of card** (default), **Below header**, or **Fill card**.
 - **Photo height** (px) — leave empty to show the full image at card width; set a height to crop it
   (hidden for **Fill**).
@@ -586,7 +589,7 @@ and an advanced `colors` map (state → color) for per-state colors.
 
 **Button sections** — one or more grids of buttons below the status bar, managed in the editor's
 **Button sections** section (add, reorder, delete sections; add, reorder, delete buttons within each).
-Each button is a `ted-label-button-card`, `ted-cover-card`, or `ted-light-card`, edited inline with
+Each button is a `ted-label-button-card`, `ted-cover-card`, `ted-light-card`, or `ted-camera-card`, edited inline with
 that card's own editor. Buttons lay out 5 per row as squares; set a section's **Max rows** to cap the
 height (`0` = unlimited). When the buttons overflow the cap, the last visible cell becomes a **…**
 button that reveals the rest.
@@ -604,21 +607,78 @@ px, matching a button).
 
 ---
 
+### 📷 Camera Card
+
+<a id="camera-card"></a>
+
+A single **camera feed**, rendered with Home Assistant's own picture-glance image element so it gets
+both **auto** thumbnail polling and **live** streaming for free. Use it on its own, as a Room Card
+button, or as a Room Card photo source.
+
+Minimal config:
+
+```yaml
+type: custom:ted-camera-card
+entity: camera.front_door
+```
+
+<details>
+<summary><b>Detailed options</b></summary>
+
+```yaml
+type: custom:ted-camera-card
+entity: camera.front_door   # the camera entity to show (required)
+name: Front Door            # optional caption text, defaults to the entity's name
+show_name: false            # optional, overlay the name along the bottom edge
+camera_view: auto           # optional: auto (thumbnail, default) | live (stream)
+fit_mode: cover             # optional: cover (default) | contain | fill
+aspect_ratio: "16:9"        # optional, e.g. "16:9" or "1.78" (ignored in grid layout)
+theme: ted-style            # optional, visual styling: ted-style (default) | ha
+brushed: false              # optional brushed-metal sheen behind the feed
+width: 240                  # optional manual width (px), ignored in grid layout
+height: 135                 # optional manual height (px), ignored in grid layout
+tap_action:                 # optional, defaults to More Info
+  action: more-info
+hold_action:
+  action: none
+double_tap_action:
+  action: none
+```
+
+- **Camera view** — **Auto thumbnail** (default; periodically refreshed still) or **Live stream**
+  (continuous video).
+- **Fit mode** — how the image fills its box: **Cover** (default), **Contain**, or **Fill**.
+- **Aspect ratio** — optional, sets the card's shape when it isn't sized by the dashboard grid.
+- **Sizing** — in a **grid** (sections) layout the card fills its grid cell; otherwise it uses the
+  optional **Width** / **Height** (defaulting to 240×135). `theme` and `brushed` work as in the other
+  cards (see the Light Card section).
+- **Interactions** — **Tap** defaults to **More Info** (the camera's live dialog); **Hold** and
+  **Double tap** default to none. All accept the standard Home Assistant action options.
+
+</details>
+
+---
+
 ## 📋 Changelog
 
 The newest entry below is used as the GitHub Release notes by the release workflow, so it shows in
 the Home Assistant / HACS **update** dialog when you update. Newest first.
 
+### v2.0.92
+
+- **New Camera Card** (`custom:ted-camera-card`): show a camera feed — auto thumbnail or live stream — like Home Assistant's picture-glance, with **Camera view**, **Fit mode**, and aspect-ratio options, and **More Info** on tap.
+- Room Card: a room's **photo can now be a live camera feed** (a new "Camera feed" photo source), and you can add **cameras as buttons** in any button section.
+
 ### v2.0.91
 
 - Light & Cover Cards: the gap between the two neumorphic rocker paddles is now also **tightened in the horizontal layout**, matching the vertical rocker.
 
+<details>
+<summary>Previous release notes</summary>
+
 ### v2.0.90
 
 - Room Card: **performance** — it now skips redundant re-renders when unrelated entities update and caches its button layout, so dashboards with several Room Cards stay smoother. No visible change.
-
-<details>
-<summary>Previous release notes</summary>
 
 ### v2.0.89
 

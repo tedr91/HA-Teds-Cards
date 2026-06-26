@@ -9,6 +9,7 @@ import {
   type LovelaceCardEditor,
 } from "custom-card-helpers";
 
+import { ensureHuiImage } from "../../shared/camera";
 import { registerCustomCard } from "../../shared/register-card";
 import { brushedOverlay, tedStyleTheme } from "../../shared/theme";
 import {
@@ -296,6 +297,8 @@ export class TedRoomCard extends LitElement implements LovelaceCard {
   @state() private _activeSlider?: { key: string; value: number };
   /** True when the configured room photo failed to load (hidden gracefully). */
   @state() private _photoError = false;
+  /** True once HA's `<hui-image>` is registered (for a camera room photo). */
+  @state() private _huiImageReady = false;
   /** Measured y (px) of the header's bottom edge, for the "below header" photo. */
   @state() private _headerBottom = 0;
   /** Measured rendered height (px) of the photo layer, for the "shift buttons" pad. */
@@ -375,6 +378,7 @@ export class TedRoomCard extends LitElement implements LovelaceCard {
       this._buildButtonElements();
       // A new config may point at a different photo — give it another chance.
       this._photoError = false;
+      if (this._config?.photo_source === "camera") void this._ensurePhotoImage();
     }
   }
 
@@ -498,6 +502,11 @@ export class TedRoomCard extends LitElement implements LovelaceCard {
     const pe = this._config?.photo_state_entity;
     if (Array.isArray(pe)) ids.push(...pe);
     else if (typeof pe === "string" && pe) ids.push(pe);
+    // A camera room photo: re-render on its state ticks so the embedded
+    // <hui-image> keeps receiving a fresh hass (auth tokens, thumbnails).
+    if (this._config?.photo_source === "camera" && this._config.photo_camera_entity) {
+      ids.push(this._config.photo_camera_entity);
+    }
     return ids;
   }
 
@@ -1038,8 +1047,9 @@ export class TedRoomCard extends LitElement implements LovelaceCard {
   private _renderPhoto(): TemplateResult | typeof nothing {
     const c = this._config;
     if (!c || c.show_photo === false) return nothing;
-    const url = this._resolvePhotoUrl();
-    if (!url || this._photoError) return nothing;
+    const isCamera = c.photo_source === "camera";
+    const url = isCamera ? undefined : this._resolvePhotoUrl();
+    if (isCamera ? !c.photo_camera_entity : !url || this._photoError) return nothing;
 
     const placement = this._photoPlacement();
     const opacity = typeof c.photo_opacity === "number" ? c.photo_opacity : 100;
@@ -1095,12 +1105,61 @@ export class TedRoomCard extends LitElement implements LovelaceCard {
     const gradient = this._edgeGradientCss(edges);
     return html`
       <div class="room-photo" style=${styleMap(layer)} aria-hidden="true">
-        <img src=${url} alt="" style=${styleMap(img)} @error=${this._onPhotoError} @load=${this._onPhotoLoad} />
+        ${isCamera
+          ? this._renderPhotoCamera(c, effectiveOpacity, grayscale, stateEntities.length > 0, cropped)
+          : html`<img src=${url} alt="" style=${styleMap(img)} @error=${this._onPhotoError} @load=${this._onPhotoLoad} />`}
         ${gradient
           ? html`<div class="photo-scrim" style=${styleMap({ background: gradient })}></div>`
           : nothing}
       </div>
     `;
+  }
+
+  /** Render the room photo as an auto/live camera feed via HA's `<hui-image>`. */
+  private _renderPhotoCamera(
+    c: RoomCardConfig,
+    opacity: number,
+    grayscale: boolean,
+    hasState: boolean,
+    sized: boolean,
+  ): TemplateResult | typeof nothing {
+    if (!this._huiImageReady) return nothing;
+    const style: Record<string, string> = { opacity: String(opacity / 100), width: "100%" };
+    // When the container has a fixed size (fill / cropped height) let the feed
+    // fill it; otherwise let <hui-image> self-size from a 16:9 ratio.
+    if (sized) style.height = "100%";
+    if (hasState) {
+      style.filter = grayscale ? "grayscale(1)" : "none";
+      style.transition = "opacity 0.4s ease, filter 0.4s ease";
+    }
+    return html`<hui-image
+      .hass=${this.hass}
+      .cameraImage=${c.photo_camera_entity}
+      .cameraView=${c.photo_camera_view ?? "auto"}
+      .fitMode=${c.photo_camera_fit ?? "cover"}
+      .aspectRatio=${sized ? undefined : "16:9"}
+      style=${styleMap(style)}
+    ></hui-image>`;
+  }
+
+  /** Ensure HA's `<hui-image>` is registered before rendering a camera photo. */
+  private async _ensurePhotoImage(): Promise<void> {
+    if (this._huiImageReady) return;
+    const ok = await ensureHuiImage();
+    if (!ok) return;
+    this._huiImageReady = true;
+    this.requestUpdate();
+    // Let the freshly-mounted <hui-image> lay out, then re-measure so the
+    // "shift buttons down" padding accounts for its height.
+    requestAnimationFrame(() => this._measureLayout());
+  }
+
+  /** Whether a room photo (bundled / custom URL or camera) is currently shown. */
+  private _photoIsShown(): boolean {
+    const c = this._config;
+    if (!c || c.show_photo === false) return false;
+    if (c.photo_source === "camera") return !!c.photo_camera_entity;
+    return !!this._resolvePhotoUrl() && !this._photoError;
   }
 
   protected render(): TemplateResult | typeof nothing {
@@ -1138,7 +1197,7 @@ export class TedRoomCard extends LitElement implements LovelaceCard {
     // For a "top" or "below header" photo, optionally pad the body down so the
     // first buttons sit below the photo instead of overlapping it.
     const placement = this._photoPlacement();
-    const photoShown = this._config.show_photo !== false && !!this._resolvePhotoUrl() && !this._photoError;
+    const photoShown = this._photoIsShown();
     const shiftButtons =
       photoShown &&
       (placement === "top" || placement === "below_header") &&
@@ -1224,6 +1283,10 @@ export class TedRoomCard extends LitElement implements LovelaceCard {
         pointer-events: none;
       }
       .room-photo img {
+        display: block;
+        width: 100%;
+      }
+      .room-photo hui-image {
         display: block;
         width: 100%;
       }

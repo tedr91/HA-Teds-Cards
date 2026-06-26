@@ -82,13 +82,13 @@ const FIELD_LABELS: Record<string, string> = {
   theme: "Visual styling",
   brushed: "Brushed effect",
   show_header_icon: "Display icon in header",
-  header_icon_size: "Icon size override (px)",
+  header_icon_size: "Icon size override",
   show_header_name: "Display name in header",
-  header_name_size: "Name size override (px)",
+  header_name_size: "Name size override",
   header_divider: "Display header divider line",
   header_align: "Vertical alignment",
   status_align: "Vertical alignment",
-  status_icon_size: "Status icon size (px)",
+  status_icon_size: "Status icon size",
   show_photo: "Show photo",
   photo_source: "Photo source",
   photo: "Select photo",
@@ -673,7 +673,7 @@ export class TedRoomCardEditor extends LitElement implements LovelaceCardEditor 
               .hass=${this.hass}
               .data=${{
                 status_align: this._config.status_align ?? "top",
-                status_icon_size: this._config.status_icon_size ?? 16,
+                status_icon_size: this._config.status_icon_size ?? 100,
               }}
               .schema=${[
                 {
@@ -696,7 +696,7 @@ export class TedRoomCardEditor extends LitElement implements LovelaceCardEditor 
                     },
                     {
                       name: "status_icon_size",
-                      selector: { number: { min: 8, max: 48, step: 1, mode: "box", unit_of_measurement: "px" } },
+                      selector: { number: { min: 10, max: 400, step: 5, mode: "box", unit_of_measurement: "%" } },
                     },
                   ],
                 },
@@ -796,7 +796,7 @@ export class TedRoomCardEditor extends LitElement implements LovelaceCardEditor 
               {
                 name: "header_icon_size",
                 disabled: this._config?.show_header_icon !== true,
-                selector: { number: { min: 0, max: 200, step: 1, mode: "box", unit_of_measurement: "px" } },
+                selector: { number: { min: 10, max: 400, step: 5, mode: "box", unit_of_measurement: "%" } },
               },
             ],
           },
@@ -809,7 +809,7 @@ export class TedRoomCardEditor extends LitElement implements LovelaceCardEditor 
               {
                 name: "header_name_size",
                 disabled: this._config?.show_header_name === false,
-                selector: { number: { min: 0, max: 200, step: 1, mode: "box", unit_of_measurement: "px" } },
+                selector: { number: { min: 10, max: 400, step: 5, mode: "box", unit_of_measurement: "%" } },
               },
             ],
           },
@@ -1144,7 +1144,7 @@ export class TedRoomCardEditor extends LitElement implements LovelaceCardEditor 
     if (next.header_divider !== true) delete next.header_divider;
     if (!next.header_align || next.header_align === "top") delete next.header_align;
     if (!next.status_align || next.status_align === "top") delete next.status_align;
-    if (typeof next.status_icon_size !== "number" || next.status_icon_size === 16) delete next.status_icon_size;
+    if (typeof next.status_icon_size !== "number" || next.status_icon_size === 100) delete next.status_icon_size;
     // Room photo defaults.
     if (next.show_photo !== false) delete next.show_photo;
     if (next.photo_source !== "custom") delete next.photo_source;

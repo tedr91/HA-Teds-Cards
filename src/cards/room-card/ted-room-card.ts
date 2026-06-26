@@ -984,7 +984,7 @@ export class TedRoomCard extends LitElement implements LovelaceCard {
         ? this._config.status_align
         : "top";
     const statusIconSize =
-      typeof this._config.status_icon_size === "number" ? this._config.status_icon_size : 16;
+      typeof this._config.status_icon_size === "number" ? this._config.status_icon_size : 100;
     const statusItems = this._config.status_items ?? [];
     const sections = this._config.sections ?? [];
     const hasBody = sections.length > 0;
@@ -1013,20 +1013,20 @@ export class TedRoomCard extends LitElement implements LovelaceCard {
         ${this._renderPhoto()}
         <div
           class="status-bar align-${statusAlign} header-align-${headerAlign}${headerDivider ? "" : " no-divider"}"
-          style=${styleMap({ "--rc-status-icon-size": `${statusIconSize}px` })}
+          style=${styleMap({ "--rc-status-icon-size": `calc(16px * ${statusIconSize} / 100)` })}
         >
           <div class="status-heading">
             ${showHeaderIcon
               ? html`<ha-icon
                   class="status-heading-icon"
                   .icon=${this._config.icon || this._areaIcon() || "mdi:home"}
-                  style=${styleMap(headerIconSize ? { "--mdc-icon-size": `${headerIconSize}px` } : {})}
+                  style=${styleMap(headerIconSize ? { "--mdc-icon-size": `calc(22px * ${headerIconSize} / 100)` } : {})}
                 ></ha-icon>`
               : nothing}
             ${showHeaderName && title
               ? html`<div
                   class="status-title"
-                  style=${styleMap(headerNameSize ? { fontSize: `${headerNameSize}px` } : {})}
+                  style=${styleMap(headerNameSize ? { fontSize: `calc(1rem * ${headerNameSize} / 100)` } : {})}
                 >
                   ${title}
                 </div>`

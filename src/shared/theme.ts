@@ -98,12 +98,12 @@ export const tedStyleTheme: CSSResult = css`
   }
   .ted-neu.top {
     top: 0;
-    height: calc(50% - 1.5px);
+    height: calc(50% - 1px);
     border-radius: var(--ted-style-radius) var(--ted-style-radius) 3px 3px;
   }
   .ted-neu.bottom {
     bottom: 0;
-    height: calc(50% - 1.5px);
+    height: calc(50% - 1px);
     border-radius: 3px 3px var(--ted-style-radius) var(--ted-style-radius);
   }
   .ted-neu.raised {

@@ -168,7 +168,7 @@ icon_hold: none
 For dimmable lights you can choose the brightness the light turns **on** to. The editor shows a **Memory** section (only for brightness-capable lights) with three modes:
 - `off` (default): turn on at the light's last brightness (standard Home Assistant behavior).
 - `static`: always turn on to a fixed brightness — set `memory_value` (1–100 %, default 100).
-- `helper`: turn on to the value of an `input_number` / `number` helper — set `memory_entity`. The helper's value is read as a **percentage** (1–100).
+- `helper`: turn on to the value of an `input_number` / `number` helper, read as a **percentage** (1–100). **Choosing this mode auto-creates and selects a dedicated helper for you** (`input_number.ted_light_mem_<entity>`) — no need to add one in Settings → Helpers. Add a card for the same light elsewhere and it reuses that helper automatically; delete the helper and the card falls back to the default. You can still point `memory_entity` at your own helper instead.
 
 ```yaml
 memory_mode: static        # off | static | helper
@@ -270,8 +270,11 @@ For covers that support `set_cover_position` you can choose the position the cov
 editor shows a **Memory** section (only for position-capable covers) with three modes:
 - `off` (default): open fully (100%).
 - `static`: always open to a fixed position — set `memory_value` (1–100 %, default 100).
-- `helper`: open to the value of an `input_number` / `number` helper — set `memory_entity` (read as
-  a percentage 1–100). Changing the position from the card also writes the new value back to the helper.
+- `helper`: open to the value of an `input_number` / `number` helper, read as a percentage (1–100).
+  **Choosing this mode auto-creates and selects a dedicated helper for you** (`input_number.ted_cover_mem_<entity>`)
+  — no need to add one in Settings → Helpers; add a card for the same cover elsewhere and it reuses that
+  helper, and deleting the helper falls back to the default. Changing the position from the card also
+  writes the new value back to the helper. You can still point `memory_entity` at your own helper instead.
 
 ```yaml
 memory_mode: static        # off | static | helper
@@ -664,18 +667,22 @@ double_tap_action:
 The newest entry below is used as the GitHub Release notes by the release workflow, so it shows in
 the Home Assistant / HACS **update** dialog when you update. Newest first.
 
+### v2.0.94
+
+- Light & Cover Cards: the **Memory helper** option now **creates the helper for you**. Choosing "Memory helper" automatically makes and selects a dedicated `input_number` — no more adding one by hand in Settings → Helpers. Adding another card for the same light/cover reuses that helper automatically, and if you delete the helper the card quietly falls back to its default.
+
 ### v2.0.93
 
 - Camera Card: in a dashboard **Sections** grid you can now resize it all the way down to **3 wide × 1 tall** (the minimum height was 2).
 - Room Card: status items now line up more tightly with the room **Name** — a text-only status strip is no longer padded taller than the title.
 
+<details>
+<summary>Previous release notes</summary>
+
 ### v2.0.92
 
 - **New Camera Card** (`custom:ted-camera-card`): show a camera feed — auto thumbnail or live stream — like Home Assistant's picture-glance, with **Camera view**, **Fit mode**, and aspect-ratio options, and **More Info** on tap.
 - Room Card: a room's **photo can now be a live camera feed** (a new "Camera feed" photo source), and you can add **cameras as buttons** in any button section.
-
-<details>
-<summary>Previous release notes</summary>
 
 ### v2.0.91
 

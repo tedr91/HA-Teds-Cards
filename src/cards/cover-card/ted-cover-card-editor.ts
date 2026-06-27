@@ -5,6 +5,7 @@ import { type HomeAssistant, type LovelaceCardEditor, fireEvent } from "custom-c
 
 import { COVER_CARD_EDITOR_TYPE } from "./const";
 import type { CardElement, CoverCardConfig, CoverAction } from "./types";
+import { autoMemoryHelperEntityId, ensureMemoryHelper } from "../../shared/memory-helper";
 
 const VISUAL_ICON_PATH =
   "M17.5,12A1.5,1.5 0 0,1 16,10.5A1.5,1.5 0 0,1 17.5,9A1.5,1.5 0 0,1 19,10.5A1.5,1.5 0 0,1 17.5,12M14.5,8A1.5,1.5 0 0,1 13,6.5A1.5,1.5 0 0,1 14.5,5A1.5,1.5 0 0,1 16,6.5A1.5,1.5 0 0,1 14.5,8M9.5,8A1.5,1.5 0 0,1 8,6.5A1.5,1.5 0 0,1 9.5,5A1.5,1.5 0 0,1 11,6.5A1.5,1.5 0 0,1 9.5,8M6.5,12A1.5,1.5 0 0,1 5,10.5A1.5,1.5 0 0,1 6.5,9A1.5,1.5 0 0,1 8,10.5A1.5,1.5 0 0,1 6.5,12M12,3A9,9 0 0,0 3,12A9,9 0 0,0 12,21A1.5,1.5 0 0,0 13.5,19.5C13.5,19.11 13.35,18.76 13.11,18.5C12.88,18.23 12.73,17.88 12.73,17.5A1.5,1.5 0 0,1 14.23,16H16A5,5 0 0,0 21,11C21,6.58 16.97,3 12,3Z";
@@ -58,6 +59,9 @@ export class TedCoverCardEditor extends LitElement implements LovelaceCardEditor
   /** Element chips currently expanded in the reorder section (UI-only state;
    *  chips start collapsed). */
   @state() private _expanded = new Set<CardElement>();
+
+  /** Entity whose memory config we've already reconciled (run-once-per-entity). */
+  private _reconciledEntity?: string;
 
   public setConfig(config: CoverCardConfig): void {
     this._config = config;
@@ -497,9 +501,61 @@ export class TedCoverCardEditor extends LitElement implements LovelaceCardEditor
     }
   };
 
-  private _valueChanged = (ev: CustomEvent): void => {
-    this._commit({ ...this._config, ...ev.detail.value } as CoverCardConfig);
+  private _valueChanged = async (ev: CustomEvent): Promise<void> => {
+    const prev = this._config;
+    const next = { ...prev, ...ev.detail.value } as CoverCardConfig;
+    const hass = this.hass;
+    // Selecting "Memory helper" auto-creates (or reuses) a deterministic helper
+    // and selects it, so the user never has to make one by hand.
+    if (hass && next.entity && next.memory_mode === "helper" && !next.memory_entity) {
+      const entityId = await ensureMemoryHelper(hass, "cover", next.entity);
+      if (entityId) next.memory_entity = entityId;
+    }
+    // Don't persist the ambient "100% (default)" on a card that never engaged
+    // memory — keep it unset so an existing auto-helper can still be adopted on
+    // open (see _reconcileMemory). A deliberate "off" chosen after memory was on
+    // still persists, because then prev.memory_mode is set.
+    if (next.memory_mode === "off" && !prev?.memory_mode) {
+      delete next.memory_mode;
+      delete next.memory_entity;
+    }
+    this._commit(next);
   };
+
+  protected updated(): void {
+    // Reconcile memory config with the auto-helper once per entity (covers cards
+    // added with the entity preset, and later entity changes).
+    const entity = this._config?.entity;
+    if (this.hass && entity && this._reconciledEntity !== entity) {
+      this._reconciledEntity = entity;
+      this._reconcileMemory();
+    }
+  }
+
+  /**
+   * Keep the saved memory config in step with the deterministic auto-helper:
+   *  - adopt it when memory is unset and the helper already exists (e.g. a new
+   *    card for a cover another card already set up);
+   *  - revert to the default when a previously-selected helper has been deleted.
+   */
+  private _reconcileMemory(): void {
+    const hass = this.hass;
+    const config = this._config;
+    if (!hass || !config?.entity) return;
+    if (config.memory_mode === "helper" && config.memory_entity && !hass.states[config.memory_entity]) {
+      const next = { ...config };
+      delete next.memory_mode;
+      delete next.memory_entity;
+      this._commit(next);
+      return;
+    }
+    if (!config.memory_mode && !config.memory_entity && this._entitySupportsPosition()) {
+      const predicted = autoMemoryHelperEntityId("cover", config.entity);
+      if (hass.states[predicted]) {
+        this._commit({ ...config, memory_mode: "helper", memory_entity: predicted });
+      }
+    }
+  }
 
   /** Strip values equal to their default and fire config-changed. */
   private _commit(raw: CoverCardConfig): void {
@@ -511,6 +567,9 @@ export class TedCoverCardEditor extends LitElement implements LovelaceCardEditor
     }
     const defaults = this._defaults();
     for (const key of Object.keys(defaults) as Array<keyof CoverCardConfig>) {
+      // memory_mode persistence is decided in _valueChanged / _reconcileMemory so
+      // an explicit "off" survives (distinguishing it from a never-touched card).
+      if (key === "memory_mode") continue;
       if (config[key] === defaults[key]) {
         delete config[key];
       }

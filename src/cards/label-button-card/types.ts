@@ -4,6 +4,35 @@ import type { TedStyleTheme } from "../../shared/types";
 /** The three reorderable content elements. */
 export type CardElement = "name" | "icon" | "state";
 
+/** Comparison operator for a dynamic-highlight rule. */
+export type HighlightOperator = "is" | "is_not" | ">" | ">=" | "<" | "<=";
+
+/** A single dynamic-highlight rule. When the highlight entity's state satisfies the
+ *  operator/value test, the rule's colors are applied. */
+export interface HighlightRule {
+  operator?: HighlightOperator;
+  value?: string | number;
+  background_color?: string;
+  icon_color?: string;
+  /** Stop evaluating further rules once this one matches. */
+  halt?: boolean;
+}
+
+/** Dynamic highlighting: recolor the button based on an entity's state. */
+export interface HighlightConfig {
+  entity?: string;
+  rules?: HighlightRule[];
+}
+
+/** A small numeric badge driven by an entity's state. */
+export interface BadgeConfig {
+  entity?: string;
+  color?: string;
+  text_color?: string;
+  /** Show the badge even when the value is zero. Defaults to false. */
+  show_when_zero?: boolean;
+}
+
 export interface LabelButtonCardConfig extends LovelaceCardConfig {
   type: string;
   entity?: string;
@@ -28,6 +57,10 @@ export interface LabelButtonCardConfig extends LovelaceCardConfig {
   state_scale?: number;
   /** Order the name / icon / state stack is laid out in. Defaults to icon, name, state. */
   element_order?: CardElement[];
+
+  // Badge + dynamic highlighting
+  badge?: BadgeConfig;
+  highlight?: HighlightConfig;
 
   // Interactions
   tap_action?: ActionConfig;

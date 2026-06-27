@@ -336,6 +336,25 @@ hold_action:
   action: more-info
 double_tap_action:
   action: none
+# Badge — a small number badge from any entity (e.g. an unread/notification count)
+badge:
+  entity: sensor.notifications   # the entity whose state is shown as the badge number
+  color: red                     # optional badge background color
+  text_color: white              # optional badge text color
+  show_when_zero: false          # show the badge even when the value is 0 (default hides it)
+# Dynamic highlighting — recolor the button from another entity's value
+highlight:
+  entity: sensor.days_until_bin_day
+  rules:
+    - operator: '<='             # is | is_not | > | >= | < | <=
+      value: 2
+      background_color: red
+      icon_color: white          # optional
+      halt: true                 # stop checking further rules once this one matches
+    - operator: '<='
+      value: 5
+      background_color: orange
+      halt: true
 ```
 
 `theme` and `brushed` work as in the other cards (see the Light Card section). `icon_color` and
@@ -354,6 +373,17 @@ default `100`) scale each of them.
 more-info, navigate, call-service, etc.). Defaults adapt to the entity: **tap** is `toggle` for
 toggleable domains (light, switch, fan, cover, lock, climate, media_player, …) and `more-info`
 otherwise; **hold** is `more-info` when an entity is set. With no entity, both default to nothing.
+
+**Badge** (editor **Badge** section) — overlays a small number from any entity in the top-right corner
+(e.g. a notification count). It hides automatically when the value is `0` (or unavailable) unless
+**Show when value is zero** is on; the badge and text colors are configurable.
+
+**Dynamic highlighting** (editor **Dynamic highlighting** section) — recolors the button's background
+and/or icon from a chosen entity's state. Add one or more **rules**, each comparing the entity with an
+operator (`is` / `is not` / `>` / `≥` / `<` / `≤`) and a value (the value becomes a state dropdown for
+`is` / `is not`). Rules are checked top-to-bottom and can be dragged to reorder; turn on **stop
+processing** to halt at the first match — handy for threshold ladders like `≤ 2 → red`, `≤ 5 → orange`,
+`≤ 10 → yellow`.
 
 </details>
 
@@ -667,17 +697,21 @@ double_tap_action:
 The newest entry below is used as the GitHub Release notes by the release workflow, so it shows in
 the Home Assistant / HACS **update** dialog when you update. Newest first.
 
+### v2.0.95
+
+- Label / Button Card: new **Badge** and **Dynamic highlighting**. A button can show a small **number badge** from any entity, and **recolor its background and/or icon** based on another entity's value via simple rules (e.g. `≤ 2 → red`, or `is on → green`) — rules drag-to-reorder and each can **stop at the first match**. Room Card buttons get both features too.
+
 ### v2.0.94
 
 - Light & Cover Cards: the **Memory helper** option now **creates the helper for you**. Choosing "Memory helper" automatically makes and selects a dedicated `input_number` — no more adding one by hand in Settings → Helpers. Adding another card for the same light/cover reuses that helper automatically, and if you delete the helper the card quietly falls back to its default.
+
+<details>
+<summary>Previous release notes</summary>
 
 ### v2.0.93
 
 - Camera Card: in a dashboard **Sections** grid you can now resize it all the way down to **3 wide × 1 tall** (the minimum height was 2).
 - Room Card: status items now line up more tightly with the room **Name** — a text-only status strip is no longer padded taller than the title.
-
-<details>
-<summary>Previous release notes</summary>
 
 ### v2.0.92
 

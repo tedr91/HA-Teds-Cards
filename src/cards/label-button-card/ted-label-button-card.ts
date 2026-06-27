@@ -23,7 +23,7 @@ import {
   LABEL_BUTTON_CARD_TYPE,
   entityDefaultButtonAction,
 } from "./const";
-import type { CardElement, LabelButtonCardConfig } from "./types";
+import type { CardElement, HighlightConfig, HighlightRule, LabelButtonCardConfig } from "./types";
 
 const DOUBLE_CLICK_MS = 250;
 const LONG_PRESS_MS = 500;
@@ -41,6 +41,56 @@ function cssColor(value?: string): string | undefined {
 function elementColor(value?: string): string | undefined {
   if (!value || value === "theme" || value === "other" || value === "state" || value === "none") return undefined;
   return cssColor(value);
+}
+
+/** Whether a single dynamic-highlight rule matches the highlight entity's state. */
+function highlightRuleMatches(rule: HighlightRule, raw: string, num: number): boolean {
+  const op = rule.operator ?? "is";
+  const value = rule.value;
+  if (value == null || value === "") return false;
+  if (op === "is") return raw === String(value);
+  if (op === "is_not") return raw !== String(value);
+  const target = Number(value);
+  if (!Number.isFinite(num) || !Number.isFinite(target)) return false;
+  switch (op) {
+    case ">":
+      return num > target;
+    case ">=":
+      return num >= target;
+    case "<":
+      return num < target;
+    case "<=":
+      return num <= target;
+    default:
+      return false;
+  }
+}
+
+/**
+ * Evaluate dynamic-highlight rules against the configured entity's state and return
+ * the resulting background / icon color overrides. Rules are processed top→bottom;
+ * each match applies its colors (a later match overrides an earlier one) and a
+ * matching rule with `halt` stops further processing (first-match-wins ladders).
+ */
+function evalHighlight(
+  hass: HomeAssistant,
+  highlight?: HighlightConfig,
+): { background?: string; icon?: string } {
+  const result: { background?: string; icon?: string } = {};
+  const entity = highlight?.entity;
+  const rules = highlight?.rules;
+  if (!entity || !Array.isArray(rules) || rules.length === 0) return result;
+  const stateObj = hass.states[entity];
+  if (!stateObj) return result;
+  const raw = stateObj.state;
+  const num = Number(raw);
+  for (const rule of rules) {
+    if (!highlightRuleMatches(rule, raw, num)) continue;
+    if (rule.background_color) result.background = cssColor(rule.background_color);
+    if (rule.icon_color) result.icon = cssColor(rule.icon_color);
+    if (rule.halt) break;
+  }
+  return result;
 }
 
 /** States Home Assistant treats as "off" (mirrors the frontend's STATES_OFF). */
@@ -169,11 +219,22 @@ export class TedLabelButtonCard extends LitElement implements LovelaceCard {
     if (!this._config) return false;
     if (changed.has("_config") || changed.has("layout")) return true;
     if (!changed.has("hass")) return false;
-    const entity = this._config.entity;
-    if (!entity) return false;
     const oldHass = changed.get("hass") as HomeAssistant | undefined;
     if (!oldHass) return true;
-    return oldHass.states[entity] !== this.hass?.states[entity];
+    // Re-render when any entity this card depends on changes: the bound entity,
+    // the badge entity, or the dynamic-highlight entity.
+    const deps = this._dependentEntities();
+    if (deps.length === 0) return false;
+    return deps.some((entity) => oldHass.states[entity] !== this.hass?.states[entity]);
+  }
+
+  /** Entities whose state this card reacts to (bound entity + badge + highlight). */
+  private _dependentEntities(): string[] {
+    const deps = new Set<string>();
+    if (this._config?.entity) deps.add(this._config.entity);
+    if (this._config?.badge?.entity) deps.add(this._config.badge.entity);
+    if (this._config?.highlight?.entity) deps.add(this._config.highlight.entity);
+    return [...deps];
   }
 
   public disconnectedCallback(): void {
@@ -205,6 +266,22 @@ export class TedLabelButtonCard extends LitElement implements LovelaceCard {
     return unit ? `${stateObj.state} ${unit}` : value;
   }
 
+  /** Text for the badge overlay (a number from the badge entity), or undefined to hide it. */
+  private _badgeText(): string | undefined {
+    const badge = this._config?.badge;
+    const entity = badge?.entity;
+    if (!entity) return undefined;
+    const stateObj = this.hass?.states[entity];
+    if (!stateObj) return undefined;
+    const raw = stateObj.state;
+    if (raw === "" || raw === "unavailable" || raw === "unknown" || raw === "none") return undefined;
+    const num = Number(raw);
+    const isZero = Number.isFinite(num) ? num === 0 : raw === "0";
+    if (isZero && !badge.show_when_zero) return undefined;
+    if (Number.isFinite(num)) return num > 99 ? "99+" : String(num);
+    return raw;
+  }
+
   protected render(): TemplateResult | typeof nothing {
     if (!this._config || !this.hass) return nothing;
 
@@ -234,6 +311,12 @@ export class TedLabelButtonCard extends LitElement implements LovelaceCard {
     const bg = cssColor(this._config.background);
     if (bg) cardStyle.background = bg;
 
+    // Dynamic highlighting: an independent entity drives background / icon color
+    // overrides via ordered rules, applied on top of the configured colors and
+    // regardless of the bound entity's active state.
+    const highlight = evalHighlight(this.hass, this._config.highlight);
+    if (highlight.background) cardStyle.background = highlight.background;
+
     // Dim the icon (and drop custom colors) for a bound entity that's inactive,
     // matching Home Assistant's built-in button card. Label-only buttons (no entity)
     // always show their configured colors.
@@ -241,9 +324,10 @@ export class TedLabelButtonCard extends LitElement implements LovelaceCard {
     const nameColor = dim ? undefined : elementColor(this._config.name_color);
     const stateColor = dim ? undefined : elementColor(this._config.state_color);
     const iconColor =
-      dim || this._config.icon_color === "none"
+      highlight.icon ??
+      (dim || this._config.icon_color === "none"
         ? "var(--ted-style-icon-dim)"
-        : elementColor(this._config.icon_color) ?? "var(--ted-style-accent)";
+        : elementColor(this._config.icon_color) ?? "var(--ted-style-accent)");
 
     // Each element has a fixed home based on its position in the order: 1st →
     // top, 2nd → exact center, 3rd → bottom. Hidden elements leave their home
@@ -258,6 +342,13 @@ export class TedLabelButtonCard extends LitElement implements LovelaceCard {
       icon: html`<ha-icon class=${classMap({ icon: true, [slotClass("icon")]: true })} style=${styleMap({ color: iconColor, "--mdc-icon-size": `${(32 * iconScale) / 100}px` })} .icon=${this._icon()}></ha-icon>`,
       state: html`<span class=${classMap({ state: true, [slotClass("state")]: true })} style=${styleMap({ fontSize: `${(13.6 * stateScale) / 100}px`, ...(stateColor ? { color: stateColor } : {}) })}>${this._stateLabel()}</span>`,
     };
+
+    const badgeText = this._badgeText();
+    const badgeStyle: Record<string, string> = {};
+    const badgeBg = cssColor(this._config.badge?.color);
+    if (badgeBg) badgeStyle.background = badgeBg;
+    const badgeFg = cssColor(this._config.badge?.text_color);
+    if (badgeFg) badgeStyle.color = badgeFg;
 
     return html`
       <ha-card
@@ -274,6 +365,9 @@ export class TedLabelButtonCard extends LitElement implements LovelaceCard {
           ? html`<div class="ted-neu full ${isActive ? "pressed" : "raised"}" aria-hidden="true"></div>`
           : nothing}
         <div class="lbc">${visible.map((el) => tpls[el])}</div>
+        ${badgeText !== undefined
+          ? html`<div class="lbc-badge" style=${styleMap(badgeStyle)}>${badgeText}</div>`
+          : nothing}
       </ha-card>
     `;
   }
@@ -474,6 +568,25 @@ export class TedLabelButtonCard extends LitElement implements LovelaceCard {
         font-size: 0.85rem;
         line-height: 1.1;
         color: var(--ted-style-muted);
+      }
+
+      .lbc-badge {
+        position: absolute;
+        top: 6px;
+        right: 6px;
+        z-index: 2;
+        box-sizing: border-box;
+        min-width: 18px;
+        height: 18px;
+        padding: 0 5px;
+        border-radius: 999px;
+        background: #f44336;
+        color: #fff;
+        font-size: 11px;
+        font-weight: 700;
+        line-height: 18px;
+        text-align: center;
+        pointer-events: none;
       }
     `,
   ];

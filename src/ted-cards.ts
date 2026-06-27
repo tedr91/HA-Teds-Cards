@@ -16,5 +16,6 @@ import "./cards/label-button-card/ted-label-button-card";
 import "./cards/room-card/ted-room-card";
 import "./cards/spacer-card/ted-spacer-card";
 import "./cards/camera-card/ted-camera-card";
+import "./cards/navbar-card/ted-navbar-card";
 
 printVersionBanner();

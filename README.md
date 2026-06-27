@@ -22,6 +22,7 @@ After spending months attempting to find an "on/off/brightness" switch that I li
 | Remote Card | `custom:ted-remote-card` | Remote control for media devices (e.g. Apple TV and Kaleidescape). |
 | Room Card | `custom:ted-room-card` | Overview card for a Home Assistant area. |
 | Camera Card | `custom:ted-camera-card` | Camera feed (auto thumbnail or live stream), like Home Assistant's picture-glance. |
+| Navbar Card | `custom:ted-navbar-card` | Navigation bar pinned to the top or bottom, with buttons in left/center/right zones. |
 
 ---
 
@@ -690,6 +691,70 @@ double_tap_action:
 
 </details>
 
+### 🧭 Navbar Card
+
+A **navigation bar pinned to the top or bottom** of the dashboard. It holds buttons — each a full
+**Label / Button Card**, so they get icons, colors, actions, badges, and dynamic highlighting — arranged
+in **left / center / right** zones. The **center** zone stays pinned to the exact middle regardless of
+what's on the sides, so a "Home" button can sit perfectly centered.
+
+> ℹ️ The navbar overlays the dashboard and reserves space so your content isn't hidden underneath it.
+> It's brand new — please report any layout quirks.
+
+Minimal config:
+
+```yaml
+type: custom:ted-navbar-card
+sections:
+  - placement: center
+    buttons:
+      - type: custom:ted-label-button-card
+        name: Home
+        icon: mdi:home
+```
+
+<details>
+<summary><b>Detailed options</b></summary>
+
+```yaml
+type: custom:ted-navbar-card
+theme: ted-style          # optional, visual styling: ted-style (default) | ha
+alignment: bottom         # bottom (default) | top
+bar_type: snap            # snap (edge-to-edge, default) | float (centered with margins)
+size: 64                  # bar thickness in px; buttons size from this
+sections:                 # up to 5 sections
+  - placement: left       # left | center | right (which zone the section sits in)
+    align: center         # left | center | right (alignment of items within the section)
+    visible: true         # optional, show/hide the section
+    buttons:
+      - type: custom:ted-label-button-card
+        icon: mdi:calendar
+        name: Today
+        nav_button_size: normal   # normal (default) | wide
+  - placement: center
+    buttons:
+      - type: custom:ted-label-button-card
+        name: Home
+        icon: mdi:home
+  - placement: right
+    buttons:
+      - type: custom:ted-label-button-card
+        icon: mdi:clock-outline
+        nav_button_size: wide
+```
+
+- **Navbar alignment** — pin the bar to the **Bottom** (default) or **Top** edge.
+- **Navbar type** — **Snap** spans edge-to-edge; **Float** centers the bar with margins and rounded corners.
+- **Size** — the bar thickness in pixels; buttons size automatically from it.
+- **Sections** (up to **5**) — each sits in a **left / center / right** zone and has its own content
+  **alignment**. Sections, and the buttons inside them, are added and **dragged to reorder** in the
+  editor. The **center** zone is pinned to the exact center of the bar, independent of the left/right
+  content.
+- **Buttons** — each is a full **Label / Button Card** (entity, icon, colors, actions, badge, dynamic
+  highlighting). **Button size** is **Normal** (square) or **Wide**.
+
+</details>
+
 ---
 
 ## 📋 Changelog
@@ -697,16 +762,20 @@ double_tap_action:
 The newest entry below is used as the GitHub Release notes by the release workflow, so it shows in
 the Home Assistant / HACS **update** dialog when you update. Newest first.
 
+### v2.0.96
+
+- **New Navbar Card** (`custom:ted-navbar-card`): a navigation bar **pinned to the top or bottom** of your dashboard, with buttons arranged in **left / center / right** zones (the center stays dead-center — great for a Home button). Each button is a full **Label / Button Card**, sections and buttons **drag to reorder**, and the bar can be **edge-to-edge (snap)** or **floating**.
+
 ### v2.0.95
 
 - Label / Button Card: new **Badge** and **Dynamic highlighting**. A button can show a small **number badge** from any entity, and **recolor its background and/or icon** based on another entity's value via simple rules (e.g. `≤ 2 → red`, or `is on → green`) — rules drag-to-reorder and each can **stop at the first match**. Room Card buttons get both features too.
 
+<details>
+<summary>Previous release notes</summary>
+
 ### v2.0.94
 
 - Light & Cover Cards: the **Memory helper** option now **creates the helper for you**. Choosing "Memory helper" automatically makes and selects a dedicated `input_number` — no more adding one by hand in Settings → Helpers. Adding another card for the same light/cover reuses that helper automatically, and if you delete the helper the card quietly falls back to its default.
-
-<details>
-<summary>Previous release notes</summary>
 
 ### v2.0.93
 

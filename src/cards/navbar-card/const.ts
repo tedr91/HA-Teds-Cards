@@ -7,7 +7,7 @@ export const NAVBAR_CARD_DESCRIPTION =
   "A navigation bar pinned to the top or bottom of the dashboard, holding buttons in left / center / right zones.";
 
 /** Default bar thickness (px). Buttons and status items size from this. */
-export const DEFAULT_NAVBAR_SIZE = 64;
+export const DEFAULT_NAVBAR_SIZE = 48;
 
 /** Maximum number of NavSections a navbar can hold. */
 export const MAX_NAV_SECTIONS = 5;

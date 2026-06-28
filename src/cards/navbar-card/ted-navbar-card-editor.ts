@@ -422,7 +422,14 @@ export class TedNavbarCardEditor extends LitElement implements LovelaceCardEdito
     if (!section) return;
     const buttons: NavButtonConfig[] = [
       ...(section.buttons ?? []),
-      { type: `custom:${LABEL_BUTTON_CARD_TYPE}`, name: "Button", icon: "mdi:gesture-tap-button" },
+      {
+        type: `custom:${LABEL_BUTTON_CARD_TYPE}`,
+        icon: "mdi:gesture-tap-button",
+        show_name: false,
+        show_state: false,
+        icon_scale: 75,
+        tap_action: { action: "navigate", navigation_path: "/home" },
+      },
     ];
     sections[sIdx] = { ...section, buttons };
     this._expanded = new Set([...this._expanded, `btn-${sIdx}-${buttons.length - 1}`]);

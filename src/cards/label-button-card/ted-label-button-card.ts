@@ -194,6 +194,7 @@ export class TedLabelButtonCard extends LitElement implements LovelaceCard {
   private _clickTimer?: number;
   private _longPressTimer?: number;
   private _longPressFired = false;
+  private _resizeObserver?: ResizeObserver;
 
   public setConfig(config: LabelButtonCardConfig): void {
     if (!config) {
@@ -237,10 +238,28 @@ export class TedLabelButtonCard extends LitElement implements LovelaceCard {
     return [...deps];
   }
 
+  public connectedCallback(): void {
+    super.connectedCallback();
+    this._resizeObserver ??= new ResizeObserver(() => this._measureIconBase());
+    this._resizeObserver.observe(this);
+    this._measureIconBase();
+  }
+
   public disconnectedCallback(): void {
     super.disconnectedCallback();
     if (this._clickTimer !== undefined) window.clearTimeout(this._clickTimer);
     if (this._longPressTimer !== undefined) window.clearTimeout(this._longPressTimer);
+    this._resizeObserver?.disconnect();
+  }
+
+  /** Base (100%) icon size scales with the card's smaller dimension, calibrated so
+   *  a ~64px card keeps the historical 32px base. Exposed as `--lbc-icon-base`. */
+  private _measureIconBase(): void {
+    const rect = this.getBoundingClientRect();
+    const min = Math.min(rect.width, rect.height);
+    if (min <= 0) return;
+    const base = Math.max(12, Math.min(88, min * 0.5));
+    this.style.setProperty("--lbc-icon-base", `${base}px`);
   }
 
   private _stateObj() {
@@ -339,7 +358,7 @@ export class TedLabelButtonCard extends LitElement implements LovelaceCard {
       (["slot-top", "slot-mid", "slot-bot"] as const)[order.indexOf(el)];
     const tpls: Record<CardElement, TemplateResult> = {
       name: html`<span class=${classMap({ name: true, [slotClass("name")]: true })} style=${styleMap({ fontSize: `${(16 * nameScale) / 100}px`, ...(nameColor ? { color: nameColor } : {}) })}>${this._name()}</span>`,
-      icon: html`<ha-icon class=${classMap({ icon: true, [slotClass("icon")]: true })} style=${styleMap({ color: iconColor, "--mdc-icon-size": `${(32 * iconScale) / 100}px` })} .icon=${this._icon()}></ha-icon>`,
+      icon: html`<ha-icon class=${classMap({ icon: true, [slotClass("icon")]: true })} style=${styleMap({ color: iconColor, "--mdc-icon-size": `calc(var(--lbc-icon-base, 32px) * ${iconScale} / 100)` })} .icon=${this._icon()}></ha-icon>`,
       state: html`<span class=${classMap({ state: true, [slotClass("state")]: true })} style=${styleMap({ fontSize: `${(13.6 * stateScale) / 100}px`, ...(stateColor ? { color: stateColor } : {}) })}>${this._stateLabel()}</span>`,
     };
 
@@ -375,7 +394,7 @@ export class TedLabelButtonCard extends LitElement implements LovelaceCard {
   /** The element layout order (default: icon, name, state). Unknown/missing
    *  elements are dropped/appended so the list is always the full set of three. */
   private _elementOrder(): CardElement[] {
-    const valid: CardElement[] = ["icon", "name", "state"];
+    const valid: CardElement[] = ["name", "icon", "state"];
     const order = this._config?.element_order;
     if (!Array.isArray(order)) return valid;
     const result = order.filter((el): el is CardElement => valid.includes(el as CardElement));

@@ -271,7 +271,7 @@ export class TedLabelButtonCardEditor extends LitElement implements LovelaceCard
   // --- Elements (reorderable icon / name / state) ---------------------------
 
   private _elementOrder(): CardElement[] {
-    const valid: CardElement[] = ["icon", "name", "state"];
+    const valid: CardElement[] = ["name", "icon", "state"];
     const order = this._config?.element_order;
     if (!Array.isArray(order)) return valid;
     const result = order.filter((el): el is CardElement => valid.includes(el as CardElement));
@@ -280,7 +280,7 @@ export class TedLabelButtonCardEditor extends LitElement implements LovelaceCard
   }
 
   private _isDefaultOrder(order: CardElement[]): boolean {
-    return order.length === 3 && order[0] === "icon" && order[1] === "name" && order[2] === "state";
+    return order.length === 3 && order[0] === "name" && order[1] === "icon" && order[2] === "state";
   }
 
   private _elementMoved = (ev: CustomEvent): void => {

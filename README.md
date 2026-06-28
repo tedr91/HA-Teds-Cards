@@ -721,7 +721,7 @@ type: custom:ted-navbar-card
 theme: ted-style          # optional, visual styling: ted-style (default) | ha
 alignment: bottom         # bottom (default) | top
 bar_type: snap            # snap (edge-to-edge, default) | float (centered with margins)
-size: 64                  # bar thickness in px; buttons size from this
+size: 48                  # bar thickness in px; buttons size from this
 sections:                 # up to 5 sections
   - placement: left       # left | center | right (which zone the section sits in)
     align: center         # left | center | right (alignment of items within the section)
@@ -762,16 +762,21 @@ sections:                 # up to 5 sections
 The newest entry below is used as the GitHub Release notes by the release workflow, so it shows in
 the Home Assistant / HACS **update** dialog when you update. Newest first.
 
+### v2.0.97
+
+- Label / Button Card: the **icon now scales with the card** — small buttons (like those in the navbar) get proportionally smaller icons and larger buttons get bigger ones — and the default content order is now **Name → Icon → State**.
+- Navbar Card: new buttons now default to a tidy **icon-only button that navigates to `/home`** (name & state hidden, icon at 75%), and the default **bar thickness is 48px**.
+
 ### v2.0.96
 
 - **New Navbar Card** (`custom:ted-navbar-card`): a navigation bar **pinned to the top or bottom** of your dashboard, with buttons arranged in **left / center / right** zones (the center stays dead-center — great for a Home button). Each button is a full **Label / Button Card**, sections and buttons **drag to reorder**, and the bar can be **edge-to-edge (snap)** or **floating**.
 
+<details>
+<summary>Previous release notes</summary>
+
 ### v2.0.95
 
 - Label / Button Card: new **Badge** and **Dynamic highlighting**. A button can show a small **number badge** from any entity, and **recolor its background and/or icon** based on another entity's value via simple rules (e.g. `≤ 2 → red`, or `is on → green`) — rules drag-to-reorder and each can **stop at the first match**. Room Card buttons get both features too.
-
-<details>
-<summary>Previous release notes</summary>
 
 ### v2.0.94
 

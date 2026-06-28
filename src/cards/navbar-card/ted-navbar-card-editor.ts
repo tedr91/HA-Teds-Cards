@@ -553,7 +553,7 @@ export class TedNavbarCardEditor extends LitElement implements LovelaceCardEdito
           <div class="${this._handleClass(containerPath)}" @click=${this._stop} title="Drag to reorder">
             <ha-svg-icon .path=${GRIP_ICON_PATH}></ha-svg-icon>
           </div>
-          <ha-icon class="row-icon" icon=${popup.icon || "mdi:dots-horizontal"}></ha-icon>
+          <ha-icon class="row-icon" icon=${popup.icon || (this._config?.alignment === "top" ? "mdi:chevron-down" : "mdi:chevron-up")}></ha-icon>
           <span class="row-title">Popup</span>
           <span class="row-subtitle">${popup.name || `${count} item${count === 1 ? "" : "s"}`}</span>
           <ha-icon-button
@@ -726,7 +726,7 @@ export class TedNavbarCardEditor extends LitElement implements LovelaceCardEdito
   }
 
   private _addPopup(containerPath: number[]): void {
-    const items: NavItem[] = [...this._itemsAt(containerPath), { type: "popup", icon: "mdi:dots-horizontal", items: [] }];
+    const items: NavItem[] = [...this._itemsAt(containerPath), { type: "popup", items: [] }];
     this._expanded = new Set([...this._expanded, `popup-${[...containerPath, items.length - 1].join("-")}`]);
     this._commitItemList(containerPath, items);
   }

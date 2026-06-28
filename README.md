@@ -784,20 +784,24 @@ sections:                 # up to 5 sections
 The newest entry below is used as the GitHub Release notes by the release workflow, so it shows in
 the Home Assistant / HACS **update** dialog when you update. Newest first.
 
+### v2.1.3
+
+- **Navbar Card: popup & overflow triggers now show a chevron** that points the way the menu will open (up for a bottom bar, down for a top bar) and flips when it's open. Set a custom icon on a popup to override.
+
 ### v2.1.2
 
 - **Navbar Card: clears the sidebar.** The bar now aligns with the dashboard **content area** instead of the full window, so its left section is no longer hidden behind Home Assistant's sidebar.
 - **Navbar Card: a new navbar starts ready to fill** — five sections are pre-created (left, three center, right) with the **Home** button in the center, and new buttons default to a **150%** icon.
 - Navbar Card: section rows are now labelled by **placement and alignment** (e.g. *"Section 2 - center (right aligned)"*), and a section's (or item's) **expanded/collapsed state stays put when you drag to reorder**.
 
+<details>
+<summary>Previous release notes</summary>
+
 ### v2.1.1
 
 - **Fix: fully transparent cards are see-through again.** A transparent **Clock Weather** card (and the **Navbar**) was being frosted by the blur that some Home Assistant themes apply to every card; a 100%-transparent card now disables that blur, so it shows straight through — no surface, blur, or border.
 - **Navbar Card:** a new navbar is no longer forced transparent — it shows its normal card surface by default (set **Transparency** to 100% yourself for a see-through bar). The **Home** button it starts with now matches a button added via **+ Add item → Button** (just with the Home name & icon).
 - Every card: the **Transparency** and **Background blur** boxes always sit **side-by-side** in the editor.
-
-<details>
-<summary>Previous release notes</summary>
 
 ### v2.1.0
 

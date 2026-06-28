@@ -446,9 +446,11 @@ export class TedNavbarCard extends LitElement implements LovelaceCard {
   private _renderOverflow(sIdx: number, hidden: NavItem[], offset: number): TemplateResult {
     const popId = `nav-${sIdx}-overflow`;
     const anchorId = `${popId}-btn`;
+    // Same direction-aware chevron as a popup: points where the menu opens, flips when open.
+    const chevron = this._alignment() === "bottom" ? "mdi:chevron-up" : "mdi:chevron-down";
     return html`
-      <button id=${anchorId} class="nav-button nav-popup" popovertarget=${popId} title="More" aria-label="More">
-        <ha-icon .icon=${"mdi:dots-horizontal"}></ha-icon>
+      <button id=${anchorId} class="nav-button nav-popup nav-popup-chevron" popovertarget=${popId} title="More" aria-label="More">
+        <ha-icon .icon=${chevron}></ha-icon>
       </button>
       <div id=${popId} class="nav-popover" popover data-anchor=${anchorId} @toggle=${this._onPopoverToggle}>
         <div class="nav-popover-body">${this._renderItems(hidden, `${sIdx}`, `nav-${sIdx}`, offset)}</div>
@@ -492,15 +494,18 @@ export class TedNavbarCard extends LitElement implements LovelaceCard {
     const popId = `${idBase}-popup-${idx}`;
     const anchorId = `${popId}-btn`;
     const label = popup.name ?? "More";
+    // Default trigger: a chevron pointing where the popup opens (up for a bottom bar,
+    // down for a top bar); it flips 180° while open (see CSS). A custom icon opts out.
+    const defaultChevron = this._alignment() === "bottom" ? "mdi:chevron-up" : "mdi:chevron-down";
     return html`
       <button
         id=${anchorId}
-        class="nav-button nav-popup ${wide ? "wide" : ""}"
+        class="nav-button nav-popup ${wide ? "wide" : ""} ${popup.icon ? "" : "nav-popup-chevron"}"
         popovertarget=${popId}
         title=${label}
         aria-label=${label}
       >
-        <ha-icon .icon=${popup.icon ?? "mdi:dots-horizontal"}></ha-icon>
+        <ha-icon .icon=${popup.icon ?? defaultChevron}></ha-icon>
       </button>
       <div id=${popId} class="nav-popover" popover data-anchor=${anchorId} @toggle=${this._onPopoverToggle}>
         <div class="nav-popover-body">
@@ -674,6 +679,11 @@ export class TedNavbarCard extends LitElement implements LovelaceCard {
       }
       .nav-popup ha-icon {
         --mdc-icon-size: calc((var(--nav-size) - 12px) * 0.55);
+        transition: transform 0.2s ease;
+      }
+      /* The default chevron flips to point the opposite way while its popup is open. */
+      .nav-popup-chevron:has(+ .nav-popover:popover-open) ha-icon {
+        transform: rotate(180deg);
       }
       .nav-popup:hover {
         color: var(--ted-style-text);

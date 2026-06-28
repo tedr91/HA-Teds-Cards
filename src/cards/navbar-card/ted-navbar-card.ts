@@ -318,7 +318,12 @@ export class TedNavbarCard extends LitElement implements LovelaceCard {
     const cardInner = card.clientWidth - (parseFloat(cs.paddingLeft) || 0) - (parseFloat(cs.paddingRight) || 0);
     const gap = 8;
     const centerEl = root?.querySelector?.(".zone.center") as HTMLElement | null;
-    const centerW = centerEl ? centerEl.offsetWidth : 0;
+    // The center zone is a full-width grid, so its offsetWidth == the whole bar. Use the
+    // actual content footprint (its sections summed) so the left/right budget stays sane.
+    const centerSecs = centerEl
+      ? (Array.from(centerEl.children) as HTMLElement[]).filter((c) => c.classList.contains("section"))
+      : [];
+    const centerW = centerSecs.reduce((sum, s, i) => sum + s.offsetWidth + (i > 0 ? gap : 0), 0);
 
     // Which zones are occupied, and how many sections share each (to split its budget).
     const sections = this._config.sections ?? [];

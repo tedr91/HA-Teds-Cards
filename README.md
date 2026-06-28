@@ -784,16 +784,20 @@ sections:                 # up to 5 sections
 The newest entry below is used as the GitHub Release notes by the release workflow, so it shows in
 the Home Assistant / HACS **update** dialog when you update. Newest first.
 
+### v2.1.9
+
+- **Navbar Card: fix — side sections no longer collapse into a “…” chevron** when a center section is present. The overflow check was overestimating the center's width and starving the left/right zones, so date/weather and time got hidden; they now keep their content.
+
 ### v2.1.8
 
 - **Navbar Card: a center-aligned section now stays dead-center.** A center-zone section set to **center** sits exactly in the middle of the bar even when the right-/left-aligned center sections beside it have items — so a Home button stays centered with other buttons flanking it.
 
+<details>
+<summary>Previous release notes</summary>
+
 ### v2.1.7
 
 - **Navbar Card: new buttons start more subtle** — they default to **99% transparency** (a barely-there surface that still picks up your theme's blur) and a **dimmed icon colour** (“No colour”) instead of the accent. Existing buttons are unchanged.
-
-<details>
-<summary>Previous release notes</summary>
 
 ### v2.1.6
 

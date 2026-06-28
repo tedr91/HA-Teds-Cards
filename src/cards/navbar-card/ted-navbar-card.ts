@@ -691,7 +691,11 @@ export class TedNavbarCard extends LitElement implements LovelaceCard {
         transform: scale(0.96);
       }
 
-      /* Native popover holding a popup's (or the overflow's) items. */
+      /* Native popover holding a popup's (or the overflow's) items. Opt into the
+         theme's card frost (--ha-card-backdrop-filter) so on translucent themes
+         (Mica/glass) the surface blurs the dashboard behind it instead of showing
+         it straight through — a plain [popover] isn't an ha-card, so it doesn't
+         get that blur automatically. Falls back to none on opaque/flat themes. */
       .nav-popover {
         position: fixed;
         inset: auto;
@@ -699,6 +703,8 @@ export class TedNavbarCard extends LitElement implements LovelaceCard {
         box-sizing: border-box;
         padding: 10px;
         background: var(--ted-style-surface);
+        -webkit-backdrop-filter: var(--ha-card-backdrop-filter, none);
+        backdrop-filter: var(--ha-card-backdrop-filter, none);
         border: 1px solid var(--ted-style-divider);
         border-radius: var(--ted-style-radius-sm);
         box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45);

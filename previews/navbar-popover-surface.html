@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Navbar — popover surface options</title>
+    <style>
+      /* Exact dark-mode tokens from themes/microsoft-windows-11.yaml */
+      :root {
+        --accent: #4cc2ff;
+        --text: #ffffff;
+        --muted: rgba(255, 255, 255, 0.786);
+        --stroke: rgba(255, 255, 255, 0.0931);
+        --radius: 8px;
+        --card-bg: rgba(43, 43, 43, 0.45); /* ha-card-background  → "cards"  */
+        --menu-bg: rgba(43, 43, 43, 0.92); /* card-background-color → "menus" */
+        --mica-blur: blur(22px) saturate(125%); /* ha-card-backdrop-filter        */
+        --pop-shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 32px;
+        background: #0e1116;
+        color: #e9edf3;
+        font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, sans-serif;
+      }
+      h1 {
+        font-size: 21px;
+        margin: 0 0 4px;
+      }
+      p.lead {
+        margin: 0 0 26px;
+        color: #aeb6c2;
+        font-size: 13.5px;
+        max-width: 820px;
+        line-height: 1.55;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 22px;
+      }
+      @media (max-width: 760px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      .option-title {
+        font-size: 15px;
+        font-weight: 700;
+        color: #fff;
+        margin: 0 0 2px;
+      }
+      .option-title .rec {
+        font-size: 11px;
+        font-weight: 600;
+        color: #fff;
+        background: #2f6fed;
+        border-radius: 999px;
+        padding: 2px 8px;
+        margin-left: 8px;
+        vertical-align: middle;
+      }
+      .option-title .cur {
+        font-size: 11px;
+        font-weight: 600;
+        color: #cfd6e2;
+        background: rgba(255, 255, 255, 0.12);
+        border-radius: 999px;
+        padding: 2px 8px;
+        margin-left: 8px;
+        vertical-align: middle;
+      }
+      .option-css {
+        margin: 4px 0 10px;
+        font-family: "Cascadia Mono", Consolas, monospace;
+        font-size: 11.5px;
+        color: #8fb6ff;
+        line-height: 1.5;
+      }
+
+      /* Busy "dashboard" backdrop so see-through is obvious. */
+      .stage {
+        position: relative;
+        height: 210px;
+        border-radius: 14px;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+      .stage::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at 16% 26%, #ff6b6b 0 7%, transparent 26%),
+          radial-gradient(circle at 84% 68%, #ffd93d 0 6%, transparent 24%),
+          radial-gradient(circle at 64% 18%, #51cf66 0 6%, transparent 22%),
+          radial-gradient(circle at 30% 80%, #cc5de8 0 6%, transparent 24%),
+          linear-gradient(135deg, #1f3a6e 0%, #2a6f8e 45%, #5b3a86 100%);
+      }
+      .stage-text {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 34px;
+        font-weight: 800;
+        letter-spacing: 5px;
+        color: rgba(255, 255, 255, 0.92);
+        text-transform: uppercase;
+        white-space: nowrap;
+        pointer-events: none;
+      }
+
+      /* The popup/overflow popover (holds menu items). */
+      .popover {
+        position: relative;
+        z-index: 1;
+        min-width: 210px;
+        padding: 12px 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        color: var(--text);
+        border: 1px solid var(--stroke);
+        border-radius: var(--radius);
+        box-shadow: var(--pop-shadow);
+      }
+      .popover .ico {
+        width: 26px;
+        height: 26px;
+        fill: var(--accent);
+        flex: none;
+      }
+      .popover .time {
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--text);
+        white-space: nowrap;
+      }
+      .popover .time small {
+        font-size: 10px;
+        color: var(--muted);
+        margin-left: 2px;
+      }
+
+      /* ---- the four variants ---- */
+      .current {
+        background: var(--card-bg);
+      }
+      .frost {
+        background: var(--card-bg);
+        -webkit-backdrop-filter: var(--mica-blur);
+        backdrop-filter: var(--mica-blur);
+      }
+      .opaque {
+        background: var(--menu-bg);
+      }
+      .both {
+        background: var(--menu-bg);
+        -webkit-backdrop-filter: var(--mica-blur);
+        backdrop-filter: var(--mica-blur);
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Navbar — popup / overflow popover surface</h1>
+    <p class="lead">
+      Each panel is the open popover floating over a deliberately busy dashboard. Values are your
+      <strong>Microsoft Windows 11</strong> dark-mode tokens: cards =
+      <code>rgba(43,43,43,0.45)</code> + <code>blur(22px)</code>, menus =
+      <code>rgba(43,43,43,0.92)</code>. Today the popover uses the 45% card fill with
+      <em>no</em> blur — option&nbsp;D below.
+    </p>
+
+    <div class="grid">
+      <!-- A -->
+      <section>
+        <p class="option-title">A · Frost it like a card <span class="rec">recommended</span></p>
+        <p class="option-css">background: var(--ha-card-background) /* 45% */<br />backdrop-filter: var(--ha-card-backdrop-filter)</p>
+        <div class="stage">
+          <div class="stage-text">Dashboard</div>
+          <div class="popover frost">
+            <svg class="ico" viewBox="0 0 24 24"><path d="M10,9A1,1 0 0,1 11,8A1,1 0 0,1 12,9V13.47L13.21,13.6L18.15,15.79C18.68,16.03 19,16.56 19,17.13V21.5C18.97,22.32 18.32,22.97 17.5,23H11C10.62,23 10.26,22.85 10,22.57L5.1,18.37L5.84,17.6C6.03,17.39 6.3,17.28 6.58,17.28H6.8L10,19V9M11,5A4,4 0 0,1 15,9C15,10.5 14.2,11.77 13,12.46V11.24C13.61,10.69 14,9.89 14,9A3,3 0 0,0 11,6A3,3 0 0,0 8,9C8,9.89 8.39,10.69 9,11.24V12.46C7.8,11.77 7,10.5 7,9A4,4 0 0,1 11,5Z" /></svg>
+            <span class="time">11:28<small>AM</small></span>
+            <svg class="ico" viewBox="0 0 24 24"><path d="M12,18C11.11,18 10.26,17.8 9.5,17.45C11.56,16.5 13,14.42 13,12C13,9.58 11.56,7.5 9.5,6.55C10.26,6.2 11.11,6 12,6A6,6 0 0,1 18,12A6,6 0 0,1 12,18M20,8.69V4H15.31L12,0.69L8.69,4H4V8.69L0.69,12L4,15.31V20H8.69L12,23.31L15.31,20H20V15.31L23.31,12L20,8.69Z" /></svg>
+          </div>
+        </div>
+      </section>
+
+      <!-- B -->
+      <section>
+        <p class="option-title">B · Opaque menu surface</p>
+        <p class="option-css">background: var(--card-background-color) /* 92% */<br />/* no blur */</p>
+        <div class="stage">
+          <div class="stage-text">Dashboard</div>
+          <div class="popover opaque">
+            <svg class="ico" viewBox="0 0 24 24"><path d="M10,9A1,1 0 0,1 11,8A1,1 0 0,1 12,9V13.47L13.21,13.6L18.15,15.79C18.68,16.03 19,16.56 19,17.13V21.5C18.97,22.32 18.32,22.97 17.5,23H11C10.62,23 10.26,22.85 10,22.57L5.1,18.37L5.84,17.6C6.03,17.39 6.3,17.28 6.58,17.28H6.8L10,19V9M11,5A4,4 0 0,1 15,9C15,10.5 14.2,11.77 13,12.46V11.24C13.61,10.69 14,9.89 14,9A3,3 0 0,0 11,6A3,3 0 0,0 8,9C8,9.89 8.39,10.69 9,11.24V12.46C7.8,11.77 7,10.5 7,9A4,4 0 0,1 11,5Z" /></svg>
+            <span class="time">11:28<small>AM</small></span>
+            <svg class="ico" viewBox="0 0 24 24"><path d="M12,18C11.11,18 10.26,17.8 9.5,17.45C11.56,16.5 13,14.42 13,12C13,9.58 11.56,7.5 9.5,6.55C10.26,6.2 11.11,6 12,6A6,6 0 0,1 18,12A6,6 0 0,1 12,18M20,8.69V4H15.31L12,0.69L8.69,4H4V8.69L0.69,12L4,15.31V20H8.69L12,23.31L15.31,20H20V15.31L23.31,12L20,8.69Z" /></svg>
+          </div>
+        </div>
+      </section>
+
+      <!-- C -->
+      <section>
+        <p class="option-title">C · Both (frost + opaque fill)</p>
+        <p class="option-css">background: var(--card-background-color) /* 92% */<br />backdrop-filter: var(--ha-card-backdrop-filter)</p>
+        <div class="stage">
+          <div class="stage-text">Dashboard</div>
+          <div class="popover both">
+            <svg class="ico" viewBox="0 0 24 24"><path d="M10,9A1,1 0 0,1 11,8A1,1 0 0,1 12,9V13.47L13.21,13.6L18.15,15.79C18.68,16.03 19,16.56 19,17.13V21.5C18.97,22.32 18.32,22.97 17.5,23H11C10.62,23 10.26,22.85 10,22.57L5.1,18.37L5.84,17.6C6.03,17.39 6.3,17.28 6.58,17.28H6.8L10,19V9M11,5A4,4 0 0,1 15,9C15,10.5 14.2,11.77 13,12.46V11.24C13.61,10.69 14,9.89 14,9A3,3 0 0,0 11,6A3,3 0 0,0 8,9C8,9.89 8.39,10.69 9,11.24V12.46C7.8,11.77 7,10.5 7,9A4,4 0 0,1 11,5Z" /></svg>
+            <span class="time">11:28<small>AM</small></span>
+            <svg class="ico" viewBox="0 0 24 24"><path d="M12,18C11.11,18 10.26,17.8 9.5,17.45C11.56,16.5 13,14.42 13,12C13,9.58 11.56,7.5 9.5,6.55C10.26,6.2 11.11,6 12,6A6,6 0 0,1 18,12A6,6 0 0,1 12,18M20,8.69V4H15.31L12,0.69L8.69,4H4V8.69L0.69,12L4,15.31V20H8.69L12,23.31L15.31,20H20V15.31L23.31,12L20,8.69Z" /></svg>
+          </div>
+        </div>
+      </section>
+
+      <!-- D / current -->
+      <section>
+        <p class="option-title">D · Leave as-is <span class="cur">current</span></p>
+        <p class="option-css">background: var(--ha-card-background) /* 45% */<br />/* no blur — the see-through you have now */</p>
+        <div class="stage">
+          <div class="stage-text">Dashboard</div>
+          <div class="popover current">
+            <svg class="ico" viewBox="0 0 24 24"><path d="M10,9A1,1 0 0,1 11,8A1,1 0 0,1 12,9V13.47L13.21,13.6L18.15,15.79C18.68,16.03 19,16.56 19,17.13V21.5C18.97,22.32 18.32,22.97 17.5,23H11C10.62,23 10.26,22.85 10,22.57L5.1,18.37L5.84,17.6C6.03,17.39 6.3,17.28 6.58,17.28H6.8L10,19V9M11,5A4,4 0 0,1 15,9C15,10.5 14.2,11.77 13,12.46V11.24C13.61,10.69 14,9.89 14,9A3,3 0 0,0 11,6A3,3 0 0,0 8,9C8,9.89 8.39,10.69 9,11.24V12.46C7.8,11.77 7,10.5 7,9A4,4 0 0,1 11,5Z" /></svg>
+            <span class="time">11:28<small>AM</small></span>
+            <svg class="ico" viewBox="0 0 24 24"><path d="M12,18C11.11,18 10.26,17.8 9.5,17.45C11.56,16.5 13,14.42 13,12C13,9.58 11.56,7.5 9.5,6.55C10.26,6.2 11.11,6 12,6A6,6 0 0,1 18,12A6,6 0 0,1 12,18M20,8.69V4H15.31L12,0.69L8.69,4H4V8.69L0.69,12L4,15.31V20H8.69L12,23.31L15.31,20H20V15.31L23.31,12L20,8.69Z" /></svg>
+          </div>
+        </div>
+      </section>
+    </div>
+  </body>
+</html>

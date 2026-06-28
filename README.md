@@ -727,13 +727,15 @@ bar_type: snap            # snap (edge-to-edge, default) | float (centered with 
 size: 48                  # bar thickness in px; buttons size from this
 min_width: 16             # float only: minimum bar width in px
 max_width: 920            # float only: maximum bar width in px
+background: ""            # optional card background color (theme name or hex/rgb)
 transparency: 0           # 0–100% — fade the bar's background
 blur: 0                   # 0–100% — blur the dashboard behind the bar
 sections:                 # up to 5 sections
   - placement: left       # left | center | right (which zone the section sits in)
     align: center         # left | center | right (alignment of items within the section)
     visible: true         # optional, show/hide the section
-    items:                # ordered mix of buttons and status items
+    overflow: true        # optional, collapse items that don't fit into a “…” popover
+    items:                # ordered mix of buttons, status items, and popups
       - type: date                          # status item
       - type: weather                       # status item (auto-picks a weather entity, or set entity:)
   - placement: center
@@ -745,6 +747,12 @@ sections:                 # up to 5 sections
   - placement: right
     items:
       - type: time                          # status item — updates live
+      - type: popup                         # a popup: tap the icon to reveal more items
+        icon: mdi:dots-horizontal
+        items:
+          - type: custom:ted-label-button-card
+            name: Settings
+            icon: mdi:cog
 ```
 
 - **Navbar alignment** — pin the bar to the **Bottom** (default) or **Top** edge.
@@ -755,13 +763,17 @@ sections:                 # up to 5 sections
   **alignment**. Sections, and the items inside them, are added and **dragged to reorder** in the
   editor. The **center** zone is pinned to the exact center of the bar, independent of the left/right
   content.
-- **Items** — each section's **+ Add item** menu adds either a **button** or a **status item**, mixed in
+- **Items** — each section's **+ Add item** menu adds a **button**, a **status item**, or a **popup**, mixed in
   any order and **dragged to reorder**.
 - **Buttons** — a full **Label / Button Card** (entity, icon, colors, actions, badge, dynamic
   highlighting). **Button size** is **Normal** (square) or **Wide**.
 - **Status items** — **Time**, **Date** and **Weather**, plus a room's **Temperature**, **Occupancy**,
   **Brightness**, **Volume**, an entity **Status LED**, and a **Spacer**. Brightness and volume open a
   slider on tap, and the clock updates live.
+- **Popups** — a **Popup** item is a tappable icon that opens a popover holding its own mix of buttons
+  and status items — handy for tucking extra controls behind one icon.
+- **Overflow** — when a section's items don't fit the bar, the extras **auto-collapse into a “…” popover**
+  (turn **Auto-collapse overflow** off per section to keep them inline).
 
 </details>
 
@@ -772,18 +784,25 @@ sections:                 # up to 5 sections
 The newest entry below is used as the GitHub Release notes by the release workflow, so it shows in
 the Home Assistant / HACS **update** dialog when you update. Newest first.
 
+### v2.1.0
+
+- **Navbar Card: popup menus & auto-overflow.** A new **Popup** item is a tappable icon that opens a small popover holding any mix of buttons and status items — great for tucking extra controls (say, a "Lights" popup) behind one icon. Sections also now **auto-collapse** items that don't fit the bar into a **“…” overflow** popover (on by default, toggleable per section).
+- **Every card: Background color.** All cards now have a **Background color** in their Appearance section. The **Light**, **Cover**, and **Label / Button** cards add a **Background color when on / open** that overrides the base color while the entity is active.
+- **Every card: 100% Transparency is now truly see-through** — setting Transparency to **100%** disables blur (instead of blurring whatever's behind the card), and an explicitly set background color now shows on cards that default to transparent.
+- **Light & Cover Cards: the neumorphic button now fills the freed space** when you hide the indicator and/or hint bars (the tap areas are unchanged).
+
 ### v2.0.100
 
 - **Navbar Card: status items.** A section can now show **status items** alongside (or instead of) buttons — **time**, **date** and **weather**, plus a room's **temperature**, **occupancy**, **brightness**, **volume**, an entity **status LED**, and a **spacer**. Mix them across the **left / center / right** zones — for example date & weather on the left, a **Home** button dead-center, and a live clock on the right. Brightness and volume keep their tap-to-open sliders, and each section's **+ Add item** menu adds a button or any status item, all **drag-to-reorder**.
 - Every card: the **Transparency** and **Background blur** controls are now **clearable number boxes** — leave a box empty for "no override" (the card keeps its normal background) instead of the old sliders that always forced a value.
 
+<details>
+<summary>Previous release notes</summary>
+
 ### v2.0.99
 
 - **Every card: Transparency & Background blur.** A new **Appearance (general)** section lets you fade any card's background and **blur whatever's behind it** for a frosted-glass look — perfect for floating cards over a dashboard wallpaper. Available on the Light, Cover, Label / Button, Clock Weather, Remote, Room, Camera, and Navbar cards.
 - Navbar Card: a **floating** bar now **shrinks to fit its buttons** instead of always spanning the full width — unless it has left- or right-aligned items, in which case it stays full width. New **Minimum width** and **Maximum width** options let you tune the floating bar's limits.
-
-<details>
-<summary>Previous release notes</summary>
 
 ### v2.0.98
 

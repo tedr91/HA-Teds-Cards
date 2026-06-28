@@ -104,23 +104,25 @@ export const tedStyleTheme: CSSResult = css`
      they sit over any card background (color, brushed, photo). */
   .ted-neu {
     position: absolute;
-    left: 0;
-    right: 0;
+    /* Inset by the indicator/hint bar widths (0 when a bar is hidden) so the
+       neumorphic tile fills the space those bars would otherwise occupy. */
+    left: var(--ted-neu-left, 0);
+    right: var(--ted-neu-right, 0);
     z-index: -1;
     pointer-events: none;
     transition: background-color 180ms ease, box-shadow 180ms ease;
   }
   .ted-neu.full {
-    inset: 0;
+    inset: var(--ted-neu-top, 0) var(--ted-neu-right, 0) var(--ted-neu-bottom, 0) var(--ted-neu-left, 0);
     border-radius: var(--ted-style-radius);
   }
   .ted-neu.top {
-    top: 0;
+    top: var(--ted-neu-top, 0);
     height: calc(50% - 1px);
     border-radius: var(--ted-style-radius) var(--ted-style-radius) 3px 3px;
   }
   .ted-neu.bottom {
-    bottom: 0;
+    bottom: var(--ted-neu-bottom, 0);
     height: calc(50% - 1px);
     border-radius: 3px 3px var(--ted-style-radius) var(--ted-style-radius);
   }
@@ -139,8 +141,8 @@ export const tedStyleTheme: CSSResult = css`
   }
   /* Horizontal orientation: split the rocker paddles left/right instead. */
   .horizontal .ted-neu.top {
-    top: 0;
-    bottom: 0;
+    top: var(--ted-neu-top, 0);
+    bottom: var(--ted-neu-bottom, 0);
     left: 0;
     right: auto;
     width: calc(50% - 1px);
@@ -148,8 +150,8 @@ export const tedStyleTheme: CSSResult = css`
     border-radius: var(--ted-style-radius) 3px 3px var(--ted-style-radius);
   }
   .horizontal .ted-neu.bottom {
-    top: 0;
-    bottom: 0;
+    top: var(--ted-neu-top, 0);
+    bottom: var(--ted-neu-bottom, 0);
     left: auto;
     right: 0;
     width: calc(50% - 1px);

@@ -227,6 +227,10 @@ export class TedLightCard extends LitElement implements LovelaceCard {
     const horizontal = this._config.orientation === "horizontal";
     const indicatorWidth = typeof this._config.indicator_width === "number" ? this._config.indicator_width : 4;
     const hintWidth = typeof this._config.hint_width === "number" ? this._config.hint_width : 8;
+    // Inset the neumorphic tile by each bar's width — 0 when that bar is hidden —
+    // so the tile fills the space the indicator/hint bars would otherwise occupy.
+    const indInset = this._config.show_indicator !== false ? indicatorWidth : 0;
+    const hintInset = this._config.show_hint === true ? hintWidth : 0;
     // In a grid (Sections) view, honor the grid cell sizing. Everywhere else
     // (stacks, masonry, panel), render at the configured fixed size.
     const isGrid = this.layout === "grid";
@@ -235,6 +239,10 @@ export class TedLightCard extends LitElement implements LovelaceCard {
     const cardStyle: Record<string, string> = {
       "--ted-indicator-width": `${indicatorWidth}px`,
       "--ted-hint-width": `${hintWidth}px`,
+      "--ted-neu-left": `${horizontal ? 0 : indInset}px`,
+      "--ted-neu-right": `${horizontal ? 0 : hintInset}px`,
+      "--ted-neu-top": `${horizontal ? hintInset : 0}px`,
+      "--ted-neu-bottom": `${horizontal ? indInset : 0}px`,
       ...appearanceStyle({ transparency: this._config.transparency, blur: this._config.blur }),
     };
     const bg = isOn ? bgOn ?? bgBase : bgBase;

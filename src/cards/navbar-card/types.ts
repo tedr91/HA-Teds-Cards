@@ -48,6 +48,8 @@ export interface NavSection {
   align?: NavAlign;
   /** Whether the section is shown. Defaults to true. */
   visible?: boolean;
+  /** Collapse items that don't fit into a “…” overflow popup. Defaults to true. */
+  overflow?: boolean;
   /** Ordered mix of nav buttons and status items. */
   items?: NavItem[];
   /** Legacy buttons-only list; read as items when `items` is unset. */

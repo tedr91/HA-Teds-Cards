@@ -221,6 +221,8 @@ export class TedNavbarCardEditor extends LitElement implements LovelaceCardEdito
         return "Placement";
       case "align":
         return "Content alignment";
+      case "overflow":
+        return "Auto-collapse overflow";
       case "nav_button_size":
         return "Button size";
       default:
@@ -370,7 +372,7 @@ export class TedNavbarCardEditor extends LitElement implements LovelaceCardEdito
         <div class="row-body">
           <ha-form
             .hass=${this.hass}
-            .data=${{ placement: section.placement ?? "left", align: section.align ?? "center" }}
+            .data=${{ placement: section.placement ?? "left", align: section.align ?? "center", overflow: section.overflow !== false }}
             .schema=${[
               {
                 type: "grid",
@@ -405,6 +407,7 @@ export class TedNavbarCardEditor extends LitElement implements LovelaceCardEdito
                   },
                 ],
               },
+              { name: "overflow", selector: { boolean: {} } },
             ]}
             .computeLabel=${this._computeLabel}
             @value-changed=${(ev: CustomEvent) => this._onSectionFieldsChanged(sIdx, ev)}
@@ -661,11 +664,14 @@ export class TedNavbarCardEditor extends LitElement implements LovelaceCardEdito
 
   private _onSectionFieldsChanged(sIdx: number, ev: CustomEvent): void {
     ev.stopPropagation();
-    const value = ev.detail.value as { placement?: NavZone; align?: NavAlign };
+    const value = ev.detail.value as { placement?: NavZone; align?: NavAlign; overflow?: boolean };
     const sections = [...this._sections()];
     const section = sections[sIdx];
     if (!section) return;
-    sections[sIdx] = { ...section, placement: value.placement, align: value.align };
+    const next: NavSection = { ...section, placement: value.placement, align: value.align };
+    if (value.overflow === false) next.overflow = false;
+    else delete next.overflow;
+    sections[sIdx] = next;
     this._commit({ ...this._config, sections } as NavbarCardConfig);
   }
 

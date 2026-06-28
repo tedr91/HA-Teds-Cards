@@ -91,6 +91,9 @@ export class TedNavbarCard extends LitElement implements LovelaceCard {
   private _slider = new StatusSliderController(this);
   /** Interval id that re-renders live time/date items. */
   private _clockTimer?: number;
+  /** Per-section (config index) visible item count when overflow trims the tail. */
+  private _visible = new Map<number, number>();
+  private _resizeRaf?: number;
 
   public setConfig(config: NavbarCardConfig): void {
     if (!config) throw new Error("Invalid configuration");
@@ -112,11 +115,14 @@ export class TedNavbarCard extends LitElement implements LovelaceCard {
     void this._loadHelpers();
     this._applyPadding();
     this._syncClockTimer();
+    window.addEventListener("resize", this._onResize);
   }
 
   public disconnectedCallback(): void {
     super.disconnectedCallback();
     removeNavbarPadding();
+    window.removeEventListener("resize", this._onResize);
+    if (this._resizeRaf) cancelAnimationFrame(this._resizeRaf);
     if (this._clockTimer !== undefined) {
       window.clearInterval(this._clockTimer);
       this._clockTimer = undefined;
@@ -125,6 +131,7 @@ export class TedNavbarCard extends LitElement implements LovelaceCard {
 
   protected willUpdate(changed: PropertyValues): void {
     if (changed.has("_config")) {
+      this._visible.clear();
       this._buildButtonElements();
       this._applyPadding();
       this._syncClockTimer();
@@ -255,6 +262,92 @@ export class TedNavbarCard extends LitElement implements LovelaceCard {
     for (const entry of this._buttonEls.values()) entry.el.hass = this.hass;
   }
 
+  protected updated(): void {
+    this._measureOverflow();
+  }
+
+  private _zoneOf(section: NavSection): NavZone {
+    return ZONES.includes(section.placement as NavZone) ? (section.placement as NavZone) : "left";
+  }
+
+  /** Re-measure overflow on viewport resize, resetting trims so sections can regrow. */
+  private _onResize = (): void => {
+    if (this._resizeRaf) cancelAnimationFrame(this._resizeRaf);
+    this._resizeRaf = requestAnimationFrame(() => {
+      this._resizeRaf = undefined;
+      const had = this._visible.size > 0;
+      this._visible.clear();
+      if (had) this.requestUpdate();
+      else this._measureOverflow();
+    });
+  };
+
+  /**
+   * Trim each section's trailing items into a “…” overflow popup when they don't fit.
+   * Only sections currently showing all items (no map entry) are measured; a trim sticks
+   * until the next reset (viewport resize or config change) so we never loop. Budget
+   * model: the center zone keeps its natural width and the left/right zones split the
+   * rest of the card — a deliberate approximation on this overlapping-zone bar.
+   */
+  private _measureOverflow(): void {
+    if (this._editMode || !this._config) return;
+    const root = this.renderRoot as ShadowRoot | undefined;
+    const card = root?.querySelector?.(".navbar-card") as HTMLElement | null;
+    if (!card || card.clientWidth === 0) return;
+    const cs = getComputedStyle(card);
+    const cardInner = card.clientWidth - (parseFloat(cs.paddingLeft) || 0) - (parseFloat(cs.paddingRight) || 0);
+    const gap = 8;
+    const centerEl = root?.querySelector?.(".zone.center") as HTMLElement | null;
+    const centerW = centerEl ? centerEl.offsetWidth : 0;
+
+    // Which zones are occupied, and how many sections share each (to split its budget).
+    const sections = this._config.sections ?? [];
+    const perZone = new Map<NavZone, number>();
+    sections.forEach((section) => {
+      if (section.visible === false || this._sectionItems(section).length === 0) return;
+      const zone = this._zoneOf(section);
+      perZone.set(zone, (perZone.get(zone) ?? 0) + 1);
+    });
+    const occ = (z: NavZone): boolean => (perZone.get(z) ?? 0) > 0;
+    /** Width a single zone may use before its items overflow. */
+    const zoneBudget = (zone: NavZone): number => {
+      if (zone === "center") return cardInner;
+      if (occ("center")) return (cardInner - centerW) / 2 - gap;
+      const other: NavZone = zone === "left" ? "right" : "left";
+      return occ(other) ? cardInner / 2 - gap : cardInner;
+    };
+
+    const triggerW = this._thickness() - 12 + gap;
+    let changed = false;
+    sections.forEach((section, sIdx) => {
+      if (this._visible.has(sIdx)) return; // already trimmed; wait for a reset
+      if (section.overflow === false) return;
+      const items = this._sectionItems(section);
+      if (items.length === 0) return;
+      const el = root?.querySelector?.(`.section[data-sidx="${sIdx}"]`) as HTMLElement | null;
+      if (!el) return;
+      const zone = this._zoneOf(section);
+      const inZone = perZone.get(zone) ?? 1;
+      const budget = Math.max(0, zoneBudget(zone) / inZone);
+      // One element per item (popover children are display:none — skip them).
+      const els = (Array.from(el.children) as HTMLElement[]).filter((c) => !c.hasAttribute("popover"));
+      let total = 0;
+      els.forEach((c, i) => (total += c.offsetWidth + (i > 0 ? gap : 0)));
+      if (total <= budget) return; // fits — keep showing all items
+      let used = 0;
+      let vis = 0;
+      for (let i = 0; i < els.length; i += 1) {
+        const w = els[i].offsetWidth + (i > 0 ? gap : 0);
+        if (used + w + triggerW > budget) break;
+        used += w;
+        vis += 1;
+      }
+      this._visible.set(sIdx, vis);
+      changed = true;
+    });
+    if (changed) this.requestUpdate();
+  }
+
   protected render(): TemplateResult | typeof nothing {
     if (!this._config) return nothing;
     const theme = this._config.theme === "ted-style" ? "ted-style" : "ha";
@@ -314,19 +407,41 @@ export class TedNavbarCard extends LitElement implements LovelaceCard {
 
   private _renderSection(section: NavSection, sIdx: number): TemplateResult {
     const align = section.align ?? "center";
+    const items = this._sectionItems(section);
+    const vis = this._visible.get(sIdx);
+    const trim = vis !== undefined && vis < items.length && section.overflow !== false;
+    const visible = trim ? items.slice(0, vis) : items;
+    const hidden = trim ? items.slice(vis) : [];
     return html`
-      <div class="section align-${align}">
-        ${this._renderItems(this._sectionItems(section), `${sIdx}`, `nav-${sIdx}`)}
+      <div class="section align-${align}" data-sidx=${sIdx}>
+        ${this._renderItems(visible, `${sIdx}`, `nav-${sIdx}`)}
+        ${hidden.length ? this._renderOverflow(sIdx, hidden, visible.length) : nothing}
+      </div>
+    `;
+  }
+
+  /** The “…” trigger + popover holding a section's overflowed tail items. */
+  private _renderOverflow(sIdx: number, hidden: NavItem[], offset: number): TemplateResult {
+    const popId = `nav-${sIdx}-overflow`;
+    const anchorId = `${popId}-btn`;
+    return html`
+      <button id=${anchorId} class="nav-button nav-popup" popovertarget=${popId} title="More" aria-label="More">
+        <ha-icon .icon=${"mdi:dots-horizontal"}></ha-icon>
+      </button>
+      <div id=${popId} class="nav-popover" popover data-anchor=${anchorId} @toggle=${this._onPopoverToggle}>
+        <div class="nav-popover-body">${this._renderItems(hidden, `${sIdx}`, `nav-${sIdx}`, offset)}</div>
       </div>
     `;
   }
 
   /**
    * Render an ordered list of nav items within a container (a section or a popup).
-   * `pathBase` keys embedded button cards; `idBase` namespaces popover ids.
+   * `pathBase` keys embedded button cards; `idBase` namespaces popover ids; `offset`
+   * keeps absolute indices when rendering an overflowed tail.
    */
-  private _renderItems(items: NavItem[], pathBase: string, idBase: string): TemplateResult[] {
-    return items.map((item, idx) => {
+  private _renderItems(items: NavItem[], pathBase: string, idBase: string, offset = 0): TemplateResult[] {
+    return items.map((item, i) => {
+      const idx = offset + i;
       if (this._isButton(item)) return this._renderButton(`${pathBase}:${idx}`, item);
       if (this._isPopup(item)) return this._renderPopup(item, pathBase, idBase, idx);
       return this._renderStatusItem(item as StatusItem, idBase, idx);

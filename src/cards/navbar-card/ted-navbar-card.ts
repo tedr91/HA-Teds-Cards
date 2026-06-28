@@ -274,7 +274,11 @@ export class TedNavbarCard extends LitElement implements LovelaceCard {
     const rect = navbarContentRect();
     if (!rect || rect.width === 0) return;
     const left = Math.max(0, Math.round(rect.left));
-    const right = Math.max(0, Math.round(window.innerWidth - rect.right));
+    // Right inset is resolved against the viewport WITHOUT the scrollbar: a
+    // position:fixed element's `right` is relative to documentElement.clientWidth
+    // (scrollbar excluded), whereas window.innerWidth includes it — using innerWidth
+    // would push the bar in by the scrollbar width, leaving a gap on the right.
+    const right = Math.max(0, Math.round(document.documentElement.clientWidth - rect.right));
     if (left === this._navLeft && right === this._navRight) return;
     this._navLeft = left;
     this._navRight = right;

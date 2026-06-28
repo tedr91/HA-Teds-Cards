@@ -55,6 +55,12 @@ export function removeNavbarPadding(): void {
   styleEl?.remove();
 }
 
+/** The dashboard content area's viewport rect (`hui-root`), used to inset the navbar
+ *  horizontally so it clears the HA sidebar. Null when hui-root isn't found. */
+export function navbarContentRect(): DOMRect | null {
+  return findHuiRoot()?.getBoundingClientRect() ?? null;
+}
+
 /** True when the card is currently inside a dashboard/card editor or a preview. */
 export function detectEditOrPreview(host: HTMLElement): boolean {
   const inEditDashboard = host.parentElement?.closest("hui-card-edit-mode") != null;

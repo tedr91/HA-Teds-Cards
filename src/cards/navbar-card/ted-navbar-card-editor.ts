@@ -360,7 +360,7 @@ export class TedNavbarCardEditor extends LitElement implements LovelaceCardEdito
           <div class="drag-handle section-drag-handle" @click=${this._stop} title="Drag to reorder">
             <ha-svg-icon .path=${GRIP_ICON_PATH}></ha-svg-icon>
           </div>
-          <span class="row-title">Section ${sIdx + 1} · ${section.placement ?? "left"}</span>
+          <span class="row-title">Section ${sIdx + 1} - ${section.placement ?? "left"} (${section.align ?? "center"} aligned)</span>
           <ha-switch
             .checked=${visible}
             @click=${this._stop}
@@ -652,9 +652,39 @@ export class TedNavbarCardEditor extends LitElement implements LovelaceCardEdito
     const { oldIndex, newIndex } = ev.detail as { oldIndex: number; newIndex: number };
     const sections = [...this._sections()];
     sections.splice(newIndex, 0, sections.splice(oldIndex, 1)[0]);
+    // Move each section's expanded panels (and its items') along with it.
+    this._expanded = this._remapExpanded([], 1, this._reorderMap(this._sections().length, oldIndex, newIndex));
     this._buttonEditors.clear();
     this._commit({ ...this._config, sections } as NavbarCardConfig);
   };
+
+  /** old-index → new-index map for a splice(oldIndex → newIndex) over `length` items. */
+  private _reorderMap(length: number, oldIndex: number, newIndex: number): Map<number, number> {
+    const order = Array.from({ length }, (_, i) => i);
+    order.splice(newIndex, 0, order.splice(oldIndex, 1)[0]);
+    const map = new Map<number, number>();
+    order.forEach((oldIdx, newPos) => map.set(oldIdx, newPos));
+    return map;
+  }
+
+  /** Rebuild `_expanded`, remapping the index at part `pos` for keys whose preceding
+   *  indices match `prefix`, so a reorder moves the right panels (and their children).
+   *  Keys: `sec-<s>`, `btn-/item-/popup-<s>-<i>[-<sub>]`, and `add-<s>[-<i>]`. */
+  private _remapExpanded(prefix: number[], pos: number, oldToNew: Map<number, number>): Set<string> {
+    const next = new Set<string>();
+    for (const key of this._expanded) {
+      const parts = key.split("-");
+      const matches = prefix.every((p, i) => Number(parts[i + 1]) === p);
+      const idx = Number(parts[pos]);
+      if (parts.length > pos && matches && Number.isInteger(idx) && oldToNew.has(idx)) {
+        parts[pos] = String(oldToNew.get(idx));
+        next.add(parts.join("-"));
+      } else {
+        next.add(key);
+      }
+    }
+    return next;
+  }
 
   private _toggleSectionVisible(sIdx: number, ev: Event): void {
     ev.stopPropagation();
@@ -720,6 +750,12 @@ export class TedNavbarCardEditor extends LitElement implements LovelaceCardEdito
     const { oldIndex, newIndex } = ev.detail as { oldIndex: number; newIndex: number };
     const items = [...this._itemsAt(containerPath)];
     items.splice(newIndex, 0, items.splice(oldIndex, 1)[0]);
+    // Keep each item's (and a popup's children's) expanded panels with the item.
+    this._expanded = this._remapExpanded(
+      containerPath,
+      containerPath.length + 1,
+      this._reorderMap(this._itemsAt(containerPath).length, oldIndex, newIndex),
+    );
     this._buttonEditors.clear();
     this._commitItemList(containerPath, items);
   }

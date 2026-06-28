@@ -26,6 +26,7 @@ export function defaultNavButton(): NavButtonConfig {
   return {
     type: `custom:${LABEL_BUTTON_CARD_TYPE}`,
     icon: "mdi:gesture-tap-button",
+    icon_scale: 150,
     theme: "ha",
     brushed: false,
     neumorphic: false,

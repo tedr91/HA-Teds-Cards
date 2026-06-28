@@ -26,7 +26,7 @@ import {
   NAVBAR_CARD_TYPE,
   defaultNavButton,
 } from "./const";
-import { detectEditOrPreview, forceNavbarPadding, removeNavbarPadding } from "./navbar-dom";
+import { detectEditOrPreview, forceNavbarPadding, navbarContentRect, removeNavbarPadding } from "./navbar-dom";
 import type { NavButtonConfig, NavItem, NavPopupConfig, NavSection, NavZone, NavbarCardConfig } from "./types";
 
 interface CardHelpers {
@@ -63,12 +63,16 @@ export class TedNavbarCard extends LitElement implements LovelaceCard {
   public static getStubConfig(): Omit<NavbarCardConfig, "type"> {
     return {
       sections: [
+        { placement: "left", align: "left", items: [] },
+        { placement: "center", align: "right", items: [] },
         {
           placement: "center",
           align: "center",
           // Exactly an editor-added button, then given the Home name + icon.
           items: [{ ...defaultNavButton(), name: "Home", icon: "mdi:home" }],
         },
+        { placement: "center", align: "left", items: [] },
+        { placement: "right", align: "right", items: [] },
       ],
     };
   }
@@ -87,6 +91,9 @@ export class TedNavbarCard extends LitElement implements LovelaceCard {
   /** Per-section (config index) visible item count when overflow trims the tail. */
   private _visible = new Map<number, number>();
   private _resizeRaf?: number;
+  /** Horizontal insets (px) so the bar clears the HA sidebar / matches the content area. */
+  private _navLeft = 0;
+  private _navRight = 0;
 
   public setConfig(config: NavbarCardConfig): void {
     if (!config) throw new Error("Invalid configuration");
@@ -256,7 +263,23 @@ export class TedNavbarCard extends LitElement implements LovelaceCard {
   }
 
   protected updated(): void {
+    this._measureContentInset();
     this._measureOverflow();
+  }
+
+  /** Inset the fixed bar to the dashboard content area so the HA sidebar doesn't cover
+   *  it (the bar is position:fixed to the viewport; HA offsets the content past the sidebar). */
+  private _measureContentInset(): void {
+    if (this._editMode) return;
+    const rect = navbarContentRect();
+    if (!rect || rect.width === 0) return;
+    const left = Math.max(0, Math.round(rect.left));
+    const right = Math.max(0, Math.round(window.innerWidth - rect.right));
+    if (left === this._navLeft && right === this._navRight) return;
+    this._navLeft = left;
+    this._navRight = right;
+    this._visible.clear(); // available width changed — let overflow recompute
+    this.requestUpdate();
   }
 
   private _zoneOf(section: NavSection): NavZone {
@@ -385,7 +408,11 @@ export class TedNavbarCard extends LitElement implements LovelaceCard {
     return html`
       <div
         class=${classMap(navClasses)}
-        style=${styleMap({ "--nav-size": `${this._thickness()}px` })}
+        style=${styleMap({
+          "--nav-size": `${this._thickness()}px`,
+          "--ted-nav-left": `${this._navLeft}px`,
+          "--ted-nav-right": `${this._navRight}px`,
+        })}
       >
         <ha-card class="navbar-card ${tedCardThemeClass(theme)}${hug ? " hug" : ""}" style=${styleMap(cardStyle)}>
           ${ZONES.map(
@@ -527,8 +554,8 @@ export class TedNavbarCard extends LitElement implements LovelaceCard {
 
       .navbar {
         position: fixed;
-        left: 0;
-        right: 0;
+        left: var(--ted-nav-left, 0);
+        right: var(--ted-nav-right, 0);
         z-index: 5;
         pointer-events: none;
         box-sizing: border-box;

@@ -9,6 +9,7 @@ import {
   type LovelaceCardEditor,
 } from "custom-card-helpers";
 
+import { appearanceStyle } from "../../shared/appearance";
 import { ensureHuiImage } from "../../shared/camera";
 import { registerCustomCard } from "../../shared/register-card";
 import { brushedOverlay, tedStyleTheme } from "../../shared/theme";
@@ -1211,9 +1212,13 @@ export class TedRoomCard extends LitElement implements LovelaceCard {
       ? Math.max(0, photoTop + this._photoHeight - this._headerBottom - HEADER_GAP + CARD_PADDING)
       : 0;
     const bodyStyle = bodyShift ? { marginTop: `${bodyShift}px` } : {};
+    const appearance = appearanceStyle({
+      transparency: this._config.transparency,
+      blur: this._config.blur,
+    });
 
     return html`
-      <ha-card class=${classMap(themeClasses)}>
+      <ha-card class=${classMap(themeClasses)} style=${styleMap(appearance)}>
         ${this._config.brushed ? brushedOverlay : nothing}
         ${this._renderPhoto()}
         <div

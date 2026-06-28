@@ -47,6 +47,8 @@ export interface CoverCardConfig extends LovelaceCardConfig {
   state_color?: string;
   background_open?: string;
   background_closed?: string;
+  transparency?: number;
+  blur?: number;
   brushed?: boolean;
   shadow?: boolean;
   rocker?: boolean;

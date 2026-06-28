@@ -41,6 +41,8 @@ export interface RemoteCardConfig extends LovelaceCardConfig {
   theme?: RemoteCardTheme;
   /** Optional override for the card background (hex/rgb/hsl/var or a theme color name). */
   background?: string;
+  transparency?: number;
+  blur?: number;
   brushed?: boolean;
   show_icon?: boolean;
   icon_scale?: number;

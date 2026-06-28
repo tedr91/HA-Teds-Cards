@@ -23,6 +23,8 @@ export interface CameraCardConfig extends LovelaceCardConfig {
   theme?: CameraCardTheme;
   /** Brushed-metal sheen overlay. Defaults to false. */
   brushed?: boolean;
+  transparency?: number;
+  blur?: number;
   /** Manual width in px (used outside the Sections grid). */
   width?: number;
   /** Manual height in px (used outside the Sections grid). */

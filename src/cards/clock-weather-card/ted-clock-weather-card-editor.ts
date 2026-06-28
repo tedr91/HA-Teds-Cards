@@ -2,6 +2,7 @@ import { LitElement, css, html, nothing, type TemplateResult } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { type HomeAssistant, type LovelaceCardEditor, fireEvent } from "custom-card-helpers";
 
+import { transparencyBlurSchema } from "../../shared/appearance";
 import { CLOCK_WEATHER_CARD_EDITOR_TYPE } from "./const";
 import type { ClockWeatherCardConfig } from "./types";
 
@@ -57,7 +58,8 @@ export class TedClockWeatherCardEditor extends LitElement implements LovelaceCar
   private _defaults(): Partial<ClockWeatherCardConfig> {
     return {
       theme: "ted-style",
-      force_transparent: true,
+      transparency: 100,
+      blur: 0,
       brushed: false,
       shadow: true,
       show_clock: true,
@@ -89,8 +91,6 @@ export class TedClockWeatherCardEditor extends LitElement implements LovelaceCar
   }
 
   private _appearanceFields() {
-    const cfg = this._config ?? ({} as ClockWeatherCardConfig);
-
     return [
       {
         name: "theme",
@@ -104,18 +104,8 @@ export class TedClockWeatherCardEditor extends LitElement implements LovelaceCar
           },
         },
       },
-      {
-        type: "grid",
-        name: "",
-        schema: [
-          { name: "force_transparent", selector: { boolean: {} } },
-          {
-            name: "background",
-            disabled: cfg.force_transparent !== false,
-            selector: { ui_color: {} },
-          },
-        ],
-      },
+      { name: "background", selector: { ui_color: {} } },
+      transparencyBlurSchema(),
       { name: "brushed", selector: { boolean: {} } },
       { name: "shadow", selector: { boolean: {} } },
     ];
@@ -367,8 +357,10 @@ export class TedClockWeatherCardEditor extends LitElement implements LovelaceCar
     switch (schema.name) {
       case "theme":
         return "Visual styling";
-      case "force_transparent":
-        return "Force transparent background";
+      case "transparency":
+        return "Transparency";
+      case "blur":
+        return "Background blur";
       case "background":
         return "Background color override";
       case "brushed":
@@ -427,8 +419,6 @@ export class TedClockWeatherCardEditor extends LitElement implements LovelaceCar
     if (config.date_size !== "custom") delete config.date_size_custom;
     if (config.date_format !== "custom") delete config.date_format_custom;
     if (config.weather_size !== "custom") delete config.weather_size_custom;
-    // The background override only applies when the card isn't forced transparent.
-    if (config.force_transparent !== false) delete config.background;
     if (!config.background) delete config.background;
     if (!config.weather_entity) delete config.weather_entity;
     fireEvent(this, "config-changed", { config });

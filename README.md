@@ -85,6 +85,8 @@ OR
 
 ## 📖 Usage
 
+> 🎨 **Every card** has an **Appearance (general)** section with **Transparency** and **Background blur** sliders — fade the card's surface and blur whatever sits behind it for a frosted-glass look over a dashboard wallpaper. Both default to off (fully opaque, no blur).
+
 ### 💡 Light Card
 
 A compact light tile split into two clickable halves by a subtle divider. Supports `light`
@@ -718,10 +720,14 @@ sections:
 
 ```yaml
 type: custom:ted-navbar-card
-theme: ted-style          # optional, visual styling: ted-style (default) | ha
+theme: ha                 # optional, visual styling: ha (default) | ted-style
 alignment: bottom         # bottom (default) | top
 bar_type: snap            # snap (edge-to-edge, default) | float (centered with margins)
 size: 48                  # bar thickness in px; buttons size from this
+min_width: 16             # float only: minimum bar width in px
+max_width: 920            # float only: maximum bar width in px
+transparency: 0           # 0–100% — fade the bar's background
+blur: 0                   # 0–100% — blur the dashboard behind the bar
 sections:                 # up to 5 sections
   - placement: left       # left | center | right (which zone the section sits in)
     align: center         # left | center | right (alignment of items within the section)
@@ -744,7 +750,8 @@ sections:                 # up to 5 sections
 ```
 
 - **Navbar alignment** — pin the bar to the **Bottom** (default) or **Top** edge.
-- **Navbar type** — **Snap** spans edge-to-edge; **Float** centers the bar with margins and rounded corners.
+- **Navbar type** — **Snap** spans edge-to-edge; **Float** centers the bar with margins and rounded corners. A floating bar **auto-sizes to fit its buttons** (just a little wider) — unless it has **left-** or **right-**zone items, in which case it spans the full (maximum) width so those items can pin to the edges.
+- **Minimum width** / **Maximum width** (float only) — the bounds the floating bar is sized within (defaults **16** and **920** px).
 - **Size** — the bar thickness in pixels; buttons size automatically from it.
 - **Sections** (up to **5**) — each sits in a **left / center / right** zone and has its own content
   **alignment**. Sections, and the buttons inside them, are added and **dragged to reorder** in the
@@ -762,18 +769,23 @@ sections:                 # up to 5 sections
 The newest entry below is used as the GitHub Release notes by the release workflow, so it shows in
 the Home Assistant / HACS **update** dialog when you update. Newest first.
 
+### v2.0.99
+
+- **Every card: Transparency & Background blur.** A new **Appearance (general)** section lets you fade any card's background and **blur whatever's behind it** for a frosted-glass look — perfect for floating cards over a dashboard wallpaper. Available on the Light, Cover, Label / Button, Clock Weather, Remote, Room, Camera, and Navbar cards.
+- Navbar Card: a **floating** bar now **shrinks to fit its buttons** instead of always spanning the full width — unless it has left- or right-aligned items, in which case it stays full width. New **Minimum width** and **Maximum width** options let you tune the floating bar's limits.
+
 ### v2.0.98
 
 - Label / Button Card: **fixed icon centering** in small buttons — in a small grid cell (like a navbar button) the icon was pushed below the middle; it now stays properly centered.
 - Navbar Card: new buttons now default to a full-size (**100%**) icon.
 
+<details>
+<summary>Previous release notes</summary>
+
 ### v2.0.97
 
 - Label / Button Card: the **icon now scales with the card** — small buttons (like those in the navbar) get proportionally smaller icons and larger buttons get bigger ones — and the default content order is now **Name → Icon → State**.
 - Navbar Card: new buttons now default to a tidy **icon-only button that navigates to `/home`** (name & state hidden, icon at 75%), and the default **bar thickness is 48px**.
-
-<details>
-<summary>Previous release notes</summary>
 
 ### v2.0.96
 

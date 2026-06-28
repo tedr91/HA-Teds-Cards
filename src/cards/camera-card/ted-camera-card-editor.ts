@@ -2,6 +2,7 @@ import { LitElement, css, html, nothing, type TemplateResult } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { type HomeAssistant, type LovelaceCardEditor, fireEvent } from "custom-card-helpers";
 
+import { transparencyBlurSchema } from "../../shared/appearance";
 import { CAMERA_CARD_EDITOR_TYPE } from "./const";
 import type { CameraCardConfig } from "./types";
 
@@ -53,6 +54,8 @@ export class TedCameraCardEditor extends LitElement implements LovelaceCardEdito
     return {
       theme: "ted-style",
       brushed: false,
+      transparency: 0,
+      blur: 0,
       camera_view: "auto",
       fit_mode: "cover",
       show_name: false,
@@ -132,6 +135,7 @@ export class TedCameraCardEditor extends LitElement implements LovelaceCardEdito
               { name: "brushed", selector: { boolean: {} } },
             ],
           },
+          transparencyBlurSchema(),
           { name: "name", selector: { text: {} } },
           {
             type: "grid",
@@ -214,6 +218,10 @@ export class TedCameraCardEditor extends LitElement implements LovelaceCardEdito
         return "Visual styling";
       case "brushed":
         return "Brushed effect";
+      case "transparency":
+        return "Transparency";
+      case "blur":
+        return "Background blur";
       case "width":
         return "Width (px)";
       case "height":

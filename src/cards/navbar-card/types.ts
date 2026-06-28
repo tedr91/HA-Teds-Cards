@@ -44,6 +44,14 @@ export interface NavbarCardConfig extends LovelaceCardConfig {
   bar_type?: NavbarType;
   /** Bar thickness in px; buttons/status items size from this. */
   size?: number;
+  /** Float mode: minimum bar width in px. */
+  min_width?: number;
+  /** Float mode: maximum bar width in px. */
+  max_width?: number;
+  /** Background transparency override, 0–100% (unset = no override). */
+  transparency?: number;
+  /** Background blur override, 0–100% (unset = no override). */
+  blur?: number;
   /** Up to MAX_NAV_SECTIONS sections. */
   sections?: NavSection[];
 }

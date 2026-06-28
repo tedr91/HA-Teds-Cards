@@ -9,5 +9,11 @@ export const NAVBAR_CARD_DESCRIPTION =
 /** Default bar thickness (px). Buttons and status items size from this. */
 export const DEFAULT_NAVBAR_SIZE = 48;
 
+/** Default minimum bar width (px) in float mode. */
+export const DEFAULT_NAVBAR_MIN_WIDTH = 16;
+
+/** Default maximum bar width (px) in float mode. */
+export const DEFAULT_NAVBAR_MAX_WIDTH = 920;
+
 /** Maximum number of NavSections a navbar can hold. */
 export const MAX_NAV_SECTIONS = 5;

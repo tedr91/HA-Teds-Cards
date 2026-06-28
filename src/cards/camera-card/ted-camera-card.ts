@@ -12,6 +12,7 @@ import {
 
 import { ensureHuiImage } from "../../shared/camera";
 import { registerCustomCard } from "../../shared/register-card";
+import { appearanceStyle } from "../../shared/appearance";
 import { brushedOverlay, tedStyleTheme } from "../../shared/theme";
 import {
   CAMERA_CARD_DESCRIPTION,
@@ -123,7 +124,10 @@ export class TedCameraCard extends LitElement implements LovelaceCard {
     const isGrid = this.layout === "grid";
     const cardWidth = typeof this._config.width === "number" ? this._config.width : 240;
     const cardHeight = typeof this._config.height === "number" ? this._config.height : 135;
-    const cardStyle: Record<string, string> = {};
+    const cardStyle: Record<string, string> = appearanceStyle({
+      transparency: this._config.transparency,
+      blur: this._config.blur,
+    });
     if (!isGrid) {
       cardStyle.width = `${cardWidth}px`;
       cardStyle.height = `${cardHeight}px`;

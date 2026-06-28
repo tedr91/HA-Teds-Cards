@@ -3,6 +3,7 @@ import { customElement, property, state } from "lit/decorators.js";
 import { repeat } from "lit/directives/repeat.js";
 import { type HomeAssistant, type LovelaceCardEditor, fireEvent } from "custom-card-helpers";
 
+import { transparencyBlurSchema } from "../../shared/appearance";
 import { LABEL_BUTTON_CARD_EDITOR_TYPE, entityDefaultButtonAction } from "./const";
 import type {
   BadgeConfig,
@@ -101,6 +102,8 @@ export class TedLabelButtonCardEditor extends LitElement implements LovelaceCard
       name_scale: 100,
       show_state: false,
       state_scale: 100,
+      transparency: 0,
+      blur: 0,
     };
   }
 
@@ -119,6 +122,7 @@ export class TedLabelButtonCardEditor extends LitElement implements LovelaceCard
         },
       },
       { name: "background", selector: { ui_color: {} } },
+      transparencyBlurSchema(),
       {
         type: "grid",
         name: "",
@@ -208,6 +212,10 @@ export class TedLabelButtonCardEditor extends LitElement implements LovelaceCard
         return "Custom color";
       case "icon_color":
         return "Color";
+      case "transparency":
+        return "Transparency";
+      case "blur":
+        return "Background blur";
       case "background":
         return "Background color";
       case "brushed":

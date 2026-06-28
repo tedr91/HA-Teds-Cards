@@ -5,6 +5,7 @@ import { styleMap } from "lit/directives/style-map.js";
 import { type HomeAssistant, type LovelaceCard, type LovelaceCardEditor } from "custom-card-helpers";
 
 import { registerCustomCard } from "../../shared/register-card";
+import { appearanceStyle } from "../../shared/appearance";
 import { brushedOverlay, tedStyleTheme } from "../../shared/theme";
 import {
   APPLE_TV_COMMANDS,
@@ -259,8 +260,14 @@ export class TedRemoteCard extends LitElement implements LovelaceCard {
     };
     const isGrid = this.layout === "grid";
     if (!isGrid) cardStyle.margin = "0 auto";
-    const bgOverride = cssColor(this._config.background);
-    if (bgOverride) cardStyle.background = bgOverride;
+    Object.assign(
+      cardStyle,
+      appearanceStyle({
+        background: cssColor(this._config.background),
+        transparency: this._config.transparency,
+        blur: this._config.blur,
+      }),
+    );
     // Kaleidescape's manufacturer look has a brushed-metal sheen; honor the explicit toggle too.
     const showBrushed =
       this._config.brushed === true || (theme === "manufacturer" && isKaleidescape);

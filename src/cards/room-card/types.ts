@@ -132,6 +132,10 @@ export interface RoomCardConfig extends LovelaceCardConfig {
   icon?: string;
   theme?: RoomCardTheme;
   brushed?: boolean;
+  /** Appearance: surface transparency override (0–100%). */
+  transparency?: number;
+  /** Appearance: backdrop blur override (0–100%). */
+  blur?: number;
   /** Header: show the icon. Defaults to false. */
   show_header_icon?: boolean;
   /** Header: icon size override in px. */

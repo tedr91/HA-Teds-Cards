@@ -10,6 +10,7 @@ import {
 } from "custom-card-helpers";
 
 import { registerCustomCard } from "../../shared/register-card";
+import { appearanceStyle, fadeColor } from "../../shared/appearance";
 import { brushedOverlay, tedStyleTheme } from "../../shared/theme";
 import {
   COVER_CARD_DESCRIPTION,
@@ -240,9 +241,10 @@ export class TedCoverCard extends LitElement implements LovelaceCard {
     const cardStyle: Record<string, string> = {
       "--ted-indicator-width": `${indicatorWidth}px`,
       "--ted-hint-width": `${hintWidth}px`,
+      ...appearanceStyle({ transparency: this._config.transparency, blur: this._config.blur }),
     };
-    if (isOpen && bgOpen) cardStyle.backgroundColor = bgOpen;
-    if (!isOpen && bgClosed) cardStyle.backgroundColor = bgClosed;
+    if (isOpen && bgOpen) cardStyle.backgroundColor = fadeColor(bgOpen, this._config.transparency);
+    if (!isOpen && bgClosed) cardStyle.backgroundColor = fadeColor(bgClosed, this._config.transparency);
     if (!isGrid) {
       cardStyle.width = `${cardWidth}px`;
       cardStyle.height = `${cardHeight}px`;

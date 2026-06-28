@@ -41,6 +41,8 @@ export interface LightCardConfig extends LovelaceCardConfig {
   state_color?: string;
   background_on?: string;
   background_off?: string;
+  transparency?: number;
+  blur?: number;
   brushed?: boolean;
   shadow?: boolean;
   rocker?: boolean;

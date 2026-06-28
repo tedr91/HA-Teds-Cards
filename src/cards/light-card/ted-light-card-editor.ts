@@ -3,6 +3,7 @@ import { customElement, property, state } from "lit/decorators.js";
 import { repeat } from "lit/directives/repeat.js";
 import { type HomeAssistant, type LovelaceCardEditor, fireEvent } from "custom-card-helpers";
 
+import { transparencyBlurSchema } from "../../shared/appearance";
 import { LIGHT_CARD_EDITOR_TYPE } from "./const";
 import type { CardElement, LightCardConfig, LightAction } from "./types";
 import { autoMemoryHelperEntityId, ensureMemoryHelper } from "../../shared/memory-helper";
@@ -116,6 +117,8 @@ export class TedLightCardEditor extends LitElement implements LovelaceCardEditor
       hint_width: 8,
       brushed: false,
       shadow: true,
+      transparency: 0,
+      blur: 0,
       rocker: true,
       rocker_effect: true,
       up_tap: dimmable ? "increase" : "full_on",
@@ -256,6 +259,7 @@ export class TedLightCardEditor extends LitElement implements LovelaceCardEditor
         { name: "background_off", selector: { ui_color: {} } },
       ],
     });
+    visual.push(transparencyBlurSchema());
     visual.push({
       type: "grid",
       name: "",
@@ -411,6 +415,10 @@ export class TedLightCardEditor extends LitElement implements LovelaceCardEditor
         return "Custom color";
       case "icon_color":
         return "Color";
+      case "transparency":
+        return "Transparency";
+      case "blur":
+        return "Background blur";
       case "background_on":
         return "Background color when on";
       case "background_off":

@@ -26,6 +26,7 @@ import type {
   RoomStatusItem,
   RoomStatusItemType,
 } from "./types";
+import { transparencyBlurSchema } from "../../shared/appearance";
 
 // mdi:texture-box — Room section
 const AREA_ICON_PATH =
@@ -84,6 +85,8 @@ const FIELD_LABELS: Record<string, string> = {
   display: "Display",
   theme: "Visual styling",
   brushed: "Brushed effect",
+  transparency: "Transparency",
+  blur: "Background blur",
   show_header_icon: "Display icon in header",
   header_icon_size: "Icon size override",
   show_header_name: "Display name in header",
@@ -636,6 +639,8 @@ export class TedRoomCardEditor extends LitElement implements LovelaceCardEditor 
     const data = {
       theme: "ted-style",
       brushed: false,
+      transparency: 0,
+      blur: 0,
       show_header_icon: false,
       show_header_name: true,
       header_divider: false,
@@ -787,6 +792,7 @@ export class TedRoomCardEditor extends LitElement implements LovelaceCardEditor 
             },
           },
           { name: "brushed", selector: { boolean: {} } },
+          transparencyBlurSchema(),
         ],
       },
       {
@@ -1013,6 +1019,8 @@ export class TedRoomCardEditor extends LitElement implements LovelaceCardEditor 
       icon: value.icon,
       theme: value.theme,
       brushed: value.brushed,
+      transparency: value.transparency,
+      blur: value.blur,
       show_header_icon: value.show_header_icon,
       header_icon_size: value.header_icon_size,
       show_header_name: value.show_header_name,
@@ -1186,6 +1194,8 @@ export class TedRoomCardEditor extends LitElement implements LovelaceCardEditor 
     const next: RoomCardConfig = { ...config };
     if (next.theme === "ted-style") delete next.theme;
     if (!next.brushed) delete next.brushed;
+    if (typeof next.transparency !== "number" || next.transparency === 0) delete next.transparency;
+    if (typeof next.blur !== "number" || next.blur === 0) delete next.blur;
     if (!next.area) delete next.area;
     if (!next.name) delete next.name;
     if (!next.icon) delete next.icon;

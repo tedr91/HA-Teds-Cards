@@ -9,9 +9,12 @@ import type {
   LovelaceCardEditor,
 } from "custom-card-helpers";
 
+import { appearanceStyle } from "../../shared/appearance";
 import { registerCustomCard } from "../../shared/register-card";
 import { tedCardThemeClass, tedStyleTheme } from "../../shared/theme";
 import {
+  DEFAULT_NAVBAR_MAX_WIDTH,
+  DEFAULT_NAVBAR_MIN_WIDTH,
   DEFAULT_NAVBAR_SIZE,
   NAVBAR_CARD_DESCRIPTION,
   NAVBAR_CARD_EDITOR_TYPE,
@@ -58,7 +61,16 @@ export class TedNavbarCard extends LitElement implements LovelaceCard {
         {
           placement: "center",
           align: "center",
-          buttons: [{ type: "custom:ted-label-button-card", name: "Home", icon: "mdi:home" }],
+          buttons: [
+            {
+              type: "custom:ted-label-button-card",
+              name: "Home",
+              icon: "mdi:home",
+              theme: "ha",
+              neumorphic: false,
+              transparency: 100,
+            },
+          ],
         },
       ],
     };
@@ -125,6 +137,14 @@ export class TedNavbarCard extends LitElement implements LovelaceCard {
     return this._config?.bar_type === "float" ? "float" : "snap";
   }
 
+  private _minWidth(): number {
+    return typeof this._config?.min_width === "number" ? this._config.min_width : DEFAULT_NAVBAR_MIN_WIDTH;
+  }
+
+  private _maxWidth(): number {
+    return typeof this._config?.max_width === "number" ? this._config.max_width : DEFAULT_NAVBAR_MAX_WIDTH;
+  }
+
   /** Reserve view padding so dashboard content isn't hidden under the bar. */
   private _applyPadding(): void {
     const margin = this._barType() === "float" ? 16 : 0;
@@ -175,7 +195,15 @@ export class TedNavbarCard extends LitElement implements LovelaceCard {
 
   protected render(): TemplateResult | typeof nothing {
     if (!this._config) return nothing;
-    const theme = this._config.theme === "ha" ? "ha" : "ted-style";
+    const theme = this._config.theme === "ted-style" ? "ted-style" : "ha";
+    const cardStyle: Record<string, string> = appearanceStyle({
+      transparency: this._config.transparency ?? 100,
+      blur: this._config.blur,
+    });
+    if (this._barType() === "float") {
+      cardStyle["min-width"] = `${this._minWidth()}px`;
+      cardStyle["max-width"] = `${this._maxWidth()}px`;
+    }
     const sections = this._config.sections ?? [];
     const byZone: Record<NavZone, Array<{ section: NavSection; idx: number }>> = {
       left: [],
@@ -190,6 +218,13 @@ export class TedNavbarCard extends LitElement implements LovelaceCard {
       byZone[zone].push({ section, idx });
     });
 
+    // Center-only float bars shrink to fit their buttons; bars with left/right
+    // items stay full width so those items can pin to the edges.
+    const hasSides =
+      byZone.left.some(({ section }) => (section.buttons?.length ?? 0) > 0) ||
+      byZone.right.some(({ section }) => (section.buttons?.length ?? 0) > 0);
+    const hug = this._barType() === "float" && !hasSides;
+
     const navClasses = {
       navbar: true,
       [this._alignment()]: true,
@@ -202,7 +237,7 @@ export class TedNavbarCard extends LitElement implements LovelaceCard {
         class=${classMap(navClasses)}
         style=${styleMap({ "--nav-size": `${this._thickness()}px` })}
       >
-        <ha-card class="navbar-card ${tedCardThemeClass(theme)}">
+        <ha-card class="navbar-card ${tedCardThemeClass(theme)}${hug ? " hug" : ""}" style=${styleMap(cardStyle)}>
           ${ZONES.map(
             (zone) => html`
               <div class="zone ${zone}">
@@ -268,9 +303,26 @@ export class TedNavbarCard extends LitElement implements LovelaceCard {
         overflow: visible;
       }
       .navbar.float .navbar-card {
-        max-width: 920px;
         margin: 0 auto;
         border-radius: var(--ted-style-radius, 12px);
+      }
+      /* Center-only float bars hug their content (just wider than the buttons),
+         still capped by the configured min/max width. With left/right items the
+         bar stays full width so those items can pin to the edges. */
+      .navbar.float .navbar-card.hug {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: fit-content;
+        padding: 0 12px;
+      }
+      .navbar.float .navbar-card.hug .zone.left,
+      .navbar.float .navbar-card.hug .zone.right {
+        display: none;
+      }
+      .navbar.float .navbar-card.hug .zone.center {
+        position: static;
+        transform: none;
       }
 
       /* Three zones: left pinned to the left edge, right to the right edge, and

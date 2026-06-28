@@ -10,6 +10,7 @@ import {
 } from "custom-card-helpers";
 
 import { registerCustomCard } from "../../shared/register-card";
+import { appearanceStyle } from "../../shared/appearance";
 import { brushedOverlay, tedCardThemeClass, tedStyleTheme } from "../../shared/theme";
 import {
   CLOCK_WEATHER_CARD_DESCRIPTION,
@@ -464,7 +465,6 @@ export class TedClockWeatherCard extends LitElement implements LovelaceCard {
     if (!this._config || !this.hass) return nothing;
 
     const theme = this._config.theme === "ha" ? "ha" : "ted-style";
-    const forceTransparent = this._config.force_transparent !== false; // default true
     const brushed = this._config.brushed === true;
     const shadow = this._config.shadow !== false; // default true
 
@@ -476,19 +476,14 @@ export class TedClockWeatherCard extends LitElement implements LovelaceCard {
     const cardClasses = {
       "ted-card": true,
       [tedCardThemeClass(theme)]: true,
-      "is-transparent": forceTransparent,
       "no-shadow": !shadow,
     };
 
-    const cardStyle: Record<string, string> = {};
-    if (forceTransparent) {
-      cardStyle.background = "transparent";
-      cardStyle.border = "none";
-      cardStyle.boxShadow = "none";
-    } else {
-      const bg = cssColor(this._config.background);
-      if (bg) cardStyle.background = bg;
-    }
+    const cardStyle: Record<string, string> = appearanceStyle({
+      background: cssColor(this._config.background),
+      transparency: this._config.transparency ?? 100,
+      blur: this._config.blur,
+    });
 
     const { main: timeMain, suffix: timeSuffix } = this._timeParts();
     const dateText = this._dateText();
@@ -596,13 +591,6 @@ export class TedClockWeatherCard extends LitElement implements LovelaceCard {
         position: relative;
         isolation: isolate;
         overflow: hidden;
-      }
-
-      ha-card.is-transparent {
-        --ha-card-border-color: transparent;
-        --ha-card-backdrop-filter: none;
-        backdrop-filter: none;
-        -webkit-backdrop-filter: none;
       }
 
       .cwc {

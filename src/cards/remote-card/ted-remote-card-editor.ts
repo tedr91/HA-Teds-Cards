@@ -2,6 +2,7 @@ import { LitElement, css, html, nothing, type TemplateResult } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { type HomeAssistant, type LovelaceCardEditor, fireEvent } from "custom-card-helpers";
 
+import { transparencyBlurSchema } from "../../shared/appearance";
 import {
   APP_LAUNCH_SLOTS,
   KALEIDESCAPE_HOME_OPTIONS,
@@ -56,6 +57,8 @@ export class TedRemoteCardEditor extends LitElement implements LovelaceCardEdito
     return {
       theme: "manufacturer",
       brushed: false,
+      transparency: 0,
+      blur: 0,
       show_icon: true,
       icon_scale: 100,
       show_name: false,
@@ -133,6 +136,7 @@ export class TedRemoteCardEditor extends LitElement implements LovelaceCardEdito
         },
       },
       { name: "background", selector: { ui_color: {} } },
+      transparencyBlurSchema(),
       { name: "brushed", selector: { boolean: {} } },
       {
         type: "grid",
@@ -233,6 +237,10 @@ export class TedRemoteCardEditor extends LitElement implements LovelaceCardEdito
         return "Visual styling";
       case "background":
         return "Background color override";
+      case "transparency":
+        return "Transparency";
+      case "blur":
+        return "Background blur";
       case "brushed":
         return "Brushed effect";
       case "show_icon":

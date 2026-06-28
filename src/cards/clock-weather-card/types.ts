@@ -13,7 +13,8 @@ export interface ClockWeatherCardConfig extends LovelaceCardConfig {
 
   // Visuals (General)
   theme?: TedStyleTheme;
-  force_transparent?: boolean;
+  transparency?: number;
+  blur?: number;
   background?: string;
   brushed?: boolean;
   shadow?: boolean;

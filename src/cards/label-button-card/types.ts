@@ -45,6 +45,8 @@ export interface LabelButtonCardConfig extends LovelaceCardConfig {
   name_color?: string;
   state_color?: string;
   background?: string;
+  transparency?: number;
+  blur?: number;
   brushed?: boolean;
   shadow?: boolean;
   /** Neumorphic effect: raised tile when off/idle, pressed when the entity is active. Defaults to true. */

@@ -7,8 +7,15 @@ import {
   fireEvent,
 } from "custom-card-helpers";
 
+import { transparencyBlurSchema } from "../../shared/appearance";
 import { LABEL_BUTTON_CARD_TYPE } from "../label-button-card/const";
-import { DEFAULT_NAVBAR_SIZE, MAX_NAV_SECTIONS, NAVBAR_CARD_EDITOR_TYPE } from "./const";
+import {
+  DEFAULT_NAVBAR_MAX_WIDTH,
+  DEFAULT_NAVBAR_MIN_WIDTH,
+  DEFAULT_NAVBAR_SIZE,
+  MAX_NAV_SECTIONS,
+  NAVBAR_CARD_EDITOR_TYPE,
+} from "./const";
 import type {
   NavAlign,
   NavButtonConfig,
@@ -80,10 +87,19 @@ export class TedNavbarCardEditor extends LitElement implements LovelaceCardEdito
   }
 
   private _defaults(): Partial<NavbarCardConfig> {
-    return { theme: "ted-style", alignment: "bottom", bar_type: "snap", size: DEFAULT_NAVBAR_SIZE };
+    return {
+      theme: "ha",
+      alignment: "bottom",
+      bar_type: "snap",
+      size: DEFAULT_NAVBAR_SIZE,
+      min_width: DEFAULT_NAVBAR_MIN_WIDTH,
+      max_width: DEFAULT_NAVBAR_MAX_WIDTH,
+      transparency: 100,
+    };
   }
 
   private _appearanceSchema() {
+    const isFloat = this._config?.bar_type === "float";
     return [
       {
         name: "",
@@ -98,8 +114,8 @@ export class TedNavbarCardEditor extends LitElement implements LovelaceCardEdito
               select: {
                 mode: "dropdown",
                 options: [
-                  { value: "ted-style", label: "Ted's Style (default)" },
-                  { value: "ha", label: "Home Assistant theme" },
+                  { value: "ted-style", label: "Ted's Style" },
+                  { value: "ha", label: "Home Assistant theme (default)" },
                 ],
               },
             },
@@ -135,10 +151,30 @@ export class TedNavbarCardEditor extends LitElement implements LovelaceCardEdito
               },
             ],
           },
+          ...(isFloat
+            ? [
+                {
+                  type: "grid",
+                  name: "",
+                  column_min_width: "120px",
+                  schema: [
+                    {
+                      name: "min_width",
+                      selector: { number: { min: 0, max: 2000, step: 1, mode: "box", unit_of_measurement: "px" } },
+                    },
+                    {
+                      name: "max_width",
+                      selector: { number: { min: 0, max: 2000, step: 1, mode: "box", unit_of_measurement: "px" } },
+                    },
+                  ],
+                },
+              ]
+            : []),
           {
             name: "size",
             selector: { number: { min: 40, max: 120, step: 2, mode: "slider", unit_of_measurement: "px" } },
           },
+          transparencyBlurSchema(),
         ],
       },
     ];
@@ -154,6 +190,14 @@ export class TedNavbarCardEditor extends LitElement implements LovelaceCardEdito
         return "Navbar type";
       case "size":
         return "Size (bar thickness)";
+      case "min_width":
+        return "Minimum width";
+      case "max_width":
+        return "Maximum width";
+      case "transparency":
+        return "Transparency";
+      case "blur":
+        return "Background blur";
       case "placement":
         return "Placement";
       case "align":
@@ -425,6 +469,10 @@ export class TedNavbarCardEditor extends LitElement implements LovelaceCardEdito
       {
         type: `custom:${LABEL_BUTTON_CARD_TYPE}`,
         icon: "mdi:gesture-tap-button",
+        theme: "ha",
+        brushed: false,
+        neumorphic: false,
+        transparency: 100,
         show_name: false,
         show_state: false,
         tap_action: { action: "navigate", navigation_path: "/home" },

@@ -56,11 +56,29 @@ export const tedStyleTheme: CSSResult = css`
   }
 
   ha-card.ted-card--theme-ted-style {
-    /* Brushed dark body matching the Kaleidescape manufacturer remote. */
-    background: linear-gradient(145deg, #2e2e32 0%, #222226 45%, #16161a 100%);
-    border: 1px solid var(--ted-style-divider);
+    /* Brushed dark body matching the Kaleidescape manufacturer remote. The
+       --ted-card-bg-alpha (default 100%) lets the per-card Transparency override
+       fade the surface; at 100% color-mix(X 100%, transparent) === X (opaque). */
+    background: linear-gradient(
+      145deg,
+      color-mix(in srgb, #2e2e32 var(--ted-card-bg-alpha, 100%), transparent) 0%,
+      color-mix(in srgb, #222226 var(--ted-card-bg-alpha, 100%), transparent) 45%,
+      color-mix(in srgb, #16161a var(--ted-card-bg-alpha, 100%), transparent) 100%
+    );
+    border: 1px solid
+      color-mix(in srgb, var(--ted-style-divider) var(--ted-card-bg-alpha, 100%), transparent);
     color: var(--ted-style-text);
     --ha-card-border-radius: var(--ted-style-radius);
+  }
+
+  /* HA theme: paint the surface explicitly so the per-card Transparency override
+     can fade it. At 100% it equals the normal ha-card background. */
+  ha-card.ted-card--theme-ha {
+    background: color-mix(
+      in srgb,
+      var(--ha-card-background, var(--card-background-color, #ffffff)) var(--ted-card-bg-alpha, 100%),
+      transparent
+    );
   }
 
   /* Brushed-metal sheen overlay (sits just above the card background). */

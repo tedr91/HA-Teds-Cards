@@ -14,6 +14,7 @@ import {
 } from "custom-card-helpers";
 
 import { registerCustomCard } from "../../shared/register-card";
+import { appearanceStyle } from "../../shared/appearance";
 import { brushedOverlay, tedCardThemeClass, tedStyleTheme } from "../../shared/theme";
 import {
   DEFAULT_LABEL_BUTTON_ICON,
@@ -327,9 +328,11 @@ export class TedLabelButtonCard extends LitElement implements LovelaceCard {
       grid: this.layout === "grid",
     };
 
-    const cardStyle: Record<string, string> = {};
-    const bg = cssColor(this._config.background);
-    if (bg) cardStyle.background = bg;
+    const cardStyle: Record<string, string> = appearanceStyle({
+      background: cssColor(this._config.background),
+      transparency: this._config.transparency,
+      blur: this._config.blur,
+    });
 
     // Dynamic highlighting: an independent entity drives background / icon color
     // overrides via ordered rules, applied on top of the configured colors and

@@ -5,7 +5,7 @@ import type { TedStyleTheme } from "../../shared/types";
 import type { LabelButtonCardConfig } from "../label-button-card/types";
 
 /** Which screen edge the navbar is pinned to. */
-export type NavbarAlignment = "bottom" | "top";
+export type NavbarAlignment = "bottom" | "top" | "left" | "right";
 
 /** Snap = edge-to-edge full width; float = centered with margins and rounded corners. */
 export type NavbarType = "snap" | "float";
@@ -60,7 +60,7 @@ export interface NavbarCardConfig extends LovelaceCardConfig {
   type: string;
   /** Visual styling: ted-style (default) or follow the HA theme. */
   theme?: TedStyleTheme;
-  /** Screen edge: bottom (default) or top. */
+  /** Screen edge: bottom (default), top, left, or right. Left/right are vertical bars. */
   alignment?: NavbarAlignment;
   /** snap (default, edge-to-edge) or float (centered with margins). */
   bar_type?: NavbarType;

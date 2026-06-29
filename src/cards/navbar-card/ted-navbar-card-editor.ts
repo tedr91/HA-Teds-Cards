@@ -118,7 +118,9 @@ export class TedNavbarCardEditor extends LitElement implements LovelaceCardEdito
   }
 
   private _appearanceSchema() {
-    const isFloat = this._config?.bar_type === "float";
+    const a = this._config?.alignment;
+    const isVertical = a === "left" || a === "right";
+    const isFloat = !isVertical && this._config?.bar_type === "float";
     return [
       {
         name: "",
@@ -153,22 +155,29 @@ export class TedNavbarCardEditor extends LitElement implements LovelaceCardEdito
                     options: [
                       { value: "bottom", label: "Bottom" },
                       { value: "top", label: "Top" },
+                      { value: "left", label: "Left" },
+                      { value: "right", label: "Right" },
                     ],
                   },
                 },
               },
-              {
-                name: "bar_type",
-                selector: {
-                  select: {
-                    mode: "dropdown",
-                    options: [
-                      { value: "snap", label: "Snap (edge-to-edge)" },
-                      { value: "float", label: "Float (centered)" },
-                    ],
-                  },
-                },
-              },
+              // Float is horizontal-only; a left/right (vertical) bar is always snap.
+              ...(isVertical
+                ? []
+                : [
+                    {
+                      name: "bar_type",
+                      selector: {
+                        select: {
+                          mode: "dropdown",
+                          options: [
+                            { value: "snap", label: "Snap (edge-to-edge)" },
+                            { value: "float", label: "Float (centered)" },
+                          ],
+                        },
+                      },
+                    },
+                  ]),
             ],
           },
           ...(isFloat

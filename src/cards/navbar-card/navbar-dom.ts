@@ -21,7 +21,7 @@ function findHuiRoot(): HTMLElement | null {
  * `hui-root` shadow root. Pass `enabled: false` (or px <= 0) to remove it.
  */
 export function forceNavbarPadding(opts: {
-  alignment: "top" | "bottom";
+  alignment: "top" | "bottom" | "left" | "right";
   px: number;
   enabled: boolean;
 }): void {
@@ -32,14 +32,24 @@ export function forceNavbarPadding(opts: {
     styleEl?.remove();
     return;
   }
-  const pseudo = opts.alignment === "top" ? "before" : "after";
-  const css = `:not(.edit-mode) > hui-view::${pseudo} {
+  // Horizontal bars reserve a top/bottom strip via a ::before/::after spacer; vertical
+  // bars reserve a left/right gutter by padding the view directly.
+  let css: string;
+  if (opts.alignment === "left" || opts.alignment === "right") {
+    css = `:not(.edit-mode) > hui-view {
+    box-sizing: border-box;
+    padding-${opts.alignment}: ${opts.px}px;
+  }`;
+  } else {
+    const pseudo = opts.alignment === "top" ? "before" : "after";
+    css = `:not(.edit-mode) > hui-view::${pseudo} {
     content: "";
     display: block;
     width: 100%;
     height: ${opts.px}px;
     background-color: transparent;
   }`;
+  }
   if (!styleEl) {
     styleEl = document.createElement("style");
     styleEl.id = PADDING_STYLE_ID;

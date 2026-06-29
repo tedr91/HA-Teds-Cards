@@ -722,8 +722,8 @@ sections:
 ```yaml
 type: custom:ted-navbar-card
 theme: ha                 # optional, visual styling: ha (default) | ted-style
-alignment: bottom         # bottom (default) | top
-bar_type: snap            # snap (edge-to-edge, default) | float (centered with margins)
+alignment: bottom         # bottom (default) | top | left | right (left/right = vertical bar)
+bar_type: snap            # snap (edge-to-edge, default) | float (centered) — top/bottom only
 size: 48                  # bar thickness in px; buttons size from this
 min_width: 16             # float only: minimum bar width in px
 max_width: 920            # float only: maximum bar width in px
@@ -755,8 +755,8 @@ sections:                 # up to 5 sections
             icon: mdi:cog
 ```
 
-- **Navbar alignment** — pin the bar to the **Bottom** (default) or **Top** edge.
-- **Navbar type** — **Snap** spans edge-to-edge; **Float** centers the bar with margins and rounded corners. A floating bar **auto-sizes to fit its buttons** (just a little wider) — unless it has **left-** or **right-**zone items, in which case it spans the full (maximum) width so those items can pin to the edges.
+- **Navbar alignment** — pin the bar to the **Bottom** (default) or **Top** edge (horizontal), or the **Left** / **Right** edge for a **vertical** bar. A vertical bar is always snap (Float is hidden), clears the header & sidebar, and maps the section zones top→**left**, middle→**center**, bottom→**right**.
+- **Navbar type** — **Snap** spans edge-to-edge; **Float** centers the bar with margins and rounded corners (top/bottom bars only). A floating bar **auto-sizes to fit its buttons** (just a little wider) — unless it has **left-** or **right-**zone items, in which case it spans the full (maximum) width so those items can pin to the edges.
 - **Minimum width** / **Maximum width** (float only) — the bounds the floating bar is sized within (defaults **16** and **920** px).
 - **Size** — the bar thickness in pixels; buttons size automatically from it.
 - **Sections** (up to **5**) — each sits in a **left / center / right** zone and has its own content
@@ -784,16 +784,20 @@ sections:                 # up to 5 sections
 The newest entry below is used as the GitHub Release notes by the release workflow, so it shows in
 the Home Assistant / HACS **update** dialog when you update. Newest first.
 
+### v2.1.10
+
+- **Navbar Card: vertical bars.** Pin the navbar to the **Left** or **Right** edge for a full-height vertical bar — it clears the header & sidebar, maps the zones top→**left** / middle→**center** / bottom→**right**, and stacks items vertically. (Float is automatically off for vertical bars.)
+
 ### v2.1.9
 
 - **Navbar Card: fix — side sections no longer collapse into a “…” chevron** when a center section is present. The overflow check was overestimating the center's width and starving the left/right zones, so date/weather and time got hidden; they now keep their content.
 
+<details>
+<summary>Previous release notes</summary>
+
 ### v2.1.8
 
 - **Navbar Card: a center-aligned section now stays dead-center.** A center-zone section set to **center** sits exactly in the middle of the bar even when the right-/left-aligned center sections beside it have items — so a Home button stays centered with other buttons flanking it.
-
-<details>
-<summary>Previous release notes</summary>
 
 ### v2.1.7
 

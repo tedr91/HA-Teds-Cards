@@ -27,7 +27,7 @@ import {
   defaultNavButton,
 } from "./const";
 import { detectEditOrPreview, forceNavbarPadding, navbarContentRect, removeNavbarPadding } from "./navbar-dom";
-import type { NavButtonConfig, NavItem, NavPopupConfig, NavSection, NavZone, NavbarCardConfig } from "./types";
+import type { NavButtonConfig, NavItem, NavPopupConfig, NavSection, NavZone, NavbarAlignment, NavbarCardConfig } from "./types";
 
 interface CardHelpers {
   createCardElement(config: LovelaceCardConfig): LovelaceCard;
@@ -94,6 +94,9 @@ export class TedNavbarCard extends LitElement implements LovelaceCard {
   /** Horizontal insets (px) so the bar clears the HA sidebar / matches the content area. */
   private _navLeft = 0;
   private _navRight = 0;
+  /** Vertical insets (px) so a left/right bar clears the HA header / content top & bottom. */
+  private _navTop = 0;
+  private _navBottom = 0;
 
   public setConfig(config: NavbarCardConfig): void {
     if (!config) throw new Error("Invalid configuration");
@@ -150,12 +153,20 @@ export class TedNavbarCard extends LitElement implements LovelaceCard {
     return typeof this._config?.size === "number" ? this._config.size : DEFAULT_NAVBAR_SIZE;
   }
 
-  private _alignment(): "top" | "bottom" {
-    return this._config?.alignment === "top" ? "top" : "bottom";
+  private _alignment(): NavbarAlignment {
+    const a = this._config?.alignment;
+    return a === "top" || a === "left" || a === "right" ? a : "bottom";
+  }
+
+  /** Left/right bars are vertical (full height, fixed width); top/bottom are horizontal. */
+  private _isVertical(): boolean {
+    const a = this._alignment();
+    return a === "left" || a === "right";
   }
 
   private _barType(): "snap" | "float" {
-    return this._config?.bar_type === "float" ? "float" : "snap";
+    // Float is horizontal-only; a vertical bar is always snap.
+    return !this._isVertical() && this._config?.bar_type === "float" ? "float" : "snap";
   }
 
   private _minWidth(): number {
@@ -279,9 +290,21 @@ export class TedNavbarCard extends LitElement implements LovelaceCard {
     // (scrollbar excluded), whereas window.innerWidth includes it — using innerWidth
     // would push the bar in by the scrollbar width, leaving a gap on the right.
     const right = Math.max(0, Math.round(document.documentElement.clientWidth - rect.right));
-    if (left === this._navLeft && right === this._navRight) return;
+    // Vertical insets (only used by a left/right bar): clear the HA header (top) and
+    // match the content bottom. clientHeight excludes any horizontal scrollbar.
+    const top = Math.max(0, Math.round(rect.top));
+    const bottom = Math.max(0, Math.round(document.documentElement.clientHeight - rect.bottom));
+    if (
+      left === this._navLeft &&
+      right === this._navRight &&
+      top === this._navTop &&
+      bottom === this._navBottom
+    )
+      return;
     this._navLeft = left;
     this._navRight = right;
+    this._navTop = top;
+    this._navBottom = bottom;
     this._visible.clear(); // available width changed — let overflow recompute
     this.requestUpdate();
   }
@@ -315,15 +338,22 @@ export class TedNavbarCard extends LitElement implements LovelaceCard {
     const card = root?.querySelector?.(".navbar-card") as HTMLElement | null;
     if (!card || card.clientWidth === 0) return;
     const cs = getComputedStyle(card);
-    const cardInner = card.clientWidth - (parseFloat(cs.paddingLeft) || 0) - (parseFloat(cs.paddingRight) || 0);
+    // Measure along the bar's main axis: width for horizontal, height for vertical.
+    const vert = this._isVertical();
+    const cardInner = vert
+      ? card.clientHeight - (parseFloat(cs.paddingTop) || 0) - (parseFloat(cs.paddingBottom) || 0)
+      : card.clientWidth - (parseFloat(cs.paddingLeft) || 0) - (parseFloat(cs.paddingRight) || 0);
     const gap = 8;
     const centerEl = root?.querySelector?.(".zone.center") as HTMLElement | null;
-    // The center zone is a full-width grid, so its offsetWidth == the whole bar. Use the
+    // The center zone is a full-extent grid, so its size == the whole bar. Use the
     // actual content footprint (its sections summed) so the left/right budget stays sane.
     const centerSecs = centerEl
       ? (Array.from(centerEl.children) as HTMLElement[]).filter((c) => c.classList.contains("section"))
       : [];
-    const centerW = centerSecs.reduce((sum, s, i) => sum + s.offsetWidth + (i > 0 ? gap : 0), 0);
+    const centerW = centerSecs.reduce(
+      (sum, s, i) => sum + (vert ? s.offsetHeight : s.offsetWidth) + (i > 0 ? gap : 0),
+      0,
+    );
 
     // Which zones are occupied, and how many sections share each (to split its budget).
     const sections = this._config.sections ?? [];
@@ -356,13 +386,14 @@ export class TedNavbarCard extends LitElement implements LovelaceCard {
       const budget = Math.max(0, zoneBudget(zone) / inZone);
       // One element per item (popover children are display:none — skip them).
       const els = (Array.from(el.children) as HTMLElement[]).filter((c) => !c.hasAttribute("popover"));
+      const extent = (c: HTMLElement): number => (vert ? c.offsetHeight : c.offsetWidth);
       let total = 0;
-      els.forEach((c, i) => (total += c.offsetWidth + (i > 0 ? gap : 0)));
+      els.forEach((c, i) => (total += extent(c) + (i > 0 ? gap : 0)));
       if (total <= budget) return; // fits — keep showing all items
       let used = 0;
       let vis = 0;
       for (let i = 0; i < els.length; i += 1) {
-        const w = els[i].offsetWidth + (i > 0 ? gap : 0);
+        const w = extent(els[i]) + (i > 0 ? gap : 0);
         if (used + w + triggerW > budget) break;
         used += w;
         vis += 1;
@@ -411,6 +442,7 @@ export class TedNavbarCard extends LitElement implements LovelaceCard {
       navbar: true,
       [this._alignment()]: true,
       [this._barType()]: true,
+      vertical: this._isVertical(),
       "edit-mode": this._editMode,
     };
 
@@ -421,6 +453,8 @@ export class TedNavbarCard extends LitElement implements LovelaceCard {
           "--nav-size": `${this._thickness()}px`,
           "--ted-nav-left": `${this._navLeft}px`,
           "--ted-nav-right": `${this._navRight}px`,
+          "--ted-nav-top": `${this._navTop}px`,
+          "--ted-nav-bottom": `${this._navBottom}px`,
         })}
       >
         <ha-card class="navbar-card ${tedCardThemeClass(theme)}${hug ? " hug" : ""}" style=${styleMap(cardStyle)}>
@@ -456,7 +490,9 @@ export class TedNavbarCard extends LitElement implements LovelaceCard {
     const popId = `nav-${sIdx}-overflow`;
     const anchorId = `${popId}-btn`;
     // Same direction-aware chevron as a popup: points where the menu opens, flips when open.
-    const chevron = this._alignment() === "bottom" ? "mdi:chevron-up" : "mdi:chevron-down";
+    const a = this._alignment();
+    const chevron =
+      a === "bottom" ? "mdi:chevron-up" : a === "top" ? "mdi:chevron-down" : a === "left" ? "mdi:chevron-right" : "mdi:chevron-left";
     return html`
       <button id=${anchorId} class="nav-button nav-popup nav-popup-chevron" popovertarget=${popId} title="More" aria-label="More">
         <ha-icon .icon=${chevron}></ha-icon>
@@ -505,7 +541,9 @@ export class TedNavbarCard extends LitElement implements LovelaceCard {
     const label = popup.name ?? "More";
     // Default trigger: a chevron pointing where the popup opens (up for a bottom bar,
     // down for a top bar); it flips 180° while open (see CSS). A custom icon opts out.
-    const defaultChevron = this._alignment() === "bottom" ? "mdi:chevron-up" : "mdi:chevron-down";
+    const a = this._alignment();
+    const defaultChevron =
+      a === "bottom" ? "mdi:chevron-up" : a === "top" ? "mdi:chevron-down" : a === "left" ? "mdi:chevron-right" : "mdi:chevron-left";
     return html`
       <button
         id=${anchorId}
@@ -533,27 +571,43 @@ export class TedNavbarCard extends LitElement implements LovelaceCard {
     this._positionPopover(popover, anchor ?? undefined);
   };
 
-  /** Center a popover over its trigger, opening above a bottom bar / below a top bar. */
+  /** Center a popover over its trigger: above/below a horizontal bar, beside a vertical one. */
   private _positionPopover(popover: HTMLElement, anchor?: HTMLElement): void {
     const margin = 8;
     const rect = popover.getBoundingClientRect();
+    const vw = document.documentElement.clientWidth;
+    const vh = document.documentElement.clientHeight;
     popover.style.position = "fixed";
     popover.style.margin = "0";
     if (!anchor) {
-      popover.style.left = `${Math.round((window.innerWidth - rect.width) / 2)}px`;
-      popover.style.top = `${Math.round((window.innerHeight - rect.height) / 2)}px`;
+      popover.style.left = `${Math.round((vw - rect.width) / 2)}px`;
+      popover.style.top = `${Math.round((vh - rect.height) / 2)}px`;
       return;
     }
     const a = anchor.getBoundingClientRect();
+    if (this._isVertical()) {
+      // Vertical bar: open beside the trigger (right of a left bar, left of a right bar),
+      // vertically centered on it and clamped to the viewport.
+      const openRight = this._alignment() === "left";
+      let left = openRight ? a.right + margin : a.left - margin - rect.width;
+      if (openRight && left + rect.width > vw - margin) left = a.left - margin - rect.width;
+      else if (!openRight && left < margin) left = a.right + margin;
+      left = Math.max(margin, Math.min(left, vw - rect.width - margin));
+      let top = a.top + a.height / 2 - rect.height / 2;
+      top = Math.max(margin, Math.min(top, vh - rect.height - margin));
+      popover.style.left = `${Math.round(left)}px`;
+      popover.style.top = `${Math.round(top)}px`;
+      return;
+    }
     let left = a.left + a.width / 2 - rect.width / 2;
-    left = Math.max(margin, Math.min(left, window.innerWidth - rect.width - margin));
+    left = Math.max(margin, Math.min(left, vw - rect.width - margin));
     const preferAbove = this._alignment() === "bottom";
     const fitsAbove = a.top - margin - rect.height >= margin;
-    const fitsBelow = a.bottom + margin + rect.height <= window.innerHeight - margin;
+    const fitsBelow = a.bottom + margin + rect.height <= vh - margin;
     let top = preferAbove ? a.top - margin - rect.height : a.bottom + margin;
     if (preferAbove && !fitsAbove && fitsBelow) top = a.bottom + margin;
     else if (!preferAbove && !fitsBelow && fitsAbove) top = a.top - margin - rect.height;
-    top = Math.max(margin, Math.min(top, window.innerHeight - rect.height - margin));
+    top = Math.max(margin, Math.min(top, vh - rect.height - margin));
     popover.style.left = `${Math.round(left)}px`;
     popover.style.top = `${Math.round(top)}px`;
   }
@@ -568,17 +622,33 @@ export class TedNavbarCard extends LitElement implements LovelaceCard {
 
       .navbar {
         position: fixed;
-        left: var(--ted-nav-left, 0);
-        right: var(--ted-nav-right, 0);
         z-index: 5;
         pointer-events: none;
         box-sizing: border-box;
+      }
+      /* Horizontal bar (top/bottom): full width, thickness tall. */
+      .navbar.top,
+      .navbar.bottom {
+        left: var(--ted-nav-left, 0);
+        right: var(--ted-nav-right, 0);
       }
       .navbar.bottom {
         bottom: 0;
       }
       .navbar.top {
         top: 0;
+      }
+      /* Vertical bar (left/right): full height between header & content bottom. */
+      .navbar.left,
+      .navbar.right {
+        top: var(--ted-nav-top, 0);
+        bottom: var(--ted-nav-bottom, 0);
+      }
+      .navbar.left {
+        left: var(--ted-nav-left, 0);
+      }
+      .navbar.right {
+        right: var(--ted-nav-right, 0);
       }
       .navbar.float {
         padding: 8px;
@@ -591,10 +661,16 @@ export class TedNavbarCard extends LitElement implements LovelaceCard {
       .navbar-card {
         position: relative;
         pointer-events: auto;
-        height: var(--nav-size);
         box-sizing: border-box;
         border-radius: 0;
         overflow: visible;
+      }
+      .navbar:not(.vertical) .navbar-card {
+        height: var(--nav-size);
+      }
+      .navbar.vertical .navbar-card {
+        width: var(--nav-size);
+        height: 100%;
       }
       .navbar.float .navbar-card {
         margin: 0 auto;
@@ -619,26 +695,26 @@ export class TedNavbarCard extends LitElement implements LovelaceCard {
         transform: none;
       }
 
-      /* Three zones: left pinned to the left edge, right to the right edge, and
-         center pinned to the exact horizontal center (independent of side widths). */
+      /* Three zones: side zones pin to opposite edges, center is a grid so the
+         center-aligned section sits dead-center while flanks stay symmetric. */
       .zone {
         position: absolute;
-        top: 0;
-        bottom: 0;
         display: flex;
         align-items: center;
         gap: 8px;
       }
-      .zone.left {
+      /* Horizontal (top/bottom): left/right edges + 3-column center grid. */
+      .navbar:not(.vertical) .zone {
+        top: 0;
+        bottom: 0;
+      }
+      .navbar:not(.vertical) .zone.left {
         left: 10px;
       }
-      .zone.right {
+      .navbar:not(.vertical) .zone.right {
         right: 10px;
       }
-      /* Center zone spans the bar as a 3-column grid so the center-aligned section
-         sits dead-center while right-/left-aligned sections flank it symmetrically
-         (the middle stays put regardless of how wide the side groups grow). */
-      .zone.center {
+      .navbar:not(.vertical) .zone.center {
         left: 0;
         right: 0;
         transform: none;
@@ -647,27 +723,65 @@ export class TedNavbarCard extends LitElement implements LovelaceCard {
         justify-items: center;
         pointer-events: none;
       }
-      .zone.center > .section {
-        pointer-events: auto;
-      }
-      .zone.center > .section.align-right {
+      .navbar:not(.vertical) .zone.center > .section.align-right {
         grid-column: 1;
         justify-self: end;
       }
-      .zone.center > .section.align-center {
+      .navbar:not(.vertical) .zone.center > .section.align-center {
         grid-column: 2;
         justify-self: center;
       }
-      .zone.center > .section.align-left {
+      .navbar:not(.vertical) .zone.center > .section.align-left {
         grid-column: 3;
         justify-self: start;
+      }
+      /* Vertical (left/right): top/bottom edges + 3-row center grid (left→top, right→bottom). */
+      .navbar.vertical .zone {
+        left: 0;
+        right: 0;
+        flex-direction: column;
+      }
+      .navbar.vertical .zone.left {
+        top: 10px;
+      }
+      .navbar.vertical .zone.right {
+        bottom: 10px;
+      }
+      .navbar.vertical .zone.center {
+        top: 0;
+        bottom: 0;
+        display: grid;
+        grid-template-rows: 1fr auto 1fr;
+        justify-items: center;
+        pointer-events: none;
+      }
+      .navbar.vertical .zone.center > .section.align-right {
+        grid-row: 1;
+        align-self: start;
+      }
+      .navbar.vertical .zone.center > .section.align-center {
+        grid-row: 2;
+        align-self: center;
+      }
+      .navbar.vertical .zone.center > .section.align-left {
+        grid-row: 3;
+        align-self: end;
+      }
+      .zone.center > .section {
+        pointer-events: auto;
       }
 
       .section {
         display: flex;
         align-items: center;
         gap: 8px;
+      }
+      .navbar:not(.vertical) .section {
         height: 100%;
+      }
+      .navbar.vertical .section {
+        flex-direction: column;
+        width: 100%;
       }
       .section.align-left {
         justify-content: flex-start;

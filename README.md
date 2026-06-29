@@ -784,16 +784,20 @@ sections:                 # up to 5 sections
 The newest entry below is used as the GitHub Release notes by the release workflow, so it shows in
 the Home Assistant / HACS **update** dialog when you update. Newest first.
 
+### v2.2.1
+
+- **Navbar Card: vertical bars no longer overlap.** A Left/Right bar now lays its sections out top→bottom (top, center grows, bottom) so the center **up**/**down** sections keep their order without colliding with the top/bottom sections or the header.
+
 ### v2.2.0
 
 - **Navbar Card: vertical-bar zones are now consistent** — on a **Left**/**Right** bar, a section's placement and alignment map **left→up**, **center→middle**, **right→down** everywhere (a center section that leaned the wrong way is fixed). The editor labels them **“Left (up)”** / **“Right (down)”** so it's clear; the YAML values stay `left/center/right`.
 
+<details>
+<summary>Previous release notes</summary>
+
 ### v2.1.10
 
 - **Navbar Card: vertical bars.** Pin the navbar to the **Left** or **Right** edge for a full-height vertical bar — it clears the header & sidebar, maps the zones top→**left** / middle→**center** / bottom→**right**, and stacks items vertically. (Float is automatically off for vertical bars.)
-
-<details>
-<summary>Previous release notes</summary>
 
 ### v2.1.9
 

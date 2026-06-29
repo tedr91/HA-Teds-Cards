@@ -671,6 +671,8 @@ export class TedNavbarCard extends LitElement implements LovelaceCard {
       .navbar.vertical .navbar-card {
         width: var(--nav-size);
         height: 100%;
+        display: flex;
+        flex-direction: column;
       }
       .navbar.float .navbar-card {
         margin: 0 auto;
@@ -735,21 +737,21 @@ export class TedNavbarCard extends LitElement implements LovelaceCard {
         grid-column: 3;
         justify-self: start;
       }
-      /* Vertical (left/right): top/bottom edges + 3-row center grid (left→top, right→bottom). */
+      /* Vertical (left/right): the card is a top→bottom column — top zone, center
+         (grows), bottom zone — so sections keep their order and never overlap. */
       .navbar.vertical .zone {
-        left: 0;
-        right: 0;
+        position: static;
         flex-direction: column;
+        width: 100%;
       }
       .navbar.vertical .zone.left {
-        top: 10px;
+        padding-top: 10px;
       }
       .navbar.vertical .zone.right {
-        bottom: 10px;
+        padding-bottom: 10px;
       }
       .navbar.vertical .zone.center {
-        top: 0;
-        bottom: 0;
+        flex: 1;
         display: grid;
         grid-template-rows: 1fr auto 1fr;
         justify-items: center;

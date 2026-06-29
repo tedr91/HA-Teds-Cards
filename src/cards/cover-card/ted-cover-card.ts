@@ -187,7 +187,7 @@ export class TedCoverCard extends LitElement implements LovelaceCard {
   protected render(): TemplateResult | typeof nothing {
     if (!this._config || !this.hass) return nothing;
 
-    const themeMode = this._config.theme === "ha" ? "ha" : "ted-style";
+    const themeMode = this._config.theme === "ted-style" ? "ted-style" : "ha";
     const themeClasses = {
       "ted-card": true,
       "ted-card--theme-ted-style": themeMode === "ted-style",

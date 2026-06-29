@@ -109,7 +109,7 @@ export class TedLightCardEditor extends LitElement implements LovelaceCardEditor
     const dimmable = this._entitySupportsBrightness();
     const horizontal = this._config?.orientation === "horizontal";
     return {
-      theme: "ted-style",
+      theme: "ha",
       orientation: "vertical",
       indicator_color: "theme",
       indicator_width: 4,
@@ -167,8 +167,8 @@ export class TedLightCardEditor extends LitElement implements LovelaceCardEditor
               select: {
                 mode: "dropdown",
                 options: [
-                  { value: "ted-style", label: "Ted's Style (default)" },
-                  { value: "ha", label: "Home Assistant theme" },
+                  { value: "ted-style", label: "Ted's Style" },
+                  { value: "ha", label: "Home Assistant theme (default)" },
                 ],
               },
             },

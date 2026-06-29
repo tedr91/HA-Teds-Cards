@@ -28,7 +28,7 @@ export default {
     sourcemap: dev,
     inlineDynamicImports: true,
     banner:
-      "/*! Ted's Cards (https://github.com/tedr91/HA-Teds-Cards) — MIT.\n" +
+      "/*! Ted's Cards (https://github.com/tedr91/Teds-Cards) — MIT.\n" +
       " * Clock Weather Card inspired by pkissling/clock-weather-card & samuelgoodell/clock-weather-card-hui-icons (MIT).\n" +
       " * 'Fancy' icons: Meteocons by Bas Milius (https://github.com/basmilius/weather-icons), MIT.\n" +
       " * 'Cool' icons: Home Assistant frontend weather SVGs via samuelgoodell/clock-weather-card-hui-icons (MIT). */",

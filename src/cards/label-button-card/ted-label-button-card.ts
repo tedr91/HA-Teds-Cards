@@ -305,7 +305,7 @@ export class TedLabelButtonCard extends LitElement implements LovelaceCard {
   protected render(): TemplateResult | typeof nothing {
     if (!this._config || !this.hass) return nothing;
 
-    const theme = this._config.theme === "ha" ? "ha" : "ted-style";
+    const theme = this._config.theme === "ted-style" ? "ted-style" : "ha";
     const brushed = this._config.brushed === true;
     const showIcon = this._config.show_icon !== false;
     const showName = this._config.show_name !== false;

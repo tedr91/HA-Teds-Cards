@@ -1,4 +1,4 @@
-[![hacs_badge](https://img.shields.io/badge/HACS-Default-orange.svg)](https://github.com/hacs/integration) ![GitHub Release](https://img.shields.io/github/v/release/tedr91/HA-Teds-Cards) ![GitHub Issues or Pull Requests](https://img.shields.io/github/issues/tedr91/HA-Teds-Cards) ![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/tedr91/HA-Teds-Cards/total) ![GitHub Repo stars](https://img.shields.io/github/stars/tedr91/HA-Teds-Cards) [![GitHub License](https://img.shields.io/github/license/tedr91/HA-Teds-Cards)](LICENSE)
+[![hacs_badge](https://img.shields.io/badge/HACS-Default-orange.svg)](https://github.com/hacs/integration) ![GitHub Release](https://img.shields.io/github/v/release/tedr91/Teds-Cards) ![GitHub Issues or Pull Requests](https://img.shields.io/github/issues/tedr91/Teds-Cards) ![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/tedr91/Teds-Cards/total) ![GitHub Repo stars](https://img.shields.io/github/stars/tedr91/Teds-Cards) [![GitHub License](https://img.shields.io/github/license/tedr91/Teds-Cards)](LICENSE)
 
 > **⚠️ Interim release — testing only.** This is a pre-release build published for testing purposes only and is not intended for production use. Features may change or break without notice.
 
@@ -52,7 +52,7 @@ OR
 
 1. Open HACS in Home Assistant.
 2. Go to **Frontend** → menu (⋮) → **Custom repositories**.
-3. Add `https://github.com/tedr91/HA-Teds-Cards` with category **Dashboard**.
+3. Add `https://github.com/tedr91/Teds-Cards` with category **Dashboard**.
 4. Search for **Ted's Cards** and install.
 5. Refresh your browser.
 
@@ -68,7 +68,7 @@ OR
 
 <summary>Without HACS</summary>
 
-1. Download `ted-cards.js` from the [latest release](https://github.com/tedr91/HA-Teds-Cards/releases/latest).
+1. Download `ted-cards.js` from the [latest release](https://github.com/tedr91/Teds-Cards/releases/latest).
 2. Copy it to `<config>/www/community/ted-cards/ted-cards.js`.
 3. Add the resource to your dashboard:
    - **Settings** → **Dashboards** → ⋮ → **Resources** → **Add resource**
@@ -784,13 +784,9 @@ sections:                 # up to 5 sections
 The newest entry below is used as the GitHub Release notes by the release workflow, so it shows in
 the Home Assistant / HACS **update** dialog when you update. Newest first.
 
-### v2.2.3
+### v1.0.0
 
-- **Navbar Card: center sections on a vertical bar follow their listed order.** On a **Left**/**Right** bar, sections placed in the **center** stack top→bottom in the order they're listed (section 2 above 3 above 4) rather than by alignment — so Home and its flanking buttons land where you arrange them.
-
-### v2.2.2
-
-- **Navbar Card: vertical bars clear the header & honor section order.** A **Left**/**Right** bar now starts below the dashboard header, and a center zone with several sections stacks up→middle→down in order without overlapping.
+- **Initial public release of Ted's Cards** — a collection of custom Lovelace cards: Light, Cover, Label / Button, Room, Camera, Clock Weather, Remote, Spacer, and a Navbar card with horizontal and vertical bars, popups, status items, and overflow.
 
 <details>
 <summary>Previous release notes</summary>

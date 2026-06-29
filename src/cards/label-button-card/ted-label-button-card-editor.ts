@@ -92,7 +92,7 @@ export class TedLabelButtonCardEditor extends LitElement implements LovelaceCard
 
   private _defaults(): Partial<LabelButtonCardConfig> {
     return {
-      theme: "ted-style",
+      theme: "ha",
       brushed: false,
       shadow: true,
       neumorphic: true,
@@ -115,8 +115,8 @@ export class TedLabelButtonCardEditor extends LitElement implements LovelaceCard
           select: {
             mode: "dropdown",
             options: [
-              { value: "ted-style", label: "Ted's Style (default)" },
-              { value: "ha", label: "Home Assistant theme" },
+              { value: "ted-style", label: "Ted's Style" },
+              { value: "ha", label: "Home Assistant theme (default)" },
             ],
           },
         },

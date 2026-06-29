@@ -784,6 +784,12 @@ sections:                 # up to 5 sections
 The newest entry below is used as the GitHub Release notes by the release workflow, so it shows in
 the Home Assistant / HACS **update** dialog when you update. Newest first.
 
+### v1.0.1
+
+- **MessageBox Card** — a new dismissible message banner (inline, pinned, or modal) with severities, action buttons, a learn-more link, and built-in visibility conditions.
+- **Label / Button Card** — new `view-assist-navigate` and `view-assist-hold` tap actions for View Assist dashboards (navigate following each device's configured screens; toggle hold mode).
+- **Navbar Card** — per-item `visible` / `visibility` conditions (Home Assistant `state` / `screen` / `and` / `or` / `not` plus a `view-assist` condition), re-evaluated live as state and the current view change, with a **Visible** toggle in the editor.
+
 ### v1.0.0
 
 - **Light & Cover Cards** — neumorphic rocker/button tiles, vertical or horizontal, indicator/hint bars, brightness & position control, optional memory helper.

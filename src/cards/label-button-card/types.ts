@@ -44,6 +44,12 @@ export interface ViewAssistNavigateActionConfig {
   view: string;
 }
 
+/** Toggle View Assist "hold" mode (pause the auto-revert timeout) on the current
+ *  device. Configure in YAML: `tap_action: { action: view-assist-hold }`. */
+export interface ViewAssistHoldActionConfig {
+  action: "view-assist-hold";
+}
+
 export interface LabelButtonCardConfig extends LovelaceCardConfig {
   type: string;
   entity?: string;

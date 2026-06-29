@@ -10,6 +10,7 @@ import type {
 } from "custom-card-helpers";
 
 import { appearanceStyle, cssColor } from "../../shared/appearance";
+import { isVisible } from "../../shared/conditions";
 import { registerCustomCard } from "../../shared/register-card";
 import { tedCardThemeClass, tedStyleTheme } from "../../shared/theme";
 import { renderStatusItem, type StatusItemContext } from "../../shared/status-items/render";
@@ -88,6 +89,8 @@ export class TedNavbarCard extends LitElement implements LovelaceCard {
   private _slider = new StatusSliderController(this);
   /** Interval id that re-renders live time/date items. */
   private _clockTimer?: number;
+  /** True when any nav item uses `visible`/`visibility` — enables live re-evaluation. */
+  private _hasConditional = false;
   /** Per-section (config index) visible item count when overflow trims the tail. */
   private _visible = new Map<number, number>();
   private _resizeRaf?: number;
@@ -119,12 +122,18 @@ export class TedNavbarCard extends LitElement implements LovelaceCard {
     this._applyPadding();
     this._syncClockTimer();
     window.addEventListener("resize", this._onResize);
+    window.addEventListener("location-changed", this._onVisibilityEvent);
+    window.addEventListener("popstate", this._onVisibilityEvent);
+    window.addEventListener("view-assist-responsive-change", this._onVisibilityEvent);
   }
 
   public disconnectedCallback(): void {
     super.disconnectedCallback();
     removeNavbarPadding();
     window.removeEventListener("resize", this._onResize);
+    window.removeEventListener("location-changed", this._onVisibilityEvent);
+    window.removeEventListener("popstate", this._onVisibilityEvent);
+    window.removeEventListener("view-assist-responsive-change", this._onVisibilityEvent);
     if (this._resizeRaf) cancelAnimationFrame(this._resizeRaf);
     if (this._clockTimer !== undefined) {
       window.clearInterval(this._clockTimer);
@@ -134,10 +143,15 @@ export class TedNavbarCard extends LitElement implements LovelaceCard {
 
   protected willUpdate(changed: PropertyValues): void {
     if (changed.has("_config")) {
+      this._hasConditional = this._computeHasConditional();
       this._visible.clear();
       this._buildButtonElements();
       this._applyPadding();
       this._syncClockTimer();
+    } else if (changed.has("hass") && this._hasConditional) {
+      // Visibility conditions may depend on entity state; rebuild so newly
+      // hidden/shown items are removed/added (elements reuse by config = cheap).
+      this._buildButtonElements();
     }
     if (changed.has("hass")) this._propagateHass();
   }
@@ -221,16 +235,32 @@ export class TedNavbarCard extends LitElement implements LovelaceCard {
     });
   }
 
-  /** Strip the nav-only sizing key so the embedded label-button card stays clean. */
+  /** Strip the nav-only keys so the embedded label-button card stays clean. */
   private _buttonCardConfig(button: NavButtonConfig): LovelaceCardConfig {
-    const { nav_button_size, ...cardConfig } = button;
+    const { nav_button_size, visible, visibility, ...cardConfig } = button;
     void nav_button_size;
+    void visible;
+    void visibility;
     return cardConfig as LovelaceCardConfig;
   }
 
-  /** A section's ordered items, falling back to the legacy buttons-only list. */
+  /** A section's ordered items (legacy buttons-only list as fallback), with items
+   *  hidden by `visible: false` or unmet `visibility:` conditions filtered out. */
   private _sectionItems(section: NavSection): NavItem[] {
-    return section.items ?? section.buttons ?? [];
+    const items = section.items ?? section.buttons ?? [];
+    return items.filter((item) => isVisible(item.visible, item.visibility, this.hass));
+  }
+
+  /** True when any item (incl. popup children) carries `visible`/`visibility`. */
+  private _computeHasConditional(): boolean {
+    const scan = (items: NavItem[]): boolean =>
+      items.some(
+        (i) =>
+          i.visible !== undefined ||
+          (Array.isArray(i.visibility) && i.visibility.length > 0) ||
+          (this._isPopup(i) && scan(i.items ?? [])),
+      );
+    return (this._config?.sections ?? []).some((s) => scan(s.items ?? s.buttons ?? []));
   }
 
   /** A nav item is a button when its `type` is an embeddable `custom:` card. */
@@ -320,9 +350,24 @@ export class TedNavbarCard extends LitElement implements LovelaceCard {
       this._resizeRaf = undefined;
       const had = this._visible.size > 0;
       this._visible.clear();
-      if (had) this.requestUpdate();
-      else this._measureOverflow();
+      if (this._hasConditional) {
+        // `screen` conditions can change with the viewport — re-evaluate items.
+        this._buildButtonElements();
+        this.requestUpdate();
+      } else if (had) {
+        this.requestUpdate();
+      } else {
+        this._measureOverflow();
+      }
     });
+  };
+
+  /** Re-evaluate conditional items on navigation (view change) or VA responsive change. */
+  private _onVisibilityEvent = (): void => {
+    if (!this._hasConditional) return;
+    this._visible.clear();
+    this._buildButtonElements();
+    this.requestUpdate();
   };
 
   /**

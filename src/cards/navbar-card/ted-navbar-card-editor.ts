@@ -259,6 +259,8 @@ export class TedNavbarCardEditor extends LitElement implements LovelaceCardEdito
         return "Auto-collapse overflow";
       case "nav_button_size":
         return "Button size";
+      case "visible":
+        return "Visible";
       default:
         return statusItemFieldLabel(schema.name) ?? schema.name;
     }
@@ -497,19 +499,26 @@ export class TedNavbarCardEditor extends LitElement implements LovelaceCardEdito
         <div class="row-body">
           <ha-form
             .hass=${this.hass}
-            .data=${{ nav_button_size: button.nav_button_size ?? "normal" }}
+            .data=${{ nav_button_size: button.nav_button_size ?? "normal", visible: button.visible !== false }}
             .schema=${[
               {
-                name: "nav_button_size",
-                selector: {
-                  select: {
-                    mode: "dropdown",
-                    options: [
-                      { value: "normal", label: "Normal" },
-                      { value: "wide", label: "Wide" },
-                    ],
+                type: "grid",
+                name: "",
+                schema: [
+                  {
+                    name: "nav_button_size",
+                    selector: {
+                      select: {
+                        mode: "dropdown",
+                        options: [
+                          { value: "normal", label: "Normal" },
+                          { value: "wide", label: "Wide" },
+                        ],
+                      },
+                    },
                   },
-                },
+                  { name: "visible", selector: { boolean: {} } },
+                ],
               },
             ]}
             .computeLabel=${this._computeLabel}
@@ -785,13 +794,15 @@ export class TedNavbarCardEditor extends LitElement implements LovelaceCardEdito
 
   private _onButtonSizeChanged(containerPath: number[], idx: number, ev: CustomEvent): void {
     ev.stopPropagation();
-    const value = ev.detail.value as { nav_button_size?: NavButtonSize };
+    const value = ev.detail.value as { nav_button_size?: NavButtonSize; visible?: boolean };
     const items = [...this._itemsAt(containerPath)];
     const button = items[idx];
     if (!button || !this._isButton(button)) return;
     const next = { ...button } as NavButtonConfig;
     if (value.nav_button_size && value.nav_button_size !== "normal") next.nav_button_size = value.nav_button_size;
     else delete next.nav_button_size;
+    if (value.visible === false) next.visible = false;
+    else delete next.visible;
     items[idx] = next;
     this._commitItemList(containerPath, items);
   }

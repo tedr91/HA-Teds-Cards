@@ -16,7 +16,7 @@ import {
 import { registerCustomCard } from "../../shared/register-card";
 import { appearanceStyle } from "../../shared/appearance";
 import { brushedOverlay, tedCardThemeClass, tedStyleTheme } from "../../shared/theme";
-import { viewAssistNavigate } from "../../shared/view-assist";
+import { viewAssistNavigate, viewAssistToggleHold } from "../../shared/view-assist";
 import {
   DEFAULT_LABEL_BUTTON_ICON,
   LABEL_BUTTON_CARD_DESCRIPTION,
@@ -506,6 +506,14 @@ export class TedLabelButtonCard extends LitElement implements LovelaceCard {
     if (actionConfig && (actionConfig.action as string) === "view-assist-navigate") {
       if (!this._confirmAction(actionConfig)) return;
       this._vaNavigate((actionConfig as unknown as ViewAssistNavigateActionConfig).view);
+      forwardHaptic("success");
+      return;
+    }
+
+    // View Assist hold: toggle the device's hold mode (pause auto-revert). Opt-in.
+    if (actionConfig && (actionConfig.action as string) === "view-assist-hold") {
+      if (!this._confirmAction(actionConfig)) return;
+      viewAssistToggleHold(this.hass);
       forwardHaptic("success");
       return;
     }

@@ -1,5 +1,6 @@
 import type { LovelaceCardConfig } from "custom-card-helpers";
 
+import type { Condition } from "../../shared/conditions";
 import type { StatusItem } from "../../shared/status-items/types";
 import type { TedStyleTheme } from "../../shared/types";
 import type { LabelButtonCardConfig } from "../label-button-card/types";
@@ -19,9 +20,13 @@ export type NavAlign = "left" | "center" | "right";
 /** Relative width of a nav button. */
 export type NavButtonSize = "normal" | "wide";
 
-/** A navbar button: a label-button card plus nav-only sizing. */
+/** A navbar button: a label-button card plus nav-only sizing and visibility. */
 export type NavButtonConfig = LabelButtonCardConfig & {
   nav_button_size?: NavButtonSize;
+  /** Hide the item outright (default true = shown). */
+  visible?: boolean;
+  /** Conditions (HA-style + `view-assist`) that gate the item's visibility. */
+  visibility?: Condition[];
 };
 
 /** A popup: a tappable icon that opens a popover holding more nav items. */
@@ -35,6 +40,10 @@ export interface NavPopupConfig {
   nav_button_size?: NavButtonSize;
   /** Items shown inside the popover (buttons + status items). */
   items?: NavItem[];
+  /** Hide the popup outright (default true = shown). */
+  visible?: boolean;
+  /** Conditions (HA-style + `view-assist`) that gate the popup's visibility. */
+  visibility?: Condition[];
 }
 
 /** An item in a navbar section: a button, a status item, or a popup. */

@@ -40,3 +40,26 @@ export function viewAssistNavigate(hass: HomeAssistant | undefined, view: string
   window.history.pushState(null, "", target);
   window.dispatchEvent(new CustomEvent("location-changed", { bubbles: true, composed: true }));
 }
+
+/**
+ * Toggle View Assist "hold" mode on the current device, which pauses the
+ * auto-revert timeout so the screen stays on the current view. Resolves the
+ * device from the `view_assist_sensor` localStorage key and flips its `mode`
+ * attribute between "hold" and "normal" via `view_assist.set_state`.
+ *
+ * No-op when not on a View Assist device. Only ever called from a user action.
+ */
+export function viewAssistToggleHold(hass: HomeAssistant | undefined): void {
+  let sensor: string | null = null;
+  try {
+    sensor = localStorage.getItem("view_assist_sensor");
+  } catch {
+    sensor = null;
+  }
+  if (!hass || !sensor) return;
+  const mode = String(hass.states[sensor]?.attributes.mode ?? "");
+  hass.callService("view_assist", "set_state", {
+    entity_id: sensor,
+    mode: mode === "hold" ? "normal" : "hold",
+  });
+}

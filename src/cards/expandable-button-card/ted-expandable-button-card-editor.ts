@@ -369,10 +369,10 @@ export class TedExpandableButtonCardEditor extends LitElement implements Lovelac
   /** The trigger's appearance config: the parent config minus popup-only keys, typed as
    *  a Button Card so the embedded Button Card editor can edit it. */
   private _triggerConfig(): LovelaceCardConfig {
-    const { items, popup_layout, popup_columns, popup_title, ...rest } = this._config ?? {};
+    const { items, popup_layout, popup_max_columns, popup_title, ...rest } = this._config ?? {};
     void items;
     void popup_layout;
-    void popup_columns;
+    void popup_max_columns;
     void popup_title;
     return { ...rest, type: `custom:${BUTTON_CARD_TYPE}` } as LovelaceCardConfig;
   }
@@ -389,7 +389,7 @@ export class TedExpandableButtonCardEditor extends LitElement implements Lovelac
         type: `custom:${EXPANDABLE_BUTTON_CARD_TYPE}`,
         ...(this._config?.items ? { items: this._config.items } : {}),
         ...(this._config?.popup_layout ? { popup_layout: this._config.popup_layout } : {}),
-        ...(this._config?.popup_columns ? { popup_columns: this._config.popup_columns } : {}),
+        ...(this._config?.popup_max_columns ? { popup_max_columns: this._config.popup_max_columns } : {}),
         ...(this._config?.popup_title ? { popup_title: this._config.popup_title } : {}),
       } as ExpandableButtonCardConfig;
       const triggerConfig = this._triggerConfigFrom(merged);
@@ -419,10 +419,10 @@ export class TedExpandableButtonCardEditor extends LitElement implements Lovelac
   }
 
   private _triggerConfigFrom(config: ExpandableButtonCardConfig): LovelaceCardConfig {
-    const { items, popup_layout, popup_columns, popup_title, ...rest } = config;
+    const { items, popup_layout, popup_max_columns, popup_title, ...rest } = config;
     void items;
     void popup_layout;
-    void popup_columns;
+    void popup_max_columns;
     void popup_title;
     return { ...rest, type: `custom:${BUTTON_CARD_TYPE}` } as LovelaceCardConfig;
   }

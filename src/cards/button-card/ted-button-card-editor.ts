@@ -47,9 +47,28 @@ const OPERATOR_OPTIONS = [
 // entity-based defaults (more-info / toggle) from our `entity` field.
 const ACTION_CONTEXT = { entity_id: "entity" } as const;
 
+/** Optional flags to hide Button Card editor sections when it's embedded as another
+ *  card's trigger (e.g. the Expandable Button Card, whose tap only opens its popup). */
+export interface ButtonEditorTrim {
+  /** Hide the entity field. */
+  entity?: boolean;
+  /** Hide the "Background color when on" field. */
+  backgroundOn?: boolean;
+  /** Hide the State element (icon / name only). */
+  state?: boolean;
+  /** Hide the Badge section. */
+  badge?: boolean;
+  /** Hide the Dynamic highlighting section. */
+  highlight?: boolean;
+  /** Hide the Interactions section (tap / hold / double-tap). */
+  interactions?: boolean;
+}
+
 @customElement(BUTTON_CARD_EDITOR_TYPE)
 export class TedButtonCardEditor extends LitElement implements LovelaceCardEditor {
   @property({ attribute: false }) public hass?: HomeAssistant;
+  /** When set, hides the flagged sections (used by embedding cards like Expandable Button). */
+  @property({ attribute: false }) public trim?: ButtonEditorTrim;
   @state() private _config?: ButtonCardConfig;
   /** Element chips currently expanded in the reorder section (UI-only state;
    *  chips start collapsed). */
@@ -77,15 +96,17 @@ export class TedButtonCardEditor extends LitElement implements LovelaceCardEdito
           @value-changed=${this._valueChanged}
         ></ha-form>
         ${this._renderElements()}
-        ${this._renderBadge()}
-        ${this._renderHighlight()}
-        <ha-form
-          .hass=${this.hass}
-          .data=${data}
-          .schema=${schema.bottom}
-          .computeLabel=${this._computeLabel}
-          @value-changed=${this._valueChanged}
-        ></ha-form>
+        ${this.trim?.badge ? nothing : this._renderBadge()}
+        ${this.trim?.highlight ? nothing : this._renderHighlight()}
+        ${schema.bottom.length
+          ? html`<ha-form
+              .hass=${this.hass}
+              .data=${data}
+              .schema=${schema.bottom}
+              .computeLabel=${this._computeLabel}
+              @value-changed=${this._valueChanged}
+            ></ha-form>`
+          : nothing}
       </div>
     `;
   }
@@ -95,7 +116,7 @@ export class TedButtonCardEditor extends LitElement implements LovelaceCardEdito
       theme: "ha",
       brushed: false,
       shadow: true,
-      neumorphic: true,
+      neumorphic: false,
       show_icon: true,
       icon_scale: 100,
       show_name: true,
@@ -122,7 +143,7 @@ export class TedButtonCardEditor extends LitElement implements LovelaceCardEdito
         },
       },
       { name: "background", selector: { ui_color: {} } },
-      { name: "background_on", selector: { ui_color: {} } },
+      ...(this.trim?.backgroundOn ? [] : [{ name: "background_on", selector: { ui_color: {} } }]),
       transparencyBlurSchema(this._config?.transparency),
       {
         type: "grid",
@@ -163,7 +184,7 @@ export class TedButtonCardEditor extends LitElement implements LovelaceCardEdito
 
     return {
       top: [
-        { name: "entity", selector: { entity: {} } },
+        ...(this.trim?.entity ? [] : [{ name: "entity", selector: { entity: {} } }]),
         { name: "name", selector: { text: {} } },
         { name: "icon", selector: { icon: {} } },
         {
@@ -175,16 +196,18 @@ export class TedButtonCardEditor extends LitElement implements LovelaceCardEdito
           schema: visual,
         },
       ],
-      bottom: [
-        {
-          name: "",
-          type: "expandable",
-          title: "Interactions",
-          iconPath: INTERACTIONS_ICON_PATH,
-          flatten: true,
-          schema: interactions,
-        },
-      ],
+      bottom: this.trim?.interactions
+        ? []
+        : [
+            {
+              name: "",
+              type: "expandable",
+              title: "Interactions",
+              iconPath: INTERACTIONS_ICON_PATH,
+              flatten: true,
+              schema: interactions,
+            },
+          ],
     };
   }
 
@@ -326,7 +349,7 @@ export class TedButtonCardEditor extends LitElement implements LovelaceCardEdito
   };
 
   private _renderElements(): TemplateResult {
-    const order = this._elementOrder();
+    const order = this._elementOrder().filter((el) => !(this.trim?.state && el === "state"));
     const meta: Record<
       CardElement,
       { label: string; showKey: keyof ButtonCardConfig; sizeKey: keyof ButtonCardConfig; colorKey: keyof ButtonCardConfig; defShow: boolean }
@@ -339,7 +362,7 @@ export class TedButtonCardEditor extends LitElement implements LovelaceCardEdito
       <ha-expansion-panel outlined class="elements-panel">
         <div slot="header" class="elements-header">
           <ha-svg-icon .path=${ELEMENTS_ICON_PATH}></ha-svg-icon>
-          <span>Icon / Name / State</span>
+          <span>${this.trim?.state ? "Icon / Name" : "Icon / Name / State"}</span>
         </div>
         <ha-sortable handle-selector=".drag-handle" @item-moved=${this._elementMoved}>
           <div class="elements">

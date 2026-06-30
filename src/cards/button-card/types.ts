@@ -68,7 +68,7 @@ export interface ButtonCardConfig extends LovelaceCardConfig {
   blur?: number;
   brushed?: boolean;
   shadow?: boolean;
-  /** Neumorphic effect: raised tile when off/idle, pressed when the entity is active. Defaults to true. */
+  /** Neumorphic effect: raised tile when off/idle, pressed when the entity is active. Defaults to false. */
   neumorphic?: boolean;
   show_icon?: boolean;
   icon_scale?: number;

@@ -321,8 +321,8 @@ export class TedButtonCard extends LitElement implements LovelaceCard {
     const nameScale = typeof this._config.name_scale === "number" ? this._config.name_scale : 100;
     const stateScale = typeof this._config.state_scale === "number" ? this._config.state_scale : 100;
     // Neumorphic effect: a single raised tile (off/idle) that presses in when the
-    // bound entity is active. On by default.
-    const neumorphic = this._config.neumorphic !== false;
+    // bound entity is active. Off by default.
+    const neumorphic = this._config.neumorphic === true;
     const shadow = this._config.shadow !== false; // default true
     const stateObj = this._stateObj();
     const isActive = !!stateObj && ON_STATES.has(String(stateObj.state).toLowerCase());
@@ -611,6 +611,11 @@ export class TedButtonCard extends LitElement implements LovelaceCard {
       .icon {
         --mdc-icon-size: 32px;
         color: var(--ted-style-accent);
+        /* Optional rotation driven by an inherited custom property (default none). An
+           embedding card (e.g. the Expandable Button Card) can set --ted-icon-rotate to
+           flip the icon — the property inherits through the shadow boundary. */
+        transform: rotate(var(--ted-icon-rotate, 0deg));
+        transition: transform 0.2s ease;
         /* Shadow opacity scales with the icon color's lightness (relative-color), so it
            fades out for dark icon colors instead of looking muddy. Older browsers fall
            back to the plain dark shadow. */

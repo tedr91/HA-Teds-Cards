@@ -172,8 +172,14 @@ export class TedExpandableButtonCard extends LitElement implements LovelaceCard 
         ? this._config.popup_columns
         : DEFAULT_POPUP_COLUMNS;
     const items = this._config.items ?? [];
+    const flip = this._config.flip_icon !== false;
     return html`
-      <button id=${TRIGGER_ID} class="ebc-trigger" popovertarget=${POPOVER_ID} aria-haspopup="true">
+      <button
+        id=${TRIGGER_ID}
+        class=${classMap({ "ebc-trigger": true, "flip-icon": flip })}
+        popovertarget=${POPOVER_ID}
+        aria-haspopup="true"
+      >
         ${this._triggerEl ? this._triggerEl.el : nothing}
       </button>
       <div
@@ -271,6 +277,11 @@ export class TedExpandableButtonCard extends LitElement implements LovelaceCard 
         display: block;
         width: 100%;
         height: 100%;
+      }
+      /* Flip the trigger icon while the popup is open. The custom property inherits into
+         the embedded Button Card's shadow DOM, rotating just its icon (e.g. a chevron). */
+      .ebc-trigger.flip-icon:has(+ .ebc-popover:popover-open) {
+        --ted-icon-rotate: 180deg;
       }
 
       /* Native popover holding the child buttons. Opt into the theme's card frost so on

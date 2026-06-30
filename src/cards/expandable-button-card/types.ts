@@ -20,4 +20,6 @@ export interface ExpandableButtonCardConfig extends ButtonCardConfig {
   popup_columns?: number;
   /** Optional heading shown at the top of the popup. */
   popup_title?: string;
+  /** Flip the trigger icon (e.g. a chevron) 180° while the popup is open. Defaults to true. */
+  flip_icon?: boolean;
 }

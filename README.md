@@ -327,7 +327,7 @@ theme: ted-style            # optional, visual styling: ted-style (default) | ha
 icon_color: amber           # optional icon color (theme color name or #RRGGBB)
 background: '#1c1c1c'        # optional background color override
 brushed: false              # optional brushed-metal sheen over the background
-neumorphic: true            # raised tile when off/idle, pressed when the entity is active
+neumorphic: false           # raised tile when off/idle, pressed when the entity is active
 show_name: true             # show the name/label
 name_scale: 100             # name text size, % (10–300)
 show_icon: true             # show the icon
@@ -364,7 +364,7 @@ highlight:
 `theme` and `brushed` work as in the other cards (see the Light Card section). `icon_color` and
 `background` are picked with the editor's color picker; leave them unset to follow the theme.
 
-`neumorphic` (default **on**, in the **Appearance** section): a soft "neumorphic" effect — the tile
+`neumorphic` (default **off**, in the **Appearance** section): a soft "neumorphic" effect — the tile
 looks **raised** when the entity is off/idle (or has no entity) and **pressed in** when the entity is
 active (e.g. a light `on`, a cover `open`, a media player `playing`, a lock `unlocked`).
 
@@ -430,6 +430,7 @@ theme: ted-style
 popup_layout: grid          # grid (default) | list
 popup_columns: 3            # columns for the grid layout (ignored for list)
 popup_title: Scenes         # optional heading shown at the top of the popup
+flip_icon: true             # flip the trigger icon (e.g. a chevron) 180° while open (default true)
 items:                      # child buttons shown in the popup
   - type: custom:ted-button-card
     name: Movie
@@ -448,8 +449,10 @@ The trigger's own tap/hold/double-tap actions are ignored — tapping the trigge
 popup. Configure each child's actions on the child button itself.
 
 **Popup** (editor) — **Popup layout** is **Grid** (square tiles, with a **Columns** slider) or **List**
-(a single vertical column); **Popup title** adds an optional heading. The popover anchors to the
-trigger, opening downward (flipping up if there isn't room) and dismisses on outside-click or `Esc`.
+(a single vertical column); **Popup title** adds an optional heading. **Flip icon when open** (default
+**on**) rotates the trigger icon 180° while the popup is open — handy for a chevron that flips to point
+the other way. The popover anchors to the trigger, opening downward (flipping up if there isn't room)
+and dismisses on outside-click or `Esc`.
 
 **Popup buttons** (editor) — add **Button** or **Expandable button** children, drag to reorder, and edit
 each inline with its own card editor. Nested expandable children open their own sub-popups, so you can
@@ -858,6 +861,11 @@ sections:                 # up to 5 sections
 
 The newest entry below is used as the GitHub Release notes by the release workflow, so it shows in
 the Home Assistant / HACS **update** dialog when you update. Newest first.
+
+### v1.0.6
+
+- **Expandable Button Card** — the trigger editor now hides options that don't apply to a menu trigger (entity, "background color when on", the State element, badge, dynamic highlighting, and interactions, since a tap always opens the popup); new **Flip icon when open** option (default on) rotates the trigger icon 180° while the popup is open (e.g. a chevron); fixed an editor bug where edits could sometimes revert.
+- **Button Card** — the **Neumorphic effect** now defaults to **off** (set `neumorphic: true` to keep the raised/pressed tile look).
 
 ### v1.0.5
 

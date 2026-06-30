@@ -30,6 +30,17 @@ const DELETE_ICON_PATH = "M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21
 
 const TRIGGER_KEY = "trigger";
 
+/** Sections hidden on the trigger's Button Card editor: a tap only opens the popup, so
+ *  entity/state/badge/highlight/interactions and the active-state background don't apply. */
+const TRIGGER_TRIM = {
+  entity: true,
+  backgroundOn: true,
+  state: true,
+  badge: true,
+  highlight: true,
+  interactions: true,
+} as const;
+
 interface EditorEntry {
   el: LovelaceCardEditor;
   type: string;
@@ -89,6 +100,7 @@ export class TedExpandableButtonCardEditor extends LitElement implements Lovelac
             popup_layout: layout,
             popup_columns: this._config.popup_columns ?? DEFAULT_POPUP_COLUMNS,
             popup_title: this._config.popup_title ?? "",
+            flip_icon: this._config.flip_icon !== false,
           }}
           .schema=${this._popupSchema(layout)}
           .computeLabel=${this._computeLabel}
@@ -136,6 +148,7 @@ export class TedExpandableButtonCardEditor extends LitElement implements Lovelac
         ],
       },
       { name: "popup_title", selector: { text: {} } },
+      { name: "flip_icon", selector: { boolean: {} } },
     ];
   }
 
@@ -147,6 +160,8 @@ export class TedExpandableButtonCardEditor extends LitElement implements Lovelac
         return "Columns";
       case "popup_title":
         return "Popup title";
+      case "flip_icon":
+        return "Flip icon when open";
       default:
         return schema.name;
     }
@@ -256,6 +271,7 @@ export class TedExpandableButtonCardEditor extends LitElement implements Lovelac
       popup_layout?: string;
       popup_columns?: number;
       popup_title?: string;
+      flip_icon?: boolean;
     };
     const next = { ...this._config } as ExpandableButtonCardConfig;
     if (value.popup_layout === "list") next.popup_layout = "list";
@@ -265,6 +281,8 @@ export class TedExpandableButtonCardEditor extends LitElement implements Lovelac
     else delete next.popup_columns;
     if (value.popup_title) next.popup_title = value.popup_title;
     else delete next.popup_title;
+    if (value.flip_icon === false) next.flip_icon = false;
+    else delete next.flip_icon;
     this._commit(next);
   };
 
@@ -336,6 +354,7 @@ export class TedExpandableButtonCardEditor extends LitElement implements Lovelac
     try {
       const el = await cardClass.getConfigElement();
       el.hass = this.hass;
+      if (key === TRIGGER_KEY) (el as unknown as { trim?: typeof TRIGGER_TRIM }).trim = TRIGGER_TRIM;
       el.setConfig(config);
       el.addEventListener("config-changed", (ev: Event) => {
         ev.stopPropagation();
@@ -374,9 +393,15 @@ export class TedExpandableButtonCardEditor extends LitElement implements Lovelac
         ...(this._config?.popup_columns ? { popup_columns: this._config.popup_columns } : {}),
         ...(this._config?.popup_title ? { popup_title: this._config.popup_title } : {}),
       } as ExpandableButtonCardConfig;
-      const json = JSON.stringify(this._triggerConfigFrom(merged));
+      const triggerConfig = this._triggerConfigFrom(merged);
+      const json = JSON.stringify(triggerConfig);
       if (entry && entry.json === json) return;
-      if (entry) entry.json = json;
+      // Push the config back so the controlled child editor updates its own state
+      // (it fires config-changed but doesn't self-update); otherwise edits revert.
+      if (entry) {
+        entry.json = json;
+        entry.el.setConfig(triggerConfig);
+      }
       this._commit(merged);
       return;
     }
@@ -386,7 +411,10 @@ export class TedExpandableButtonCardEditor extends LitElement implements Lovelac
     if (idx < 0 || idx >= items.length) return;
     const json = JSON.stringify(newConfig);
     if (entry && entry.json === json) return;
-    if (entry) entry.json = json;
+    if (entry) {
+      entry.json = json;
+      entry.el.setConfig(newConfig);
+    }
     items[idx] = newConfig as ExpandableChildConfig;
     this._commitItems(items);
   }

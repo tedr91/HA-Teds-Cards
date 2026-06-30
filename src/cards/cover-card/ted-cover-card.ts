@@ -958,10 +958,10 @@ export class TedCoverCard extends LitElement implements LovelaceCard {
       background-color: color-mix(in srgb, var(--ted-style-surface-2) 10%, transparent);
     }
     ha-card.neu .position-fill {
-      opacity: 0.9;
+      opacity: 1;
     }
     ha-card.neu .stripe-symbol {
-      opacity: 0.9;
+      opacity: 1;
     }
     .position-fill {
       position: absolute;

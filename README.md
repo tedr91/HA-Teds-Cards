@@ -876,6 +876,10 @@ sections:                 # up to 5 sections
 The newest entry below is used as the GitHub Release notes by the release workflow, so it shows in
 the Home Assistant / HACS **update** dialog when you update. Newest first.
 
+### v1.0.9
+
+- **Light & Cover Cards** — the neumorphic indicator fill and the +/- (up/down) hint symbols are now fully opaque, so the level indicator and hints read clearly against the faint bar track.
+
 ### v1.0.8
 
 - **Button Card** — added **Width** / **Height** overrides (used when the card isn't a direct item in a grid/Sections view), matching the Light and Cover cards.

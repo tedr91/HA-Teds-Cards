@@ -658,19 +658,35 @@ export class TedNavbarCard extends LitElement implements LovelaceCard {
     const a = this._alignment();
     const defaultChevron =
       a === "bottom" ? "mdi:chevron-up" : a === "top" ? "mdi:chevron-down" : a === "left" ? "mdi:chevron-right" : "mdi:chevron-left";
+    const flip = popup.flip_icon !== false;
+    const items = popup.items ?? [];
+    const layout = popup.popup_layout === "list" ? "list" : "grid";
+    const maxCols =
+      typeof popup.popup_max_columns === "number" && popup.popup_max_columns > 0
+        ? popup.popup_max_columns
+        : undefined;
+    const cols = Math.max(1, maxCols ? Math.min(maxCols, items.length) : items.length || 1);
     return html`
       <button
         id=${anchorId}
-        class="nav-button nav-popup ${wide ? "wide" : ""} ${popup.icon ? "" : "nav-popup-chevron"}"
+        class="nav-button nav-popup ${wide ? "wide" : ""} ${popup.icon ? "" : "nav-popup-chevron"} ${flip ? "nav-popup-flip" : ""}"
         popovertarget=${popId}
         title=${label}
         aria-label=${label}
       >
         <ha-icon .icon=${popup.icon ?? defaultChevron}></ha-icon>
       </button>
-      <div id=${popId} class="nav-popover" popover data-anchor=${anchorId} @toggle=${this._onPopoverToggle}>
-        <div class="nav-popover-body">
-          ${this._renderItems(popup.items ?? [], `${pathBase}:${idx}`, `${idBase}-${idx}`)}
+      <div
+        id=${popId}
+        class="nav-popover"
+        popover
+        data-anchor=${anchorId}
+        style=${styleMap({ "--nav-pop-cols": String(cols) })}
+        @toggle=${this._onPopoverToggle}
+      >
+        ${popup.popup_title ? html`<div class="nav-popover-title">${popup.popup_title}</div>` : nothing}
+        <div class="nav-popover-body ${layout}">
+          ${this._renderItems(items, `${pathBase}:${idx}`, `${idBase}-${idx}`)}
         </div>
       </div>
     `;
@@ -934,6 +950,10 @@ export class TedNavbarCard extends LitElement implements LovelaceCard {
       .nav-popup-chevron:has(+ .nav-popover:popover-open) ha-icon {
         transform: rotate(180deg);
       }
+      /* Optional flip of any trigger icon while its popup is open (default on). */
+      .nav-popup-flip:has(+ .nav-popover:popover-open) ha-icon {
+        transform: rotate(180deg);
+      }
       .nav-popup:hover {
         color: color-mix(in srgb, var(--ted-style-accent) 75%, var(--ted-style-text));
       }
@@ -952,6 +972,8 @@ export class TedNavbarCard extends LitElement implements LovelaceCard {
         margin: 0;
         box-sizing: border-box;
         padding: 10px;
+        max-height: 80vh;
+        overflow: auto;
         background: var(--ted-style-surface);
         -webkit-backdrop-filter: var(--ha-card-backdrop-filter, none);
         backdrop-filter: var(--ha-card-backdrop-filter, none);
@@ -962,12 +984,30 @@ export class TedNavbarCard extends LitElement implements LovelaceCard {
       .nav-popover::backdrop {
         background: transparent;
       }
+      .nav-popover-title {
+        color: var(--ted-style-muted, var(--secondary-text-color));
+        font-size: 0.8rem;
+        font-weight: 600;
+        padding: 0 2px 8px;
+      }
       .nav-popover-body {
         display: flex;
         flex-wrap: wrap;
         align-items: center;
         gap: 8px;
         max-width: 80vw;
+      }
+      /* Popup layouts (the overflow popover keeps the default wrapping row). */
+      .nav-popover-body.grid {
+        display: grid;
+        grid-template-columns: repeat(var(--nav-pop-cols, 1), calc(var(--nav-size) - 12px));
+        flex-wrap: initial;
+        align-items: start;
+      }
+      .nav-popover-body.list {
+        flex-direction: column;
+        flex-wrap: initial;
+        align-items: stretch;
       }
     `,
   ];

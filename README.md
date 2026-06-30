@@ -334,6 +334,8 @@ show_icon: true             # show the icon
 icon_scale: 100             # icon size, % (10–300)
 show_state: true            # show the entity state under the name
 state_scale: 100            # state text size, % (10–300)
+width: 100                  # fixed width (px) when NOT a direct grid (Sections) item
+height: 120                 # fixed height (px) when NOT a direct grid (Sections) item
 tap_action:                 # optional, see Interactions below
   action: toggle
 hold_action:
@@ -370,7 +372,9 @@ active (e.g. a light `on`, a cover `open`, a media player `playing`, a lock `unl
 
 In the **Appearance** section, `show_icon` (default **on**) and `show_name` / `show_state` (default
 **off**) toggle the icon, label, and the entity-state line, and `name_scale` / `icon_scale` /
-`state_scale` (percent, default `100`) scale each of them.
+`state_scale` (percent, default `100`) scale each of them. `width` and `height` (px, default `100` ×
+`120`) set the card's fixed size when it is **not** a direct item in a grid (Sections) view — e.g.
+inside a stack, masonry, or panel view; as a direct grid item the card honors the grid cell.
 
 **Interactions** — the editor's **Interactions** section sets `tap_action`, `hold_action`, and (under
 **Add interaction**) `double_tap_action`, using Home Assistant's standard action picker (toggle,
@@ -826,10 +830,17 @@ sections:                 # up to 5 sections
       - type: time                          # status item — updates live
       - type: popup                         # a popup: tap the icon to reveal more items
         icon: mdi:dots-horizontal
+        popup_layout: grid                  # grid (default) | list
+        popup_max_columns: 3                # optional cap on grid columns (unset = fit items)
+        popup_title: Settings               # optional heading
+        flip_icon: true                     # flip the trigger icon 180° while open (default true)
         items:
           - type: custom:ted-button-card
             name: Settings
             icon: mdi:cog
+          - type: popup                      # popups can be nested
+            icon: mdi:dots-vertical
+            items: []
 ```
 
 - **Navbar alignment** — pin the bar to the **Bottom** (default) or **Top** edge (horizontal), or the **Left** / **Right** edge for a **vertical** bar. A vertical bar is always snap (Float is hidden), clears the header & sidebar, and maps the section zones top→**left**, middle→**center**, bottom→**right**.
@@ -849,8 +860,10 @@ sections:                 # up to 5 sections
 - **Status items** — **Time**, **Date** and **Weather**, plus a room's **Temperature**, **Occupancy**,
   **Brightness**, **Volume**, an entity **Status LED**, and a **Spacer**. Brightness and volume open a
   slider on tap, and the clock updates live.
-- **Popups** — a **Popup** item is a tappable icon that opens a popover holding its own mix of buttons
-  and status items — handy for tucking extra controls behind one icon.
+- **Popups** — a **Popup menu** item is a tappable icon that opens a popover holding its own mix of
+  buttons, status items, and **nested popups**. The popover has a configurable **layout** (Grid with an
+  optional **Max columns**, or List), an optional **title**, and a **Flip icon when open** toggle
+  (default on) — handy for tucking extra controls behind one icon.
 - **Overflow** — when a section's items don't fit the bar, the extras **auto-collapse into a “…” popover**
   (turn **Auto-collapse overflow** off per section to keep them inline).
 
@@ -862,6 +875,12 @@ sections:                 # up to 5 sections
 
 The newest entry below is used as the GitHub Release notes by the release workflow, so it shows in
 the Home Assistant / HACS **update** dialog when you update. Newest first.
+
+### v1.0.8
+
+- **Button Card** — added **Width** / **Height** overrides (used when the card isn't a direct item in a grid/Sections view), matching the Light and Cover cards.
+- **Light & Cover Cards** — refined the neumorphic rocker so the paddles span the full card and fill the corners (no more card surface peeking at the rounded corners); the indicator/hint bars become faint overlays with the fill and +/- symbols kept readable.
+- **Navbar Card** — the **Popup menu** item now matches the Expandable Button Card: configurable popup **layout** (grid with optional **max columns**, or list), an optional **title**, a **Flip icon when open** toggle (default on), and support for **nested popups**.
 
 ### v1.0.7
 

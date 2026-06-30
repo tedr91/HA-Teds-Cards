@@ -231,6 +231,13 @@ export class TedLightCard extends LitElement implements LovelaceCard {
     // so the tile fills the space the indicator/hint bars would otherwise occupy.
     const indInset = this._config.show_indicator !== false ? indicatorWidth : 0;
     const hintInset = this._config.show_hint === true ? hintWidth : 0;
+    // Neumorphic effect: rocker style splits into two paddles (one raised, one
+    // pressed, flipping with state); button style is a single raised/pressed tile.
+    const neumorphic = this._config.rocker_effect !== false;
+    // With the neumorphic effect on, the paddles span the full card (no bar inset) so
+    // their rounded corners fill the card's corners; the bars float faintly on top.
+    const neuInd = neumorphic ? 0 : indInset;
+    const neuHint = neumorphic ? 0 : hintInset;
     // In a grid (Sections) view, honor the grid cell sizing. Everywhere else
     // (stacks, masonry, panel), render at the configured fixed size.
     const isGrid = this.layout === "grid";
@@ -239,10 +246,10 @@ export class TedLightCard extends LitElement implements LovelaceCard {
     const cardStyle: Record<string, string> = {
       "--ted-indicator-width": `${indicatorWidth}px`,
       "--ted-hint-width": `${hintWidth}px`,
-      "--ted-neu-left": `${horizontal ? 0 : indInset}px`,
-      "--ted-neu-right": `${horizontal ? 0 : hintInset}px`,
-      "--ted-neu-top": `${horizontal ? hintInset : 0}px`,
-      "--ted-neu-bottom": `${horizontal ? indInset : 0}px`,
+      "--ted-neu-left": `${horizontal ? 0 : neuInd}px`,
+      "--ted-neu-right": `${horizontal ? 0 : neuHint}px`,
+      "--ted-neu-top": `${horizontal ? neuHint : 0}px`,
+      "--ted-neu-bottom": `${horizontal ? neuInd : 0}px`,
       ...appearanceStyle({ transparency: this._config.transparency, blur: this._config.blur }),
     };
     const bg = isOn ? bgOn ?? bgBase : bgBase;
@@ -258,9 +265,6 @@ export class TedLightCard extends LitElement implements LovelaceCard {
     const nameScale = typeof this._config.name_scale === "number" ? this._config.name_scale : 100;
     const iconScale = typeof this._config.icon_scale === "number" ? this._config.icon_scale : 150;
     const stateScale = typeof this._config.state_scale === "number" ? this._config.state_scale : 100;
-    // Neumorphic effect: rocker style splits into two paddles (one raised, one
-    // pressed, flipping with state); button style is a single raised/pressed tile.
-    const neumorphic = this._config.rocker_effect !== false;
     const rockerMode = this._config.rocker !== false;
     const shadow = this._config.shadow !== false; // default true
 
@@ -294,6 +298,7 @@ export class TedLightCard extends LitElement implements LovelaceCard {
           unavailable: isUnavailable,
           horizontal,
           single: this._config.rocker === false,
+          neu: neumorphic,
           "no-shadow": !shadow,
           ...themeClasses,
         })}
@@ -883,6 +888,20 @@ export class TedLightCard extends LitElement implements LovelaceCard {
       opacity: 0.5;
       background-color: var(--ted-style-surface-2);
       pointer-events: none;
+    }
+    /* Option E: with the neumorphic effect the paddles span the full card, so the
+       indicator / hint bars float on top as faint overlays — a barely-there track with
+       the fill (and the +/- hint symbols) kept readable at 90%. */
+    ha-card.neu .brightness,
+    ha-card.neu .stripe {
+      opacity: 1;
+      background-color: color-mix(in srgb, var(--ted-style-surface-2) 10%, transparent);
+    }
+    ha-card.neu .brightness-fill {
+      opacity: 0.9;
+    }
+    ha-card.neu .stripe-symbol {
+      opacity: 0.9;
     }
     .brightness-fill {
       position: absolute;

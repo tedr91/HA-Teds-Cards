@@ -349,6 +349,17 @@ export class TedButtonCard extends LitElement implements LovelaceCard {
     const highlight = evalHighlight(this.hass, this._config.highlight);
     if (highlight.background) cardStyle.background = highlight.background;
 
+    // In a grid (Sections) view, honor the grid cell sizing. Everywhere else
+    // (stacks, masonry, panel), render at the configured fixed size.
+    const isGrid = this.layout === "grid";
+    if (!isGrid) {
+      const cardWidth = typeof this._config.width === "number" ? this._config.width : 100;
+      const cardHeight = typeof this._config.height === "number" ? this._config.height : 120;
+      cardStyle.width = `${cardWidth}px`;
+      cardStyle.height = `${cardHeight}px`;
+      cardStyle.margin = "0 auto";
+    }
+
     // Dim the icon (and drop custom colors) for a bound entity that's inactive,
     // matching Home Assistant's built-in button card. Label-only buttons (no entity)
     // always show their configured colors.

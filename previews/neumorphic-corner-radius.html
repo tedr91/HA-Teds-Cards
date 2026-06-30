@@ -1,0 +1,514 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Neumorphic corner radius — options</title>
+    <style>
+      /* Faithful to src/shared/theme.ts .ted-neu paddles + .ted-card dark surface.
+         Radius bumped to 16px (from the 8px default) so the corner effect is easy to
+         see; the same artifact exists at any radius. The paddles are inset by the
+         indicator (left) and hint (right) bar widths, which is what pulls their rounded
+         corners inward and lets the card surface peek out at the top/bottom corners. */
+      :root {
+        --accent: #4cc2ff;
+        --text: #ffffff;
+        --muted: rgba(255, 255, 255, 0.786);
+        --divider: rgba(255, 255, 255, 0.0931);
+        --radius: 16px;
+        --card-bg: linear-gradient(145deg, #2e2e32 0%, #222226 45%, #16161a 100%);
+        --neu-left: 4px; /* indicator bar width */
+        --neu-right: 9px; /* hint bar width */
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 32px 36px 48px;
+        background: #0e0e10;
+        color: var(--text);
+        font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, sans-serif;
+      }
+      h1 {
+        font-size: 20px;
+        font-weight: 600;
+        margin: 0 0 4px;
+      }
+      .sub {
+        color: var(--muted);
+        font-size: 13px;
+        margin: 0 0 28px;
+        max-width: 760px;
+        line-height: 1.5;
+      }
+      .row {
+        display: grid;
+        grid-template-columns: repeat(2, max-content);
+        gap: 30px 56px;
+        align-items: start;
+      }
+      .col h2 {
+        font-size: 15px;
+        font-weight: 600;
+        margin: 0 0 2px;
+      }
+      .col p {
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.45;
+        margin: 0 0 16px;
+        width: 180px;
+        min-height: 76px;
+      }
+      .states {
+        display: flex;
+        gap: 18px;
+      }
+      .slot {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+      }
+      .slot > span {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--muted);
+      }
+
+      /* A checkerboard frame behind each card makes any transparency / peeking obvious. */
+      .frame {
+        padding: 0;
+        border-radius: calc(var(--radius) + 4px);
+        background-image:
+          linear-gradient(45deg, #444 25%, transparent 25%),
+          linear-gradient(-45deg, #444 25%, transparent 25%),
+          linear-gradient(45deg, transparent 75%, #444 75%),
+          linear-gradient(-45deg, transparent 75%, #444 75%);
+        background-size: 14px 14px;
+        background-position: 0 0, 0 7px, 7px -7px, -7px 0;
+        background-color: #5a5a5f;
+      }
+
+      /* ---- Card (mirrors the light card) ---- */
+      .card {
+        position: relative;
+        width: 132px;
+        height: 150px;
+        border-radius: var(--radius);
+        background: var(--card-bg);
+        border: 1px solid var(--divider);
+        color: var(--text);
+        overflow: hidden;
+        isolation: isolate;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 12px;
+      }
+      .name {
+        position: relative;
+        z-index: 1;
+        font-size: 14px;
+        font-weight: 600;
+      }
+      .icon {
+        position: relative;
+        z-index: 1;
+        font-size: 26px;
+        line-height: 1;
+        color: var(--muted);
+      }
+      .state {
+        position: relative;
+        z-index: 1;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .card.on .icon {
+        color: var(--accent);
+      }
+
+      /* Indicator (left) + hint (right) bars — they create the paddle insets. */
+      .bar-left,
+      .bar-right {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        z-index: 0;
+        background: rgba(255, 255, 255, 0.1);
+      }
+      .bar-left {
+        left: 0;
+        width: var(--neu-left);
+      }
+      .bar-right {
+        right: 0;
+        width: var(--neu-right);
+      }
+
+      /* ---- Neumorphic paddles (exact values from theme.ts) ---- */
+      .neu {
+        position: absolute;
+        left: var(--neu-left, 0);
+        right: var(--neu-right, 0);
+        z-index: -1;
+        pointer-events: none;
+      }
+      .neu.top {
+        top: 0;
+        height: calc(50% - 1px);
+        border-radius: var(--radius) var(--radius) 3px 3px;
+      }
+      .neu.bottom {
+        bottom: 0;
+        height: calc(50% - 1px);
+        border-radius: 3px 3px var(--radius) var(--radius);
+      }
+      .neu.raised {
+        background-color: rgba(255, 255, 255, 0.05);
+        box-shadow:
+          4px 5px 11px rgba(0, 0, 0, 0.42),
+          -2px -2px 7px rgba(255, 255, 255, 0.05),
+          inset 0 1px 0 rgba(255, 255, 255, 0.13);
+      }
+      .neu.pressed {
+        background-color: rgba(0, 0, 0, 0.22);
+        box-shadow:
+          inset 4px 4px 10px rgba(0, 0, 0, 0.5),
+          inset -2px -2px 7px rgba(255, 255, 255, 0.04);
+      }
+
+      /* ===== Option A: hide the behind piece (card surface) when neumorphic is on.
+         The card paints no base surface, so there's no contrasting piece to peek at the
+         corners — you instead see straight through to whatever is behind the card. ===== */
+      .opt-a .card,
+      .opt-c .card {
+        background: transparent;
+        border-color: transparent;
+      }
+
+      /* ===== Option B: drop the edge radii on the neumorphic button regions.
+         Square paddles fill into the corners and the card's own overflow:hidden +
+         border-radius clips them, giving a clean rounded edge with nothing peeking. ===== */
+      .opt-b .neu.top,
+      .opt-c .neu.top,
+      .opt-b .neu.bottom,
+      .opt-c .neu.bottom {
+        border-radius: 0;
+      }
+
+      /* ===== Option D: keep Current exactly, but lift the card surface to the same tone
+         as the indicator / hint bars (gradient + white 10%). The corner peek then matches
+         the bars instead of contrasting, so it reads as intentional. The bars merge into
+         the unified surface. ===== */
+      .opt-d .card {
+        background:
+          linear-gradient(rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.1)),
+          var(--card-bg);
+      }
+      .opt-d .bar-left,
+      .opt-d .bar-right {
+        background: transparent;
+      }
+
+      /* ===== Option E: paddles span edge-to-edge (no bar inset) so they fill the corners
+         (clipped round by the card — nothing peeks), and the indicator / hint bars drop
+         to 90% transparent, floating faintly on top of the paddles. ===== */
+      .opt-e .neu {
+        left: 0;
+        right: 0;
+      }
+      .opt-e .bar-left,
+      .opt-e .bar-right {
+        opacity: 0.1;
+      }
+
+      /* ===== Option E with a visible brightness fill. Full-width paddles + a 90%-
+         transparent track, but the colored fill is kept readable. E1 = fill at 100%,
+         E2 = fill at 50%. The track/fill are layered so the faint track doesn't dim
+         the fill. ===== */
+      .opt-e1 .neu,
+      .opt-e2 .neu {
+        left: 0;
+        right: 0;
+      }
+      .opt-e1 .bar-left,
+      .opt-e1 .bar-right,
+      .opt-e2 .bar-left,
+      .opt-e2 .bar-right {
+        background: transparent;
+      }
+      .opt-e1 .track,
+      .opt-e2 .track {
+        position: absolute;
+        inset: 0;
+        background: rgba(255, 255, 255, 0.1);
+        opacity: 0.1;
+      }
+      .opt-e1 .fill,
+      .opt-e2 .fill {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 62%;
+        background: var(--accent);
+      }
+      .opt-e1 .fill {
+        opacity: 1;
+      }
+      .opt-e2 .fill {
+        opacity: 0.5;
+      }
+
+      .legend {
+        margin-top: 34px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.6;
+        max-width: 760px;
+      }
+      .legend b {
+        color: var(--text);
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Neumorphic corner radius — fix options</h1>
+    <p class="sub">
+      The rocker paddles round their outer corners to the card radius but are inset by the indicator /
+      hint bars, so the card surface "peeks" through the corners (most visible against the checkerboard).
+      Compare the current look with the three proposed fixes, in both Off (raised top) and On (pressed
+      top) states.
+    </p>
+
+    <div class="row">
+      <!-- Current -->
+      <div class="col current">
+        <h2>Current</h2>
+        <p>Rounded paddles inset by the bars; the card surface shows in the corner crescents.</p>
+        <div class="states">
+          <div class="slot">
+            <span>Off</span>
+            <div class="frame">
+              <div class="card">
+                <div class="bar-left"></div><div class="bar-right"></div>
+                <div class="neu top raised"></div><div class="neu bottom pressed"></div>
+                <div class="name">Kitchen</div><div class="icon">&#128161;</div><div class="state">Off</div>
+              </div>
+            </div>
+          </div>
+          <div class="slot">
+            <span>On</span>
+            <div class="frame">
+              <div class="card on">
+                <div class="bar-left"></div><div class="bar-right"></div>
+                <div class="neu top pressed"></div><div class="neu bottom raised"></div>
+                <div class="name">Kitchen</div><div class="icon">&#128161;</div><div class="state">62%</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Option D -->
+      <div class="col opt-d">
+        <h2>D. Surface matches bars</h2>
+        <p>Current look, but the card surface is lifted to the indicator/hint bar tone, so the corner peek blends in instead of contrasting.</p>
+        <div class="states">
+          <div class="slot">
+            <span>Off</span>
+            <div class="frame">
+              <div class="card">
+                <div class="bar-left"></div><div class="bar-right"></div>
+                <div class="neu top raised"></div><div class="neu bottom pressed"></div>
+                <div class="name">Kitchen</div><div class="icon">&#128161;</div><div class="state">Off</div>
+              </div>
+            </div>
+          </div>
+          <div class="slot">
+            <span>On</span>
+            <div class="frame">
+              <div class="card on">
+                <div class="bar-left"></div><div class="bar-right"></div>
+                <div class="neu top pressed"></div><div class="neu bottom raised"></div>
+                <div class="name">Kitchen</div><div class="icon">&#128161;</div><div class="state">62%</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Option A -->
+      <div class="col opt-a">
+        <h2>A. Hide behind piece</h2>
+        <p>No card surface painted under the paddles, so nothing contrasting peeks — but the corners go transparent (you see behind the card).</p>
+        <div class="states">
+          <div class="slot">
+            <span>Off</span>
+            <div class="frame">
+              <div class="card">
+                <div class="bar-left"></div><div class="bar-right"></div>
+                <div class="neu top raised"></div><div class="neu bottom pressed"></div>
+                <div class="name">Kitchen</div><div class="icon">&#128161;</div><div class="state">Off</div>
+              </div>
+            </div>
+          </div>
+          <div class="slot">
+            <span>On</span>
+            <div class="frame">
+              <div class="card on">
+                <div class="bar-left"></div><div class="bar-right"></div>
+                <div class="neu top pressed"></div><div class="neu bottom raised"></div>
+                <div class="name">Kitchen</div><div class="icon">&#128161;</div><div class="state">62%</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Option B -->
+      <div class="col opt-b">
+        <h2>B. Square paddle regions</h2>
+        <p>Paddles lose their radius and are clipped by the card's rounded overflow — clean corners, surface stays opaque.</p>
+        <div class="states">
+          <div class="slot">
+            <span>Off</span>
+            <div class="frame">
+              <div class="card">
+                <div class="bar-left"></div><div class="bar-right"></div>
+                <div class="neu top raised"></div><div class="neu bottom pressed"></div>
+                <div class="name">Kitchen</div><div class="icon">&#128161;</div><div class="state">Off</div>
+              </div>
+            </div>
+          </div>
+          <div class="slot">
+            <span>On</span>
+            <div class="frame">
+              <div class="card on">
+                <div class="bar-left"></div><div class="bar-right"></div>
+                <div class="neu top pressed"></div><div class="neu bottom raised"></div>
+                <div class="name">Kitchen</div><div class="icon">&#128161;</div><div class="state">62%</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Option C -->
+      <div class="col opt-c">
+        <h2>C. A + B combined</h2>
+        <p>Square paddles and no card surface behind them — the paddles fully define the rounded card.</p>
+        <div class="states">
+          <div class="slot">
+            <span>Off</span>
+            <div class="frame">
+              <div class="card">
+                <div class="bar-left"></div><div class="bar-right"></div>
+                <div class="neu top raised"></div><div class="neu bottom pressed"></div>
+                <div class="name">Kitchen</div><div class="icon">&#128161;</div><div class="state">Off</div>
+              </div>
+            </div>
+          </div>
+          <div class="slot">
+            <span>On</span>
+            <div class="frame">
+              <div class="card on">
+                <div class="bar-left"></div><div class="bar-right"></div>
+                <div class="neu top pressed"></div><div class="neu bottom raised"></div>
+                <div class="name">Kitchen</div><div class="icon">&#128161;</div><div class="state">62%</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Option E -->
+      <div class="col opt-e">
+        <h2>E. Full-width paddles, faint bars</h2>
+        <p>Paddles run edge-to-edge so they fill the corners; the indicator/hint bars drop to 90% transparent and float faintly on top.</p>
+        <div class="states">
+          <div class="slot">
+            <span>Off</span>
+            <div class="frame">
+              <div class="card">
+                <div class="bar-left"></div><div class="bar-right"></div>
+                <div class="neu top raised"></div><div class="neu bottom pressed"></div>
+                <div class="name">Kitchen</div><div class="icon">&#128161;</div><div class="state">Off</div>
+              </div>
+            </div>
+          </div>
+          <div class="slot">
+            <span>On</span>
+            <div class="frame">
+              <div class="card on">
+                <div class="bar-left"></div><div class="bar-right"></div>
+                <div class="neu top pressed"></div><div class="neu bottom raised"></div>
+                <div class="name">Kitchen</div><div class="icon">&#128161;</div><div class="state">62%</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Option E1: fill 100% -->
+      <div class="col opt-e1">
+        <h2>E — fill 100%</h2>
+        <p>Full-width paddles + 90% transparent track, with the brightness fill at full opacity.</p>
+        <div class="states">
+          <div class="slot">
+            <span>On</span>
+            <div class="frame">
+              <div class="card on">
+                <div class="bar-left"><div class="track"></div><div class="fill"></div></div>
+                <div class="bar-right"><div class="track"></div></div>
+                <div class="neu top pressed"></div><div class="neu bottom raised"></div>
+                <div class="name">Kitchen</div><div class="icon">&#128161;</div><div class="state">62%</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Option E2: fill 50% -->
+      <div class="col opt-e2">
+        <h2>E — fill 50%</h2>
+        <p>Same as E1, but the brightness fill is at 50% opacity.</p>
+        <div class="states">
+          <div class="slot">
+            <span>On</span>
+            <div class="frame">
+              <div class="card on">
+                <div class="bar-left"><div class="track"></div><div class="fill"></div></div>
+                <div class="bar-right"><div class="track"></div></div>
+                <div class="neu top pressed"></div><div class="neu bottom raised"></div>
+                <div class="name">Kitchen</div><div class="icon">&#128161;</div><div class="state">62%</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <p class="legend">
+      <b>Current:</b> the lighter card gradient shows in the rounded corner gaps.<br />
+      <b>D — Surface matches bars:</b> keeps the current shape but lifts the card surface to the
+      indicator/hint bar tone, so the corner peek blends in and reads as intentional — no transparency,
+      paddles keep their radius.<br />
+      <b>A — Hide behind piece:</b> removes the contrasting surface, but the corners become transparent
+      (the dashboard shows through) since the rounded paddles don't fill them.<br />
+      <b>B — Square paddle regions:</b> the paddles extend into the corners and the card's
+      <code>overflow: hidden</code> rounds them — clean edges, opaque surface, and it also removes the
+      little inner-corner notch at the rocker seam. Usually the best standalone fix.<br />
+      <b>C — A + B:</b> same clean corners as B; the surface is purely the paddles (matters only on
+      translucent themes where you don't want any base fill).<br />
+      <b>E — Full-width paddles + faint bars:</b> the paddles span edge-to-edge so they fill (and round)
+      the corners with no inset gap; the indicator/hint bars become 90% transparent overlays. Clean
+      corners while the bars stay visible as a subtle hint.
+    </p>
+  </body>
+</html>

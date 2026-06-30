@@ -38,6 +38,7 @@ const TRIGGER_TRIM = {
   badge: true,
   highlight: true,
   interactions: true,
+  size: true,
 } as const;
 
 interface EditorEntry {

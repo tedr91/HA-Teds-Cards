@@ -261,6 +261,14 @@ export class TedNavbarCardEditor extends LitElement implements LovelaceCardEdito
         return "Button size";
       case "visible":
         return "Visible";
+      case "popup_layout":
+        return "Popup layout";
+      case "popup_max_columns":
+        return "Max columns (optional)";
+      case "popup_title":
+        return "Popup title";
+      case "flip_icon":
+        return "Flip icon when open";
       default:
         return statusItemFieldLabel(schema.name) ?? schema.name;
     }
@@ -305,13 +313,18 @@ export class TedNavbarCardEditor extends LitElement implements LovelaceCardEdito
     return item.type === "popup";
   }
 
-  /** The ordered item list of a container: a section ([sIdx]) or a popup ([sIdx, pIdx]). */
+  /** The ordered item list of a container: a section ([sIdx]) or a (possibly nested)
+   *  popup ([sIdx, pIdx, …]). */
   private _itemsAt(containerPath: number[]): NavItem[] {
     const section = this._sections()[containerPath[0]];
     if (!section) return [];
-    if (containerPath.length === 1) return this._items(section);
-    const popup = this._items(section)[containerPath[1]];
-    return popup && this._isPopup(popup) ? popup.items ?? [] : [];
+    let items = this._items(section);
+    for (let i = 1; i < containerPath.length; i += 1) {
+      const popup = items[containerPath[i]];
+      if (!popup || !this._isPopup(popup)) return [];
+      items = popup.items ?? [];
+    }
+    return items;
   }
 
   /** Write an item list back to its container, dropping the section's legacy buttons key. */
@@ -324,19 +337,31 @@ export class TedNavbarCardEditor extends LitElement implements LovelaceCardEdito
     if (containerPath.length === 1) {
       sections[containerPath[0]] = { ...rest, items };
     } else {
-      const sectionItems = [...this._items(section)];
-      const popup = sectionItems[containerPath[1]];
-      if (!popup || !this._isPopup(popup)) return;
-      sectionItems[containerPath[1]] = { ...popup, items };
-      sections[containerPath[0]] = { ...rest, items: sectionItems };
+      sections[containerPath[0]] = {
+        ...rest,
+        items: this._setNestedItems(this._items(section), containerPath.slice(1), items),
+      };
     }
     this._commit({ ...this._config, sections } as NavbarCardConfig);
   }
 
-  /** Drag-handle class for a container's rows (distinct per nesting level so nested
-   *  ha-sortables don't grab each other's handles). */
+  /** Immutably replace the item list of the (possibly nested) popup reached by `subPath`. */
+  private _setNestedItems(items: NavItem[], subPath: number[], newItems: NavItem[]): NavItem[] {
+    const idx = subPath[0];
+    const popup = items[idx];
+    if (!popup || !this._isPopup(popup)) return items;
+    const next = [...items];
+    next[idx] =
+      subPath.length === 1
+        ? { ...popup, items: newItems }
+        : { ...popup, items: this._setNestedItems(popup.items ?? [], subPath.slice(1), newItems) };
+    return next;
+  }
+
+  /** Drag-handle selector class for a container's rows (unique per nesting depth so
+   *  nested ha-sortables don't grab each other's handles). */
   private _handleClass(containerPath: number[]): string {
-    return containerPath.length <= 1 ? "drag-handle" : "subitem-drag-handle";
+    return `lvl-${containerPath.length}-handle`;
   }
 
   private _stop = (ev: Event): void => {
@@ -483,7 +508,7 @@ export class TedNavbarCardEditor extends LitElement implements LovelaceCardEdito
         @expanded-changed=${(ev: CustomEvent) => this._onPanelToggle(key, ev)}
       >
         <div slot="header" class="row-header">
-          <div class="${this._handleClass(containerPath)}" @click=${this._stop} title="Drag to reorder">
+          <div class="drag-handle ${this._handleClass(containerPath)}" @click=${this._stop} title="Drag to reorder">
             <ha-svg-icon .path=${GRIP_ICON_PATH}></ha-svg-icon>
           </div>
           <ha-icon class="row-icon" icon=${button.icon || "mdi:gesture-tap-button"}></ha-icon>
@@ -543,7 +568,7 @@ export class TedNavbarCardEditor extends LitElement implements LovelaceCardEdito
         @expanded-changed=${(ev: CustomEvent) => this._onPanelToggle(key, ev)}
       >
         <div slot="header" class="row-header">
-          <div class="${this._handleClass(containerPath)}" @click=${this._stop} title="Drag to reorder">
+          <div class="drag-handle ${this._handleClass(containerPath)}" @click=${this._stop} title="Drag to reorder">
             <ha-svg-icon .path=${GRIP_ICON_PATH}></ha-svg-icon>
           </div>
           <ha-icon class="row-icon" icon=${STATUS_ITEM_DEFAULT_ICON[item.type]}></ha-icon>
@@ -574,6 +599,7 @@ export class TedNavbarCardEditor extends LitElement implements LovelaceCardEdito
     const key = `popup-${path.join("-")}`;
     const expanded = this._expanded.has(key);
     const count = (popup.items ?? []).length;
+    const layout = popup.popup_layout === "list" ? "list" : "grid";
     return html`
       <ha-expansion-panel
         outlined
@@ -582,11 +608,11 @@ export class TedNavbarCardEditor extends LitElement implements LovelaceCardEdito
         @expanded-changed=${(ev: CustomEvent) => this._onPanelToggle(key, ev)}
       >
         <div slot="header" class="row-header">
-          <div class="${this._handleClass(containerPath)}" @click=${this._stop} title="Drag to reorder">
+          <div class="drag-handle ${this._handleClass(containerPath)}" @click=${this._stop} title="Drag to reorder">
             <ha-svg-icon .path=${GRIP_ICON_PATH}></ha-svg-icon>
           </div>
           <ha-icon class="row-icon" icon=${popup.icon || (this._config?.alignment === "top" ? "mdi:chevron-down" : "mdi:chevron-up")}></ha-icon>
-          <span class="row-title">Popup</span>
+          <span class="row-title">Popup menu</span>
           <span class="row-subtitle">${popup.name || `${count} item${count === 1 ? "" : "s"}`}</span>
           <ha-icon-button
             class="warning"
@@ -598,16 +624,54 @@ export class TedNavbarCardEditor extends LitElement implements LovelaceCardEdito
         <div class="row-body">
           <ha-form
             .hass=${this.hass}
-            .data=${{ icon: popup.icon ?? "", name: popup.name ?? "" }}
+            .data=${{
+              icon: popup.icon ?? "",
+              name: popup.name ?? "",
+              popup_layout: layout,
+              popup_max_columns: popup.popup_max_columns,
+              popup_title: popup.popup_title ?? "",
+              flip_icon: popup.flip_icon !== false,
+            }}
             .schema=${[
-              { name: "icon", selector: { icon: {} } },
-              { name: "name", selector: { text: {} } },
+              {
+                type: "grid",
+                name: "",
+                column_min_width: "120px",
+                schema: [
+                  { name: "icon", selector: { icon: {} } },
+                  { name: "name", selector: { text: {} } },
+                ],
+              },
+              {
+                type: "grid",
+                name: "",
+                column_min_width: "120px",
+                schema: [
+                  {
+                    name: "popup_layout",
+                    selector: {
+                      select: {
+                        mode: "dropdown",
+                        options: [
+                          { value: "grid", label: "Grid" },
+                          { value: "list", label: "List" },
+                        ],
+                      },
+                    },
+                  },
+                  ...(layout === "grid"
+                    ? [{ name: "popup_max_columns", selector: { number: { min: 1, max: 12, step: 1, mode: "box" } } }]
+                    : []),
+                ],
+              },
+              { name: "popup_title", selector: { text: {} } },
+              { name: "flip_icon", selector: { boolean: {} } },
             ]}
             .computeLabel=${this._computeLabel}
             @value-changed=${(ev: CustomEvent) => this._onPopupFieldsChanged(containerPath, idx, ev)}
           ></ha-form>
           <div class="subgroup-label">Popup items</div>
-          ${this._renderItemList(path, popup.items ?? [], false)}
+          ${this._renderItemList(path, popup.items ?? [], true)}
         </div>
       </ha-expansion-panel>
     `;
@@ -819,7 +883,14 @@ export class TedNavbarCardEditor extends LitElement implements LovelaceCardEdito
 
   private _onPopupFieldsChanged(containerPath: number[], idx: number, ev: CustomEvent): void {
     ev.stopPropagation();
-    const value = (ev.detail?.value ?? {}) as { icon?: string; name?: string };
+    const value = (ev.detail?.value ?? {}) as {
+      icon?: string;
+      name?: string;
+      popup_layout?: string;
+      popup_max_columns?: number;
+      popup_title?: string;
+      flip_icon?: boolean;
+    };
     const items = [...this._itemsAt(containerPath)];
     const popup = items[idx];
     if (!popup || !this._isPopup(popup)) return;
@@ -828,6 +899,15 @@ export class TedNavbarCardEditor extends LitElement implements LovelaceCardEdito
     else delete next.icon;
     if (value.name) next.name = value.name;
     else delete next.name;
+    if (value.popup_layout === "list") next.popup_layout = "list";
+    else delete next.popup_layout;
+    if (typeof value.popup_max_columns === "number" && value.popup_max_columns > 0)
+      next.popup_max_columns = value.popup_max_columns;
+    else delete next.popup_max_columns;
+    if (value.popup_title) next.popup_title = value.popup_title;
+    else delete next.popup_title;
+    if (value.flip_icon === false) next.flip_icon = false;
+    else delete next.flip_icon;
     items[idx] = next;
     this._commitItemList(containerPath, items);
   }

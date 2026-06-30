@@ -62,6 +62,8 @@ export interface ButtonEditorTrim {
   highlight?: boolean;
   /** Hide the Interactions section (tap / hold / double-tap). */
   interactions?: boolean;
+  /** Hide the Width / Height size fields (e.g. when always grid-embedded). */
+  size?: boolean;
 }
 
 @customElement(BUTTON_CARD_EDITOR_TYPE)
@@ -93,6 +95,7 @@ export class TedButtonCardEditor extends LitElement implements LovelaceCardEdito
           .data=${data}
           .schema=${schema.top}
           .computeLabel=${this._computeLabel}
+          .computeHelper=${this._computeHelper}
           @value-changed=${this._valueChanged}
         ></ha-form>
         ${this._renderElements()}
@@ -123,12 +126,15 @@ export class TedButtonCardEditor extends LitElement implements LovelaceCardEdito
       name_scale: 100,
       show_state: false,
       state_scale: 100,
+      width: 100,
+      height: 120,
       transparency: undefined,
       blur: undefined,
     };
   }
 
   private _schema() {
+    const inGrid = Boolean(this._config?.grid_options);
     const visual: Array<Record<string, unknown>> = [
       {
         name: "theme",
@@ -155,6 +161,19 @@ export class TedButtonCardEditor extends LitElement implements LovelaceCardEdito
         ],
       },
       { name: "shadow", selector: { boolean: {} } },
+      ...(this.trim?.size
+        ? []
+        : [
+            {
+              type: "grid",
+              name: "",
+              column_min_width: "100px",
+              schema: [
+                { name: "width", disabled: inGrid, selector: { number: { min: 80, max: 600, step: 10, mode: "box", unit_of_measurement: "px" } } },
+                { name: "height", disabled: inGrid, selector: { number: { min: 60, max: 600, step: 10, mode: "box", unit_of_measurement: "px" } } },
+              ],
+            },
+          ]),
     ];
 
     const interactions: Array<Record<string, unknown>> = [
@@ -221,6 +240,13 @@ export class TedButtonCardEditor extends LitElement implements LovelaceCardEdito
     return this._config?.entity ? "more-info" : "none";
   }
 
+  private _computeHelper = (schema: { name: string }): string | undefined => {
+    if (schema.name === "width" || schema.name === "height") {
+      return "Only used when the card isn't a direct item in a grid (Sections) view.";
+    }
+    return undefined;
+  };
+
   private _computeLabel = (schema: { name: string }): string => {
     switch (schema.name) {
       case "entity":
@@ -262,6 +288,10 @@ export class TedButtonCardEditor extends LitElement implements LovelaceCardEdito
         return "Show entity state";
       case "state_scale":
         return "State size";
+      case "width":
+        return "Width (px)";
+      case "height":
+        return "Height (px)";
       case "tap_action":
       case "hold_action":
       case "double_tap_action": {

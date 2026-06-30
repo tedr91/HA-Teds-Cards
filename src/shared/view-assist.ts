@@ -1,6 +1,20 @@
 import type { HomeAssistant } from "custom-card-helpers";
 
 /**
+ * The entity id of the current device's View Assist sensor, as stored by View Assist
+ * in `localStorage` under `view_assist_sensor`. Returns `undefined` on a normal browser
+ * (no View Assist), so callers can fall back gracefully. The read is wrapped so a blocked
+ * `localStorage` never throws.
+ */
+export function viewAssistSensor(): string | undefined {
+  try {
+    return localStorage.getItem("view_assist_sensor") ?? undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
  * Navigate using the View Assist integration's `view_assist.navigate` service so
  * the destination honours the current device's configured screens.
  *
@@ -18,12 +32,7 @@ import type { HomeAssistant } from "custom-card-helpers";
  * has no effect for users who don't use View Assist.
  */
 export function viewAssistNavigate(hass: HomeAssistant | undefined, view: string): void {
-  let sensor: string | null = null;
-  try {
-    sensor = localStorage.getItem("view_assist_sensor");
-  } catch {
-    sensor = null;
-  }
+  const sensor = viewAssistSensor();
 
   const state = sensor && hass ? hass.states[sensor] : undefined;
   if (hass && sensor && state) {
@@ -50,12 +59,7 @@ export function viewAssistNavigate(hass: HomeAssistant | undefined, view: string
  * No-op when not on a View Assist device. Only ever called from a user action.
  */
 export function viewAssistToggleHold(hass: HomeAssistant | undefined): void {
-  let sensor: string | null = null;
-  try {
-    sensor = localStorage.getItem("view_assist_sensor");
-  } catch {
-    sensor = null;
-  }
+  const sensor = viewAssistSensor();
   if (!hass || !sensor) return;
   const mode = String(hass.states[sensor]?.attributes.mode ?? "");
   hass.callService("view_assist", "set_state", {

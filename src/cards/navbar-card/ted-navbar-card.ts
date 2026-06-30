@@ -12,6 +12,7 @@ import type {
 import { appearanceStyle, cssColor } from "../../shared/appearance";
 import { isVisible } from "../../shared/conditions";
 import { registerCustomCard } from "../../shared/register-card";
+import { viewAssistSensor } from "../../shared/view-assist";
 import { tedCardThemeClass, tedStyleTheme } from "../../shared/theme";
 import { renderStatusItem, type StatusItemContext } from "../../shared/status-items/render";
 import { StatusSliderController } from "../../shared/status-items/slider-controller";
@@ -173,8 +174,9 @@ export class TedNavbarCard extends LitElement implements LovelaceCard {
 
   private _thickness(): number {
     const source = this._config?.size_source;
-    if (source && this.hass) {
-      const mapped = vaSizeToThickness(this.hass.states[source.entity]?.attributes?.[source.attribute]);
+    const entity = source ? this._sourceEntity(source) : undefined;
+    if (source && entity && this.hass) {
+      const mapped = vaSizeToThickness(this.hass.states[entity]?.attributes?.[source.attribute]);
       if (mapped !== undefined) return mapped;
     }
     return typeof this._config?.size === "number" ? this._config.size : DEFAULT_NAVBAR_SIZE;
@@ -281,9 +283,16 @@ export class TedNavbarCard extends LitElement implements LovelaceCard {
   /** Build extra buttons from a View Assist status-icon / menu attribute (a list of
    *  strings), de-duped against the section's curated items so e.g. `home`/`weather`
    *  aren't doubled. Returns nothing until the source entity is available. */
+  /** Resolve a source's entity: the current device's View Assist sensor when
+   *  `va_device` is set (falling back to a static `entity`), else the static `entity`. */
+  private _sourceEntity(source: EntityAttrSource): string | undefined {
+    return source.va_device ? viewAssistSensor() ?? source.entity : source.entity;
+  }
+
   private _sourcedItems(source: EntityAttrSource, base: NavItem[]): NavButtonConfig[] {
-    if (!this.hass) return [];
-    const raw = this.hass.states[source.entity]?.attributes?.[source.attribute];
+    const entity = this._sourceEntity(source);
+    if (!this.hass || !entity) return [];
+    const raw = this.hass.states[entity]?.attributes?.[source.attribute];
     if (!Array.isArray(raw)) return [];
     const seen = new Set<string>();
     for (const item of base) {

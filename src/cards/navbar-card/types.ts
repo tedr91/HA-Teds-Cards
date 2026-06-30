@@ -52,8 +52,13 @@ export type NavItem = NavButtonConfig | StatusItem | NavPopupConfig;
 /** Binds to an entity attribute: a section's `items_source` (a list of View Assist
  *  status-icon / menu strings) or the card's `size_source` (a View Assist size value). */
 export interface EntityAttrSource {
-  /** Entity whose attribute is read (e.g. a View Assist `sensor.<name>`). */
-  entity: string;
+  /** Entity whose attribute is read (e.g. a View Assist `sensor.<name>`). Omit when
+   *  `va_device` is set. */
+  entity?: string;
+  /** Resolve the entity from the current device's View Assist sensor (the
+   *  `view_assist_sensor` localStorage key) instead of a static `entity`, so one shared
+   *  dashboard reads each device's own values. Falls back to `entity` when not on a VA device. */
+  va_device?: boolean;
   /** Attribute holding the value (e.g. `status_icons`, `menu_items`, `status_icons_size`). */
   attribute: string;
 }

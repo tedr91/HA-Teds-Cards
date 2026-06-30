@@ -792,6 +792,10 @@ sections:                 # up to 5 sections
 The newest entry below is used as the GitHub Release notes by the release workflow, so it shows in
 the Home Assistant / HACS **update** dialog when you update. Newest first.
 
+### v1.0.2
+
+- **Navbar Card** — sections can now **source buttons from a View Assist status-icon / menu list** (`items_source`) and the bar can **size its thickness from a View Assist size** (`size_source`); sourced `view:` / `entity:` / `service:` items and known names like `home` / `weather` are mapped automatically and de-duped against the section's own buttons.
+
 ### v1.0.1
 
 - **MessageBox Card** — a new dismissible message banner (inline, pinned, or modal) with severities, action buttons, a learn-more link, and built-in visibility conditions.

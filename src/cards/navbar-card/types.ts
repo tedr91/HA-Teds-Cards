@@ -49,6 +49,15 @@ export interface NavPopupConfig {
 /** An item in a navbar section: a button, a status item, or a popup. */
 export type NavItem = NavButtonConfig | StatusItem | NavPopupConfig;
 
+/** Binds to an entity attribute: a section's `items_source` (a list of View Assist
+ *  status-icon / menu strings) or the card's `size_source` (a View Assist size value). */
+export interface EntityAttrSource {
+  /** Entity whose attribute is read (e.g. a View Assist `sensor.<name>`). */
+  entity: string;
+  /** Attribute holding the value (e.g. `status_icons`, `menu_items`, `status_icons_size`). */
+  attribute: string;
+}
+
 /** A section of the navbar, placed in a zone and holding an ordered list of items. */
 export interface NavSection {
   /** Which zone the section sits in. Defaults to "left". */
@@ -63,6 +72,10 @@ export interface NavSection {
   items?: NavItem[];
   /** Legacy buttons-only list; read as items when `items` is unset. */
   buttons?: NavButtonConfig[];
+  /** Append buttons parsed from a list of View Assist status-icon / menu strings read
+   *  off an entity attribute. Sourced buttons follow the section's own items and are
+   *  de-duped against them (so e.g. a curated Home button isn't doubled). */
+  items_source?: EntityAttrSource;
 }
 
 export interface NavbarCardConfig extends LovelaceCardConfig {
@@ -85,6 +98,10 @@ export interface NavbarCardConfig extends LovelaceCardConfig {
   transparency?: number;
   /** Background blur override, 0–100% (unset = no override). */
   blur?: number;
+  /** Drive the bar thickness from an entity attribute holding a View Assist size
+   *  ("6vw"/"7vw"/"8vw" → 35/42/50 px). Overrides `size` when it resolves; View Assist's
+   *  own vw rendering is intentionally not used. */
+  size_source?: EntityAttrSource;
   /** Up to MAX_NAV_SECTIONS sections. */
   sections?: NavSection[];
 }

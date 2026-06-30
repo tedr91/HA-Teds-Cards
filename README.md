@@ -730,6 +730,9 @@ max_width: 920            # float only: maximum bar width in px
 background: ""            # optional card background color (theme name or hex/rgb)
 transparency: 0           # 0–100% — fade the bar's background
 blur: 0                   # 0–100% — blur the dashboard behind the bar
+size_source:              # optional (View Assist): set bar thickness from an entity attribute
+  entity: sensor.view_assist_kitchen
+  attribute: status_icons_size   # View Assist size 6vw/7vw/8vw → 35/42/50 px
 sections:                 # up to 5 sections
   - placement: left       # left | center | right (which zone the section sits in)
     align: center         # left | center | right (alignment of items within the section)
@@ -739,6 +742,9 @@ sections:                 # up to 5 sections
       - type: date                          # status item
       - type: weather                       # status item (auto-picks a weather entity, or set entity:)
   - placement: center
+    items_source:         # optional (View Assist): append buttons from a status-icon list
+      entity: sensor.view_assist_kitchen
+      attribute: status_icons             # or menu_items
     items:
       - type: custom:ted-label-button-card  # a button
         name: Home
@@ -759,6 +765,8 @@ sections:                 # up to 5 sections
 - **Navbar type** — **Snap** spans edge-to-edge; **Float** centers the bar with margins and rounded corners (top/bottom bars only). A floating bar **auto-sizes to fit its buttons** (just a little wider) — unless it has **left-** or **right-**zone items, in which case it spans the full (maximum) width so those items can pin to the edges.
 - **Minimum width** / **Maximum width** (float only) — the bounds the floating bar is sized within (defaults **16** and **920** px).
 - **Size** — the bar thickness in pixels; buttons size automatically from it.
+- **Size source** *(View Assist)* — optionally drive the **bar thickness** from an entity attribute holding a View Assist size (`6vw` / `7vw` / `8vw` → `35` / `42` / `50` px). View Assist's own `vw` rendering isn't used; everything inside the bar auto-scales from the resulting thickness.
+- **Items source** *(View Assist)* — a section can **append buttons from a View Assist status-icon / menu list** (e.g. a VA sensor's `status_icons` or `menu_items` attribute). Each entry becomes a button — `view:` navigates, `entity:` toggles, `service:` calls a service, and known names like `home` / `weather` map automatically — added after the section's own items and **de-duped** against them.
 - **Sections** (up to **5**) — each sits in a **left / center / right** zone and has its own content
   **alignment**. Sections, and the items inside them, are added and **dragged to reorder** in the
   editor. The **center** zone is pinned to the exact center of the bar, independent of the left/right

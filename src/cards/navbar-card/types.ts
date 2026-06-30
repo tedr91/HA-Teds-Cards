@@ -3,7 +3,7 @@ import type { LovelaceCardConfig } from "custom-card-helpers";
 import type { Condition } from "../../shared/conditions";
 import type { StatusItem } from "../../shared/status-items/types";
 import type { TedStyleTheme } from "../../shared/types";
-import type { LabelButtonCardConfig } from "../label-button-card/types";
+import type { ButtonCardConfig } from "../button-card/types";
 
 /** Which screen edge the navbar is pinned to. */
 export type NavbarAlignment = "bottom" | "top" | "left" | "right";
@@ -20,8 +20,8 @@ export type NavAlign = "left" | "center" | "right";
 /** Relative width of a nav button. */
 export type NavButtonSize = "normal" | "wide";
 
-/** A navbar button: a label-button card plus nav-only sizing and visibility. */
-export type NavButtonConfig = LabelButtonCardConfig & {
+/** A navbar button: a button card plus nav-only sizing and visibility. */
+export type NavButtonConfig = ButtonCardConfig & {
   nav_button_size?: NavButtonSize;
   /** Hide the item outright (default true = shown). */
   visible?: boolean;

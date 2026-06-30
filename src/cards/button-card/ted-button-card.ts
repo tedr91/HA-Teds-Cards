@@ -18,18 +18,18 @@ import { appearanceStyle } from "../../shared/appearance";
 import { brushedOverlay, tedCardThemeClass, tedStyleTheme } from "../../shared/theme";
 import { viewAssistNavigate, viewAssistToggleHold } from "../../shared/view-assist";
 import {
-  DEFAULT_LABEL_BUTTON_ICON,
-  LABEL_BUTTON_CARD_DESCRIPTION,
-  LABEL_BUTTON_CARD_EDITOR_TYPE,
-  LABEL_BUTTON_CARD_NAME,
-  LABEL_BUTTON_CARD_TYPE,
+  BUTTON_CARD_DESCRIPTION,
+  BUTTON_CARD_EDITOR_TYPE,
+  BUTTON_CARD_NAME,
+  BUTTON_CARD_TYPE,
+  DEFAULT_BUTTON_ICON,
   entityDefaultButtonAction,
 } from "./const";
 import type {
+  ButtonCardConfig,
   CardElement,
   HighlightConfig,
   HighlightRule,
-  LabelButtonCardConfig,
   ViewAssistNavigateActionConfig,
 } from "./types";
 
@@ -174,37 +174,37 @@ interface GridOptions {
 }
 
 registerCustomCard({
-  type: LABEL_BUTTON_CARD_TYPE,
-  name: LABEL_BUTTON_CARD_NAME,
-  description: LABEL_BUTTON_CARD_DESCRIPTION,
+  type: BUTTON_CARD_TYPE,
+  name: BUTTON_CARD_NAME,
+  description: BUTTON_CARD_DESCRIPTION,
   preview: true,
-  documentationURL: "https://github.com/tedr91/HA-Teds-Cards#label--button-card",
+  documentationURL: "https://github.com/tedr91/HA-Teds-Cards#button-card",
   getEntitySuggestion: (_hass, entityId) => ({
-    config: { type: `custom:${LABEL_BUTTON_CARD_TYPE}`, entity: entityId },
+    config: { type: `custom:${BUTTON_CARD_TYPE}`, entity: entityId },
   }),
 });
 
-@customElement(LABEL_BUTTON_CARD_TYPE)
-export class TedLabelButtonCard extends LitElement implements LovelaceCard {
+@customElement(BUTTON_CARD_TYPE)
+export class TedButtonCard extends LitElement implements LovelaceCard {
   public static async getConfigElement(): Promise<LovelaceCardEditor> {
-    await import("./ted-label-button-card-editor");
-    return document.createElement(LABEL_BUTTON_CARD_EDITOR_TYPE) as LovelaceCardEditor;
+    await import("./ted-button-card-editor");
+    return document.createElement(BUTTON_CARD_EDITOR_TYPE) as LovelaceCardEditor;
   }
 
-  public static getStubConfig(): Omit<LabelButtonCardConfig, "type"> {
+  public static getStubConfig(): Omit<ButtonCardConfig, "type"> {
     return { name: "Button" };
   }
 
   @property({ attribute: false }) public hass?: HomeAssistant;
   @property({ attribute: false }) public layout?: string;
-  @state() private _config?: LabelButtonCardConfig;
+  @state() private _config?: ButtonCardConfig;
 
   private _clickTimer?: number;
   private _longPressTimer?: number;
   private _longPressFired = false;
   private _resizeObserver?: ResizeObserver;
 
-  public setConfig(config: LabelButtonCardConfig): void {
+  public setConfig(config: ButtonCardConfig): void {
     if (!config) {
       throw new Error("Invalid configuration");
     }
@@ -282,7 +282,7 @@ export class TedLabelButtonCard extends LitElement implements LovelaceCard {
 
   private _icon(): string {
     const stateObj = this._stateObj();
-    return this._config?.icon ?? stateObj?.attributes?.icon ?? DEFAULT_LABEL_BUTTON_ICON;
+    return this._config?.icon ?? stateObj?.attributes?.icon ?? DEFAULT_BUTTON_ICON;
   }
 
   private _stateLabel(): string {
@@ -658,6 +658,6 @@ export class TedLabelButtonCard extends LitElement implements LovelaceCard {
 
 declare global {
   interface HTMLElementTagNameMap {
-    "ted-label-button-card": TedLabelButtonCard;
+    "ted-button-card": TedButtonCard;
   }
 }

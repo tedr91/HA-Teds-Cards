@@ -50,7 +50,7 @@ export interface ViewAssistHoldActionConfig {
   action: "view-assist-hold";
 }
 
-export interface LabelButtonCardConfig extends LovelaceCardConfig {
+export interface ButtonCardConfig extends LovelaceCardConfig {
   type: string;
   entity?: string;
   name?: string;

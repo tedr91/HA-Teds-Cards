@@ -58,7 +58,7 @@ interface ButtonEditorEntry {
   json: string;
 }
 
-/** Strip the nav-only sizing key so the embedded label-button editor stays clean. */
+/** Strip the nav-only sizing key so the embedded button editor stays clean. */
 function stripNavSize(button: NavButtonConfig): LovelaceCardConfig {
   const { nav_button_size, ...rest } = button;
   void nav_button_size;

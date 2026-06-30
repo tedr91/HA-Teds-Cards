@@ -1,12 +1,12 @@
 import { NAMESPACE } from "../../shared/const";
 
-export const LABEL_BUTTON_CARD_TYPE = `${NAMESPACE}-label-button-card`;
-export const LABEL_BUTTON_CARD_EDITOR_TYPE = `${LABEL_BUTTON_CARD_TYPE}-editor`;
-export const LABEL_BUTTON_CARD_NAME = "Ted Label / Button Card";
-export const LABEL_BUTTON_CARD_DESCRIPTION =
+export const BUTTON_CARD_TYPE = `${NAMESPACE}-button-card`;
+export const BUTTON_CARD_EDITOR_TYPE = `${BUTTON_CARD_TYPE}-editor`;
+export const BUTTON_CARD_NAME = "Ted Button Card";
+export const BUTTON_CARD_DESCRIPTION =
   "A label or button with an optional entity, icon and tap/hold actions.";
 
-export const DEFAULT_LABEL_BUTTON_ICON = "mdi:gesture-tap-button";
+export const DEFAULT_BUTTON_ICON = "mdi:gesture-tap-button";
 
 /** Domains whose default button (tap) action is "toggle" — mirrors Home Assistant's
  *  getEntityDefaultButtonAction. Everything else defaults to "more-info". */

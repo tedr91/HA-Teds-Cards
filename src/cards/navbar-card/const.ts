@@ -1,5 +1,5 @@
 import { NAMESPACE } from "../../shared/const";
-import { LABEL_BUTTON_CARD_TYPE } from "../label-button-card/const";
+import { BUTTON_CARD_TYPE } from "../button-card/const";
 import type { NavButtonConfig } from "./types";
 
 export const NAVBAR_CARD_TYPE = `${NAMESPACE}-navbar-card`;
@@ -24,9 +24,9 @@ export const MAX_NAV_SECTIONS = 5;
  *  and the default Navbar stub so an auto-added button is identical to a hand-added one. */
 export function defaultNavButton(): NavButtonConfig {
   return {
-    type: `custom:${LABEL_BUTTON_CARD_TYPE}`,
+    type: `custom:${BUTTON_CARD_TYPE}`,
     icon: "mdi:gesture-tap-button",
-    icon_scale: 150,
+    icon_scale: 140,
     icon_color: "none",
     theme: "ha",
     brushed: false,

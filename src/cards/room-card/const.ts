@@ -8,7 +8,7 @@ export const ROOM_CARD_DESCRIPTION =
 
 /** Embeddable button card types, as Lovelace `custom:` config types. */
 export const ROOM_BUTTON_CARD_TYPES = {
-  label: `custom:${NAMESPACE}-label-button-card`,
+  label: `custom:${NAMESPACE}-button-card`,
   cover: `custom:${NAMESPACE}-cover-card`,
   light: `custom:${NAMESPACE}-light-card`,
   camera: `custom:${NAMESPACE}-camera-card`,

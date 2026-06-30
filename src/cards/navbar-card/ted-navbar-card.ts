@@ -260,7 +260,7 @@ export class TedNavbarCard extends LitElement implements LovelaceCard {
     });
   }
 
-  /** Strip the nav-only keys so the embedded label-button card stays clean. */
+  /** Strip the nav-only keys so the embedded button card stays clean. */
   private _buttonCardConfig(button: NavButtonConfig): LovelaceCardConfig {
     const { nav_button_size, visible, visibility, ...cardConfig } = button;
     void nav_button_size;

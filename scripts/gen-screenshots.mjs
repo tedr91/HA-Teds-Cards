@@ -230,11 +230,11 @@ const CARDS = [
     ],
   },
   {
-    name: "label-button-card",
+    name: "button-card",
     padding: 28,
     cards: [
       {
-        tag: "ted-label-button-card",
+        tag: "ted-button-card",
         frame: { width: "200px", height: "120px" },
         config: { entity: "switch.fireplace", name: "Fireplace", icon: "mdi:fireplace" },
         states: {
@@ -313,8 +313,8 @@ const CARDS = [
                 { type: "custom:ted-light-card", entity: "light.living_room", name: "Lamp" },
                 { type: "custom:ted-light-card", entity: "light.accent", name: "Accent" },
                 { type: "custom:ted-cover-card", entity: "cover.living_room_blinds", name: "Blinds" },
-                { type: "custom:ted-label-button-card", entity: "script.movie_night", name: "Movie", icon: "mdi:movie-open" },
-                { type: "custom:ted-label-button-card", entity: "switch.fireplace", name: "Fire", icon: "mdi:fireplace" },
+                { type: "custom:ted-button-card", entity: "script.movie_night", name: "Movie", icon: "mdi:movie-open" },
+                { type: "custom:ted-button-card", entity: "switch.fireplace", name: "Fire", icon: "mdi:fireplace" },
               ],
             },
           ],

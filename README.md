@@ -17,7 +17,7 @@ After spending months attempting to find an "on/off/brightness" switch that I li
 | --- | --- | --- |
 | Light Card | `custom:ted-light-card` | Light tile with click-to-dim halves and an indicator bar. |
 | Cover Card | `custom:ted-cover-card` | Cover tile with click-to-position halves and an indicator bar. |
-| Label / Button Card | `custom:ted-label-button-card` | Label or button tile with an optional entity, icon, and tap/hold actions. |
+| Button Card | `custom:ted-button-card` | Label or button tile with an optional entity, icon, and tap/hold actions. |
 | Clock Weather Card | `custom:ted-clock-weather-card` | A large clock with the date and current weather. |
 | Remote Card | `custom:ted-remote-card` | Remote control for media devices (e.g. Apple TV and Kaleidescape). |
 | Room Card | `custom:ted-room-card` | Overview card for a Home Assistant area. |
@@ -289,7 +289,7 @@ memory_entity: input_number.blinds_position
 
 </details>
 
-### 🏷️👆 Label / Button Card
+### 🏷️👆 Button Card
 
 A small, versatile tile that works as either a **label** or a **button**. The entity is optional: with
 no entity it's a static label (or an action button via the tap/hold actions); with an entity it shows
@@ -297,20 +297,20 @@ the entity's state and toggles (or opens more-info) by default. It's also the bu
 **Room Card** sections.
 
 <p align="center">
-  <img src="images/cards/label-button-card.png" alt="Label / Button Card preview" width="220" />
+  <img src="images/cards/button-card.png" alt="Button Card preview" width="220" />
 </p>
 
 Minimal config (button bound to an entity):
 
 ```yaml
-type: custom:ted-label-button-card
+type: custom:ted-button-card
 entity: light.living_room
 ```
 
 Minimal config (plain label):
 
 ```yaml
-type: custom:ted-label-button-card
+type: custom:ted-button-card
 name: Hello, world!
 ```
 
@@ -318,7 +318,7 @@ name: Hello, world!
 <summary><b>Detailed options</b></summary>
 
 ```yaml
-type: custom:ted-label-button-card
+type: custom:ted-button-card
 entity: light.living_room   # optional, the entity to control / show
 name: Living Room           # optional label text, defaults to the entity friendly name
 icon: mdi:lightbulb         # optional, defaults to the entity icon
@@ -579,7 +579,7 @@ sections:                  # optional, grids of buttons below the status bar
         entity: light.living_room
       - type: custom:ted-cover-card
         entity: cover.living_room
-      - type: custom:ted-label-button-card
+      - type: custom:ted-button-card
         name: Scene
 ```
 
@@ -625,7 +625,7 @@ and an advanced `colors` map (state → color) for per-state colors.
 
 **Button sections** — one or more grids of buttons below the status bar, managed in the editor's
 **Button sections** section (add, reorder, delete sections; add, reorder, delete buttons within each).
-Each button is a `ted-label-button-card`, `ted-cover-card`, `ted-light-card`, or `ted-camera-card`, edited inline with
+Each button is a `ted-button-card`, `ted-cover-card`, `ted-light-card`, or `ted-camera-card`, edited inline with
 that card's own editor. Buttons lay out 5 per row as squares; set a section's **Max rows** to cap the
 height (`0` = unlimited). When the buttons overflow the cap, the last visible cell becomes a **…**
 button that reveals the rest.
@@ -696,7 +696,7 @@ double_tap_action:
 ### 🧭 Navbar Card
 
 A **navigation bar pinned to the top or bottom** of the dashboard. Each section holds an ordered mix of
-**buttons** — each a full **Label / Button Card**, so they get icons, colors, actions, badges, and dynamic
+**buttons** — each a full **Button Card**, so they get icons, colors, actions, badges, and dynamic
 highlighting — and **status items** such as the **time**, **date**, **weather**, or a room's temperature,
 brightness and volume, arranged in **left / center / right** zones. The **center** zone stays pinned to the
 exact middle regardless of what's on the sides, so a "Home" button can sit perfectly centered.
@@ -711,7 +711,7 @@ type: custom:ted-navbar-card
 sections:
   - placement: center
     items:
-      - type: custom:ted-label-button-card
+      - type: custom:ted-button-card
         name: Home
         icon: mdi:home
 ```
@@ -746,7 +746,7 @@ sections:                 # up to 5 sections
       va_device: true                     # this device's VA sensor (or use entity: sensor.<name>)
       attribute: status_icons             # or menu_items
     items:
-      - type: custom:ted-label-button-card  # a button
+      - type: custom:ted-button-card  # a button
         name: Home
         icon: mdi:home
         nav_button_size: normal             # normal (default) | wide
@@ -756,7 +756,7 @@ sections:                 # up to 5 sections
       - type: popup                         # a popup: tap the icon to reveal more items
         icon: mdi:dots-horizontal
         items:
-          - type: custom:ted-label-button-card
+          - type: custom:ted-button-card
             name: Settings
             icon: mdi:cog
 ```
@@ -773,7 +773,7 @@ sections:                 # up to 5 sections
   content.
 - **Items** — each section's **+ Add item** menu adds a **button**, a **status item**, or a **popup**, mixed in
   any order and **dragged to reorder**.
-- **Buttons** — a full **Label / Button Card** (entity, icon, colors, actions, badge, dynamic
+- **Buttons** — a full **Button Card** (entity, icon, colors, actions, badge, dynamic
   highlighting). **Button size** is **Normal** (square) or **Wide**.
 - **Status items** — **Time**, **Date** and **Weather**, plus a room's **Temperature**, **Occupancy**,
   **Brightness**, **Volume**, an entity **Status LED**, and a **Spacer**. Brightness and volume open a
@@ -791,6 +791,10 @@ sections:                 # up to 5 sections
 
 The newest entry below is used as the GitHub Release notes by the release workflow, so it shows in
 the Home Assistant / HACS **update** dialog when you update. Newest first.
+
+### v1.0.4
+
+- **Button Card** — renamed from **Label / Button Card** to **Button Card**; its config type is now `custom:ted-button-card`. A label is just a non-clickable button, so the single name is clearer. Update any dashboards using the old `custom:ted-label-button-card` type.
 
 ### v1.0.3
 

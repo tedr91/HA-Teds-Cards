@@ -5,7 +5,7 @@ import type { TedStyleTheme } from "../../shared/types";
 import type { CameraCardConfig } from "../camera-card/types";
 import type { CoverCardConfig } from "../cover-card/types";
 import type { LightCardConfig } from "../light-card/types";
-import type { LabelButtonCardConfig } from "../label-button-card/types";
+import type { ButtonCardConfig } from "../button-card/types";
 import type { SpacerCardConfig } from "../spacer-card/types";
 
 /** Visual styling mode. `ted-style` = self-contained look; `ha` = follow HA theme. */
@@ -49,7 +49,7 @@ export type RoomStatusItem =
 
 /** A button inside a button section — one of the embeddable Ted card types. */
 export type RoomButtonConfig = (
-  | LabelButtonCardConfig
+  | ButtonCardConfig
   | CoverCardConfig
   | LightCardConfig
   | CameraCardConfig

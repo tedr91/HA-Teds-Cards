@@ -4,13 +4,13 @@ import { repeat } from "lit/directives/repeat.js";
 import { type HomeAssistant, type LovelaceCardEditor, fireEvent } from "custom-card-helpers";
 
 import { transparencyBlurSchema } from "../../shared/appearance";
-import { LABEL_BUTTON_CARD_EDITOR_TYPE, entityDefaultButtonAction } from "./const";
+import { BUTTON_CARD_EDITOR_TYPE, entityDefaultButtonAction } from "./const";
 import type {
   BadgeConfig,
   CardElement,
   HighlightConfig,
   HighlightRule,
-  LabelButtonCardConfig,
+  ButtonCardConfig,
 } from "./types";
 
 // mdi:palette — Visual section
@@ -47,17 +47,17 @@ const OPERATOR_OPTIONS = [
 // entity-based defaults (more-info / toggle) from our `entity` field.
 const ACTION_CONTEXT = { entity_id: "entity" } as const;
 
-@customElement(LABEL_BUTTON_CARD_EDITOR_TYPE)
-export class TedLabelButtonCardEditor extends LitElement implements LovelaceCardEditor {
+@customElement(BUTTON_CARD_EDITOR_TYPE)
+export class TedButtonCardEditor extends LitElement implements LovelaceCardEditor {
   @property({ attribute: false }) public hass?: HomeAssistant;
-  @state() private _config?: LabelButtonCardConfig;
+  @state() private _config?: ButtonCardConfig;
   /** Element chips currently expanded in the reorder section (UI-only state;
    *  chips start collapsed). */
   @state() private _expanded = new Set<CardElement>();
   /** Highlight-rule chips currently expanded (by index; UI-only state). */
   @state() private _expandedRules = new Set<number>();
 
-  public setConfig(config: LabelButtonCardConfig): void {
+  public setConfig(config: ButtonCardConfig): void {
     this._config = config;
   }
 
@@ -90,7 +90,7 @@ export class TedLabelButtonCardEditor extends LitElement implements LovelaceCard
     `;
   }
 
-  private _defaults(): Partial<LabelButtonCardConfig> {
+  private _defaults(): Partial<ButtonCardConfig> {
     return {
       theme: "ha",
       brushed: false,
@@ -254,13 +254,13 @@ export class TedLabelButtonCardEditor extends LitElement implements LovelaceCard
   };
 
   private _valueChanged = (ev: CustomEvent): void => {
-    this._commit({ ...this._config, ...ev.detail.value } as LabelButtonCardConfig);
+    this._commit({ ...this._config, ...ev.detail.value } as ButtonCardConfig);
   };
 
   /** Strip defaults / empty values, drop a redundant element order, and fire. */
-  private _commit(config: LabelButtonCardConfig): void {
+  private _commit(config: ButtonCardConfig): void {
     const defaults = this._defaults();
-    for (const key of Object.keys(defaults) as Array<keyof LabelButtonCardConfig>) {
+    for (const key of Object.keys(defaults) as Array<keyof ButtonCardConfig>) {
       if (config[key] === defaults[key]) {
         delete config[key];
       }
@@ -300,7 +300,7 @@ export class TedLabelButtonCardEditor extends LitElement implements LovelaceCard
     const { oldIndex, newIndex } = ev.detail as { oldIndex: number; newIndex: number };
     const order = this._elementOrder();
     order.splice(newIndex, 0, order.splice(oldIndex, 1)[0]);
-    this._commit({ ...this._config, element_order: order } as LabelButtonCardConfig);
+    this._commit({ ...this._config, element_order: order } as ButtonCardConfig);
   };
 
   private _toggleExpand(el: CardElement): void {
@@ -310,15 +310,15 @@ export class TedLabelButtonCardEditor extends LitElement implements LovelaceCard
     this._expanded = next;
   }
 
-  private _toggleShow(showKey: keyof LabelButtonCardConfig, ev: Event): void {
+  private _toggleShow(showKey: keyof ButtonCardConfig, ev: Event): void {
     ev.stopPropagation();
     const checked = (ev.target as HTMLInputElement).checked;
-    this._commit({ ...this._config, [showKey]: checked } as LabelButtonCardConfig);
+    this._commit({ ...this._config, [showKey]: checked } as ButtonCardConfig);
   }
 
   private _onElementChanged = (ev: CustomEvent): void => {
     ev.stopPropagation();
-    const next = { ...this._config, ...ev.detail.value } as LabelButtonCardConfig;
+    const next = { ...this._config, ...ev.detail.value } as ButtonCardConfig;
     for (const key of ["name_color", "icon_color", "state_color"] as const) {
       if (!next[key]) delete next[key];
     }
@@ -329,7 +329,7 @@ export class TedLabelButtonCardEditor extends LitElement implements LovelaceCard
     const order = this._elementOrder();
     const meta: Record<
       CardElement,
-      { label: string; showKey: keyof LabelButtonCardConfig; sizeKey: keyof LabelButtonCardConfig; colorKey: keyof LabelButtonCardConfig; defShow: boolean }
+      { label: string; showKey: keyof ButtonCardConfig; sizeKey: keyof ButtonCardConfig; colorKey: keyof ButtonCardConfig; defShow: boolean }
     > = {
       icon: { label: "Icon", showKey: "show_icon", sizeKey: "icon_scale", colorKey: "icon_color", defShow: true },
       name: { label: "Name", showKey: "show_name", sizeKey: "name_scale", colorKey: "name_color", defShow: true },
@@ -472,7 +472,7 @@ export class TedLabelButtonCardEditor extends LitElement implements LovelaceCard
     if (value.color) badge.color = value.color;
     if (value.text_color) badge.text_color = value.text_color;
     if (value.show_when_zero) badge.show_when_zero = true;
-    const next = { ...this._config } as LabelButtonCardConfig;
+    const next = { ...this._config } as ButtonCardConfig;
     if (badge.entity) next.badge = badge;
     else delete next.badge;
     this._commit(next);
@@ -679,7 +679,7 @@ export class TedLabelButtonCardEditor extends LitElement implements LovelaceCard
 
   /** Commit a highlight config, dropping it entirely when empty. */
   private _commitHighlight(highlight: HighlightConfig): void {
-    const next = { ...this._config } as LabelButtonCardConfig;
+    const next = { ...this._config } as ButtonCardConfig;
     if (highlight.entity || (highlight.rules && highlight.rules.length > 0)) {
       next.highlight = highlight;
     } else {
@@ -833,6 +833,6 @@ export class TedLabelButtonCardEditor extends LitElement implements LovelaceCard
 
 declare global {
   interface HTMLElementTagNameMap {
-    "ted-label-button-card-editor": TedLabelButtonCardEditor;
+    "ted-button-card-editor": TedButtonCardEditor;
   }
 }

@@ -18,6 +18,7 @@ After spending months attempting to find an "on/off/brightness" switch that I li
 | Light Card | `custom:ted-light-card` | Light tile with click-to-dim halves and an indicator bar. |
 | Cover Card | `custom:ted-cover-card` | Cover tile with click-to-position halves and an indicator bar. |
 | Button Card | `custom:ted-button-card` | Label or button tile with an optional entity, icon, and tap/hold actions. |
+| Expandable Button Card | `custom:ted-button-card` is the trigger; type `custom:ted-expandable-button-card` | A button that opens a popup of child buttons on tap (children can be expandable too). |
 | Clock Weather Card | `custom:ted-clock-weather-card` | A large clock with the date and current weather. |
 | Remote Card | `custom:ted-remote-card` | Remote control for media devices (e.g. Apple TV and Kaleidescape). |
 | Room Card | `custom:ted-room-card` | Overview card for a Home Assistant area. |
@@ -390,7 +391,73 @@ processing** to halt at the first match — handy for threshold ladders like `�
 
 </details>
 
-### 🕒⛅ Clock Weather Card
+### �️👆 Expandable Button Card
+
+A **Button Card that opens a popup of child buttons on tap**. The trigger looks and is configured
+exactly like a normal **Button Card** (icon/name/state, theme, badge, dynamic highlighting); tapping it
+opens a native popover holding a configurable set of child buttons. Each child is a full **Button
+Card** with its own icon, colors, and actions — and a child can itself be **another Expandable Button
+Card**, opening a nested popup without closing its parent. Selecting a leaf button runs its action and
+closes the popup.
+
+Minimal config:
+
+```yaml
+type: custom:ted-expandable-button-card
+name: Scenes
+icon: mdi:movie-open
+items:
+  - type: custom:ted-button-card
+    name: Movie
+    icon: mdi:movie-open
+    tap_action: { action: call-service, service: script.movie_night }
+  - type: custom:ted-button-card
+    name: Bright
+    icon: mdi:white-balance-sunny
+    tap_action: { action: call-service, service: script.bright }
+```
+
+<details>
+<summary><b>Detailed options</b></summary>
+
+```yaml
+type: custom:ted-expandable-button-card
+# --- Trigger appearance: any Button Card option (icon/name/state, theme, badge, highlight, …) ---
+name: Scenes
+icon: mdi:movie-open
+theme: ted-style
+# --- Popup ---
+popup_layout: grid          # grid (default) | list
+popup_columns: 3            # columns for the grid layout (ignored for list)
+popup_title: Scenes         # optional heading shown at the top of the popup
+items:                      # child buttons shown in the popup
+  - type: custom:ted-button-card
+    name: Movie
+    icon: mdi:movie-open
+    tap_action: { action: call-service, service: script.movie_night }
+  - type: custom:ted-expandable-button-card   # a nested expandable child
+    name: More
+    icon: mdi:dots-horizontal
+    items:
+      - type: custom:ted-button-card
+        name: Reading
+        icon: mdi:book-open-variant
+```
+
+The trigger's own tap/hold/double-tap actions are ignored — tapping the trigger always opens the
+popup. Configure each child's actions on the child button itself.
+
+**Popup** (editor) — **Popup layout** is **Grid** (square tiles, with a **Columns** slider) or **List**
+(a single vertical column); **Popup title** adds an optional heading. The popover anchors to the
+trigger, opening downward (flipping up if there isn't room) and dismisses on outside-click or `Esc`.
+
+**Popup buttons** (editor) — add **Button** or **Expandable button** children, drag to reorder, and edit
+each inline with its own card editor. Nested expandable children open their own sub-popups, so you can
+build multi-level menus behind a single tile.
+
+</details>
+
+### �🕒⛅ Clock Weather Card
 
 A large clock with the current date and weather, designed to sit transparently on top of a dashboard
 background. The clock, date, and weather can each be shown or hidden and positioned independently.
@@ -791,6 +858,10 @@ sections:                 # up to 5 sections
 
 The newest entry below is used as the GitHub Release notes by the release workflow, so it shows in
 the Home Assistant / HACS **update** dialog when you update. Newest first.
+
+### v1.0.5
+
+- **Expandable Button Card** — a new `custom:ted-expandable-button-card`: a Button Card that opens a popup of child buttons on tap. The trigger has the full Button Card look; children are full Button Cards with their own actions, and a child can itself be an Expandable Button Card for nested menus. Popup layout is a configurable grid (with columns) or list; selecting a leaf button runs its action and closes the popup.
 
 ### v1.0.4
 

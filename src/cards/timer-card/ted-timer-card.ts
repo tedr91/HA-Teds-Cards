@@ -8,6 +8,7 @@ import { appearanceStyle } from "../../shared/appearance";
 import { brushedOverlay, tedCardThemeClass, tedStyleTheme } from "../../shared/theme";
 import { registerCustomCard } from "../../shared/register-card";
 import { modalStyles } from "../../shared/dialogs";
+import "../../shared/ted-icon-button";
 import {
   TIMERS_SENSOR,
   TIMER_CARD_DESCRIPTION,
@@ -251,23 +252,22 @@ export class TedTimerCard extends LitElement implements LovelaceCard {
           <div class="tname" title=${t.name}>${t.name}</div>
         </div>
         <div class="tile-ctrl">
-          <ha-icon-button
-            class="play ${t.paused ? "accent" : ""}"
+          <ted-icon-button
+            tone=${t.paused ? "accent" : "muted"}
+            icon=${t.paused ? "mdi:play" : "mdi:pause"}
             .label=${t.paused ? `Resume ${t.name}` : `Pause ${t.name}`}
             @click=${() => this._togglePause(t)}
-          >
-            <ha-icon icon=${t.paused ? "mdi:play" : "mdi:pause"}></ha-icon>
-          </ha-icon-button>
-          <ha-icon-button class="gear" .label=${`Edit ${t.name}`} @click=${() => this._openEdit(t)}>
-            <ha-icon icon="mdi:cog"></ha-icon>
-          </ha-icon-button>
-          <ha-icon-button
-            class="del"
+          ></ted-icon-button>
+          <ted-icon-button
+            icon="mdi:cog"
+            .label=${`Edit ${t.name}`}
+            @click=${() => this._openEdit(t)}
+          ></ted-icon-button>
+          <ted-icon-button
+            icon="mdi:delete-outline"
             .label=${`Delete ${t.name}`}
             @click=${() => this._call("cancel_timer", { id: t.id })}
-          >
-            <ha-icon icon="mdi:delete-outline"></ha-icon>
-          </ha-icon-button>
+          ></ted-icon-button>
         </div>
       </div>
     `;
@@ -282,13 +282,12 @@ export class TedTimerCard extends LitElement implements LovelaceCard {
           <div class="tname" title=${r.name}>${r.name}</div>
         </div>
         <div class="tile-ctrl">
-          <ha-icon-button
-            class="play accent"
+          <ted-icon-button
+            tone="accent"
+            icon="mdi:play"
             .label=${`Start ${r.name}`}
             @click=${() => this._call("start_timer", { name: r.name, hours: r.h, minutes: r.m, seconds: r.s })}
-          >
-            <ha-icon icon="mdi:play"></ha-icon>
-          </ha-icon-button>
+          ></ted-icon-button>
         </div>
       </div>
     `;
@@ -386,6 +385,7 @@ export class TedTimerCard extends LitElement implements LovelaceCard {
         display: flex;
         flex-direction: column;
         color: var(--ted-style-text);
+        container-type: inline-size;
       }
       ha-card.no-shadow {
         box-shadow: none;
@@ -496,24 +496,15 @@ export class TedTimerCard extends LitElement implements LovelaceCard {
         gap: 2px;
         padding: 0 6px;
       }
-      .tile-ctrl ha-icon-button {
-        flex: none;
-        --mdc-icon-button-size: 40px;
-        --mdc-icon-size: 22px;
-        border-radius: var(--ted-style-radius-sm);
-      }
-      .play {
-        color: var(--ted-style-muted);
-      }
-      .play.accent {
-        color: var(--ted-style-on-accent);
-        background: var(--ted-style-accent);
-      }
-      .gear {
-        color: var(--ted-style-muted);
-      }
-      .del {
-        color: var(--ted-style-muted);
+      /* Shrink the tile controls when the card itself is narrow. */
+      @container (max-width: 320px) {
+        .tile-ctrl {
+          gap: 0;
+        }
+        .tile-ctrl ted-icon-button {
+          --ted-ib-size: 34px;
+          --ted-ib-icon: 18px;
+        }
       }
       ha-textfield {
         --mdc-theme-primary: var(--ted-style-accent);

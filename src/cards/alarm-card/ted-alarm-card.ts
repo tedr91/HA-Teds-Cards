@@ -8,6 +8,7 @@ import { appearanceStyle } from "../../shared/appearance";
 import { brushedOverlay, tedCardThemeClass, tedStyleTheme } from "../../shared/theme";
 import { registerCustomCard } from "../../shared/register-card";
 import { showConfirmation, modalStyles } from "../../shared/dialogs";
+import "../../shared/ted-icon-button";
 import {
   ALARMS_SENSOR,
   ALARM_CARD_DESCRIPTION,
@@ -210,27 +211,35 @@ export class TedAlarmCard extends LitElement implements LovelaceCard {
       <div class="row ${a.enabled ? "" : "off"}">
         <div class="info">
           <div class="time">${this._fmtTime(a.time)}</div>
-          <div class="label">${a.label}</div>
+          <div class="label-row">
+            <div class="label">${a.label}</div>
+            ${Array.isArray(a.days) && a.days.length
+              ? html`<div class="days">
+                  ${grouped
+                    ? html`<span>${grouped}</span>`
+                    : a.days.map((d) => html`<span>${DAY_LABELS[d] ?? d}</span>`)}
+                </div>`
+              : nothing}
+          </div>
           ${a.description ? html`<div class="desc">${a.description}</div>` : nothing}
-          ${Array.isArray(a.days) && a.days.length
-            ? html`<div class="days">
-                ${grouped
-                  ? html`<span>${grouped}</span>`
-                  : a.days.map((d) => html`<span>${DAY_LABELS[d] ?? d}</span>`)}
-              </div>`
-            : nothing}
         </div>
-        <ha-switch
-          .checked=${a.enabled}
-          @change=${(e: Event) =>
-            this._call("update_alarm", { id: a.id, enabled: (e.target as HTMLInputElement).checked })}
-        ></ha-switch>
-        <ha-icon-button class="gear" .label=${`Edit ${a.label}`} @click=${() => this._openEdit(a)}>
-          <ha-icon icon="mdi:cog"></ha-icon>
-        </ha-icon-button>
-        <ha-icon-button class="del" .label=${`Delete ${a.label}`} @click=${() => this._confirmDelete(a)}>
-          <ha-icon icon="mdi:delete-outline"></ha-icon>
-        </ha-icon-button>
+        <div class="ctrl">
+          <ha-switch
+            .checked=${a.enabled}
+            @change=${(e: Event) =>
+              this._call("update_alarm", { id: a.id, enabled: (e.target as HTMLInputElement).checked })}
+          ></ha-switch>
+          <ted-icon-button
+            icon="mdi:cog"
+            .label=${`Edit ${a.label}`}
+            @click=${() => this._openEdit(a)}
+          ></ted-icon-button>
+          <ted-icon-button
+            icon="mdi:delete-outline"
+            .label=${`Delete ${a.label}`}
+            @click=${() => this._confirmDelete(a)}
+          ></ted-icon-button>
+        </div>
       </div>
     `;
   }
@@ -332,6 +341,7 @@ export class TedAlarmCard extends LitElement implements LovelaceCard {
         display: flex;
         flex-direction: column;
         color: var(--ted-style-text);
+        container-type: inline-size;
       }
       ha-card.no-shadow {
         box-shadow: none;
@@ -368,7 +378,7 @@ export class TedAlarmCard extends LitElement implements LovelaceCard {
       }
       .row {
         display: flex;
-        align-items: center;
+        align-items: flex-start;
         gap: 12px;
         padding: 10px 8px 10px 16px;
         border-top: 1px solid var(--ted-style-divider);
@@ -389,7 +399,14 @@ export class TedAlarmCard extends LitElement implements LovelaceCard {
         line-height: 1.1;
         font-variant-numeric: tabular-nums;
       }
+      .label-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+      }
       .label {
+        flex: 0 1 auto;
         color: var(--ted-style-muted);
         overflow: hidden;
         text-overflow: ellipsis;
@@ -400,10 +417,9 @@ export class TedAlarmCard extends LitElement implements LovelaceCard {
         color: var(--ted-style-muted);
       }
       .days {
+        flex: none;
         display: flex;
-        flex-wrap: wrap;
         gap: 4px;
-        margin-top: 2px;
       }
       .days span {
         font-size: 0.7rem;
@@ -413,13 +429,24 @@ export class TedAlarmCard extends LitElement implements LovelaceCard {
         background: var(--ted-style-surface-2);
         color: var(--ted-style-muted);
       }
-      .del {
-        color: var(--ted-style-muted);
+      .ctrl {
         flex: none;
+        display: flex;
+        align-items: center;
+        gap: 2px;
       }
-      .gear {
-        color: var(--ted-style-muted);
-        flex: none;
+      /* Shrink the row controls when the card itself is narrow. */
+      @container (max-width: 320px) {
+        .ctrl {
+          gap: 0;
+        }
+        .ctrl ted-icon-button {
+          --ted-ib-size: 34px;
+          --ted-ib-icon: 18px;
+        }
+        .ctrl ha-switch {
+          transform: scale(0.85);
+        }
       }
       ha-textfield {
         --mdc-theme-primary: var(--ted-style-accent);

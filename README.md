@@ -913,6 +913,10 @@ options as the Alarm card apply.
 The newest entry below is used as the GitHub Release notes by the release workflow, so it shows in
 the Home Assistant / HACS **update** dialog when you update. Newest first.
 
+### v1.0.17
+
+- **Alarm & Timer Cards** — the shared inline control buttons are now more compact (smaller footprint) with a slightly larger icon inside, for a cleaner, tighter look on both cards.
+
 ### v1.0.16
 
 - **Alarm & Timer Cards** — the inline row/tile controls (on/off, edit, delete, pause/resume, start) now share a single **themed icon button**, so they look and feel consistent across both cards and pick up theme colours and radii uniformly. Both cards also **auto-shrink** these buttons when the card is narrow.

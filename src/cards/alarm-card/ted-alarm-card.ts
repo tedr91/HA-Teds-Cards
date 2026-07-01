@@ -192,9 +192,12 @@ export class TedAlarmCard extends LitElement implements LovelaceCard {
           <ha-icon icon="mdi:alarm"></ha-icon>
           <span>${cfg.title ?? "Alarms"}</span>
           ${!missing && showAdd
-            ? html`<ha-icon-button class="add-hdr" label="New alarm" @click=${this._openAdd}>
-                <ha-icon icon="mdi:plus"></ha-icon>
-              </ha-icon-button>`
+            ? html`<ted-icon-button
+                class="add-hdr"
+                icon="mdi:plus"
+                label="New alarm"
+                @click=${this._openAdd}
+              ></ted-icon-button>`
             : nothing}
         </div>
         ${missing
@@ -364,7 +367,7 @@ export class TedAlarmCard extends LitElement implements LovelaceCard {
       }
       .add-hdr {
         margin-left: auto;
-        color: var(--ted-style-accent);
+        --ted-ib-color: var(--ted-style-accent);
         flex: none;
       }
       .warn {

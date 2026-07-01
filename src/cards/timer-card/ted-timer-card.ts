@@ -227,9 +227,12 @@ export class TedTimerCard extends LitElement implements LovelaceCard {
           <ha-icon icon="mdi:timer-outline"></ha-icon>
           <span>${cfg.title ?? "Timers"}</span>
           ${!missing && showAdd
-            ? html`<ha-icon-button class="add-hdr" label="New timer" @click=${this._openAdd}>
-                <ha-icon icon="mdi:plus"></ha-icon>
-              </ha-icon-button>`
+            ? html`<ted-icon-button
+                class="add-hdr"
+                icon="mdi:plus"
+                label="New timer"
+                @click=${this._openAdd}
+              ></ted-icon-button>`
             : nothing}
         </div>
         ${missing
@@ -253,7 +256,7 @@ export class TedTimerCard extends LitElement implements LovelaceCard {
         </div>
         <div class="tile-ctrl">
           <ted-icon-button
-            tone=${t.paused ? "accent" : "muted"}
+            tone=${t.paused ? "caution" : "muted"}
             icon=${t.paused ? "mdi:play" : "mdi:pause"}
             .label=${t.paused ? `Resume ${t.name}` : `Pause ${t.name}`}
             @click=${() => this._togglePause(t)}
@@ -399,7 +402,7 @@ export class TedTimerCard extends LitElement implements LovelaceCard {
       }
       .add-hdr {
         margin-left: auto;
-        color: var(--ted-style-accent);
+        --ted-ib-color: var(--ted-style-accent);
         flex: none;
       }
       .warn {

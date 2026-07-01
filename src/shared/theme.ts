@@ -27,6 +27,7 @@ export const tedStyleTheme: CSSResult = css`
     --ted-style-surface: #2b2b2b;
     --ted-style-surface-2: #383838;
     --ted-style-success: #6ccb5f;
+    --ted-style-warning: #fcb043;
     --ted-style-danger: #ff99a4;
     --ted-style-radius: 8px;
     --ted-style-radius-sm: 4px;
@@ -49,6 +50,7 @@ export const tedStyleTheme: CSSResult = css`
     --ted-style-surface: var(--ha-card-background, var(--card-background-color, #ffffff));
     --ted-style-surface-2: color-mix(in srgb, var(--ted-style-surface) 84%, var(--ted-style-text) 16%);
     --ted-style-success: var(--success-color, #43a047);
+    --ted-style-warning: var(--warning-color, #ffa600);
     --ted-style-danger: var(--error-color, #e5484d);
     --ted-style-radius: var(--ha-card-border-radius, 12px);
     --ted-style-radius-sm: var(--ha-border-radius-sm, min(var(--ha-card-border-radius, 12px), 14px));

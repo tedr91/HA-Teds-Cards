@@ -20,7 +20,7 @@ import { customElement, property } from "lit/decorators.js";
 export class TedIconButton extends LitElement {
   @property() public icon = "";
   @property() public label = "";
-  @property({ reflect: true }) public tone: "muted" | "accent" | "danger" = "muted";
+  @property({ reflect: true }) public tone: "muted" | "accent" | "caution" | "danger" = "muted";
   @property({ type: Boolean, reflect: true }) public disabled = false;
 
   protected render(): TemplateResult {
@@ -50,7 +50,7 @@ export class TedIconButton extends LitElement {
       height: var(--ted-ib-size);
       border-radius: var(--ted-style-radius-sm, 6px);
       background: none;
-      color: var(--ted-style-muted, var(--secondary-text-color, #6f6f6f));
+      color: var(--ted-ib-color, var(--ted-style-muted, var(--secondary-text-color, #6f6f6f)));
       cursor: pointer;
       transition: background 0.15s ease;
     }
@@ -68,6 +68,13 @@ export class TedIconButton extends LitElement {
       background: var(--ted-style-accent, var(--primary-color, #2196f3));
     }
     :host([tone="accent"]) button:hover {
+      filter: brightness(1.06);
+    }
+    :host([tone="caution"]) button {
+      color: #1c1c1c;
+      background: var(--ted-style-warning, var(--warning-color, #ffa600));
+    }
+    :host([tone="caution"]) button:hover {
       filter: brightness(1.06);
     }
     :host([tone="danger"]) button {

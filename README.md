@@ -913,6 +913,11 @@ options as the Alarm card apply.
 The newest entry below is used as the GitHub Release notes by the release workflow, so it shows in
 the Home Assistant / HACS **update** dialog when you update. Newest first.
 
+### v1.0.21
+
+- **Alarm & Timer Cards** — the header **+** (add) button now uses the same themed button as the other controls, so its corners follow your theme.
+- **Timer Card** — a **paused** active timer's **resume** button now uses a **caution (amber)** colour to make paused timers stand out.
+
 ### v1.0.20
 
 - **Alarm & Timer Cards** — the shared inline control buttons now render with **themed (rounded-rectangle) corners** that follow your theme instead of always being circular, and their footprint is sized tightly to the icon for a cleaner look.

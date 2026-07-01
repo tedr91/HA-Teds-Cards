@@ -1,6 +1,7 @@
 import { NAMESPACE } from "../../shared/const";
 
 export const TIMER_CARD_TYPE = `${NAMESPACE}-timer-card`;
+export const TIMER_CARD_EDITOR_TYPE = `${TIMER_CARD_TYPE}-editor`;
 export const TIMER_CARD_NAME = "Ted Timer Card";
 export const TIMER_CARD_DESCRIPTION =
   "Start, view, and cancel countdown timers (requires the Ted's Cards Backend integration).";

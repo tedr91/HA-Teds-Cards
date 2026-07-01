@@ -24,6 +24,8 @@ After spending months attempting to find an "on/off/brightness" switch that I li
 | Room Card | `custom:ted-room-card` | Overview card for a Home Assistant area. |
 | Camera Card | `custom:ted-camera-card` | Camera feed (auto thumbnail or live stream), like Home Assistant's picture-glance. |
 | Navbar Card | `custom:ted-navbar-card` | Navigation bar pinned to the top or bottom, with buttons and status items in left/center/right zones. |
+| Alarm Card | `custom:ted-alarm-card` | Add, view, and enable/disable alarms (requires the Ted's Cards Backend integration). |
+| Timer Card | `custom:ted-timer-card` | Start, view, and cancel countdown timers (requires the Ted's Cards Backend integration). |
 
 ---
 
@@ -868,12 +870,52 @@ sections:                 # up to 5 sections
 
 </details>
 
+### ⏰ Alarm Card
+
+Add, view, and enable/disable **alarms**. Requires the **[Ted's Cards Backend](https://github.com/tedr91/Teds-Cards-Backend)**
+integration (which owns the alarms and fires them reliably server-side). The card reads
+`sensor.teds_alarms` and calls the backend's `add_alarm` / `update_alarm` / `remove_alarm` services.
+
+```yaml
+type: custom:ted-alarm-card
+title: Alarms            # optional header (default "Alarms")
+entity: sensor.teds_alarms   # optional, override the alarms sensor
+show_add: true           # optional, show the add form (default true)
+theme: ha                # optional, visual styling: ha (default) | ted-style
+```
+
+Each alarm row has an enable toggle, its label (and any description / repeat days), the time, and a
+delete button. The add form takes a label and time. **Appearance** (in the editor) offers **Visual
+styling**, **Transparency** / **Background blur**, a **Brushed** sheen, and a **Subtle shadow** toggle —
+matching the other cards.
+
+### ⏱️ Timer Card
+
+Start, view, and cancel **countdown timers**. Also requires the **Ted's Cards Backend** integration;
+the card reads `sensor.teds_timers` and calls `start_timer` / `cancel_timer`.
+
+```yaml
+type: custom:ted-timer-card
+title: Timers            # optional header (default "Timers")
+entity: sensor.teds_timers   # optional, override the timers sensor
+show_add: true           # optional, show the start form (default true)
+theme: ha                # optional, visual styling: ha (default) | ted-style
+```
+
+Running timers show a **live countdown** with a cancel button; the start form takes a name and an
+**H / M / S** duration; recently used timers appear as quick-start chips. The same **Appearance**
+options as the Alarm card apply.
+
 ---
 
 ## 📋 Changelog
 
 The newest entry below is used as the GitHub Release notes by the release workflow, so it shows in
 the Home Assistant / HACS **update** dialog when you update. Newest first.
+
+### v1.0.11
+
+- **Alarm & Timer Cards** — rebuilt on the same foundations as the other cards: a **Visual styling** option (ted-style / ha, default HA), **Appearance** controls (transparency, background blur, brushed sheen, subtle shadow), an optional **Title** and **sensor entity** override, and a **Show add form** toggle — all via a proper visual editor. Themed inputs throughout; the Timer card now shows a **live countdown** and starts timers with an **H / M / S** duration.
 
 ### v1.0.10
 

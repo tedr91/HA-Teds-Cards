@@ -200,27 +200,34 @@ export class TedAlarmCard extends LitElement implements LovelaceCard {
   }
 
   private _renderAddDialog(): TemplateResult {
+    const theme = this._config?.theme === "ted-style" ? "ted-style" : "ha";
     return html`
       <div
-        class="ted-modal"
+        class="ted-modal ${tedCardThemeClass(theme)}"
         @click=${this._closeAdd}
         @keydown=${(e: KeyboardEvent) => e.key === "Escape" && this._closeAdd()}
       >
         <div class="ted-sheet" @click=${(e: Event) => e.stopPropagation()}>
           <div class="ted-sheet-head">New alarm</div>
           <div class="ted-sheet-body">
-            <ha-textfield
-              label="Label"
-              .value=${this._label}
-              @input=${(e: Event) => (this._label = (e.target as HTMLInputElement).value)}
-              @keydown=${(e: KeyboardEvent) => e.key === "Enter" && this._submitAdd()}
-            ></ha-textfield>
-            <ha-textfield
-              label="Time"
-              type="time"
-              .value=${this._time}
-              @input=${(e: Event) => (this._time = (e.target as HTMLInputElement).value)}
-            ></ha-textfield>
+            <label class="ted-field">
+              <span class="ted-field-label">Label</span>
+              <input
+                class="ted-input"
+                .value=${this._label}
+                @input=${(e: Event) => (this._label = (e.target as HTMLInputElement).value)}
+                @keydown=${(e: KeyboardEvent) => e.key === "Enter" && this._submitAdd()}
+              />
+            </label>
+            <label class="ted-field">
+              <span class="ted-field-label">Time</span>
+              <input
+                class="ted-input"
+                type="time"
+                .value=${this._time}
+                @input=${(e: Event) => (this._time = (e.target as HTMLInputElement).value)}
+              />
+            </label>
           </div>
           <div class="ted-sheet-foot">
             <button class="ted-btn" @click=${this._closeAdd}>Cancel</button>

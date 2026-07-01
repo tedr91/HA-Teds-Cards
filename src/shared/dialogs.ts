@@ -35,9 +35,12 @@ export function showConfirmation(element: HTMLElement, params: ConfirmationParam
 /**
  * Styles for a self-contained modal overlay (`.ted-modal` > `.ted-sheet`).
  * Used instead of `ha-dialog`, which is lazy-loaded and often undefined when a
- * dashboard card first renders. Uses Home Assistant theme tokens so it looks
- * native in any theme. Render the overlay as a sibling of `<ha-card>` (not
- * inside it) so it is not clipped by the card's `overflow: hidden`.
+ * dashboard card first renders. Fields are native `<input>`s (not `ha-textfield`,
+ * which is also lazy-loaded and renders blank until HA registers it) styled with
+ * the card's own `--ted-style-*` theme tokens so radii/colours follow the card's
+ * theme. Give `.ted-modal` the same `tedCardThemeClass(...)` as the card so those
+ * tokens resolve. Render the overlay as a sibling of `<ha-card>` (not inside it)
+ * so it is not clipped by the card's `overflow: hidden`.
  */
 export const modalStyles = css`
   .ted-modal {
@@ -55,9 +58,10 @@ export const modalStyles = css`
     max-height: calc(100vh - 32px);
     overflow: auto;
     box-sizing: border-box;
-    background: var(--ha-card-background, var(--card-background-color, #fff));
-    color: var(--primary-text-color, #111);
-    border-radius: 16px;
+    background: var(--ted-style-surface, var(--ha-card-background, var(--card-background-color, #fff)));
+    color: var(--ted-style-text, var(--primary-text-color, #111));
+    border: 1px solid var(--ted-style-divider, rgba(120, 120, 120, 0.22));
+    border-radius: var(--ted-style-radius, 12px);
     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
   }
   .ted-sheet-head {
@@ -71,20 +75,46 @@ export const modalStyles = css`
     gap: 14px;
     padding: 16px 20px;
   }
-  .ted-sheet-body ha-textfield {
+  .ted-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+  }
+  .ted-field-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--ted-style-muted, var(--secondary-text-color, #6f6f6f));
+  }
+  .ted-input {
     width: 100%;
-    --mdc-theme-primary: var(--primary-color);
-    --mdc-text-field-fill-color: var(--secondary-background-color, rgba(0, 0, 0, 0.04));
-    --mdc-text-field-ink-color: var(--primary-text-color);
-    --mdc-text-field-label-ink-color: var(--secondary-text-color);
+    box-sizing: border-box;
+    font: inherit;
+    color: var(--ted-style-text, var(--primary-text-color, #111));
+    background: var(--ted-style-surface-2, var(--secondary-background-color, rgba(0, 0, 0, 0.04)));
+    border: 1px solid var(--ted-style-divider, rgba(120, 120, 120, 0.22));
+    border-radius: var(--ted-style-radius-sm, 6px);
+    padding: 10px 12px;
+    outline: none;
+    accent-color: var(--ted-style-accent, var(--primary-color, #2196f3));
+  }
+  .ted-input:focus {
+    border-color: var(--ted-style-accent, var(--primary-color, #2196f3));
+  }
+  .ted-input::-webkit-inner-spin-button,
+  .ted-input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  .ted-input[type="number"] {
+    -moz-appearance: textfield;
   }
   .ted-hms {
     display: flex;
     gap: 10px;
   }
-  .ted-hms ha-textfield {
+  .ted-hms .ted-field {
     flex: 1 1 0;
-    min-width: 0;
   }
   .ted-sheet-foot {
     display: flex;
@@ -102,26 +132,26 @@ export const modalStyles = css`
     font: inherit;
     font-weight: 600;
     padding: 10px 16px;
-    border-radius: 10px;
+    border-radius: var(--ted-style-radius-sm, 10px);
     cursor: pointer;
-    color: var(--primary-color, #2196f3);
+    color: var(--ted-style-accent, var(--primary-color, #2196f3));
   }
   .ted-btn:hover {
-    background: color-mix(in srgb, var(--primary-color, #2196f3) 12%, transparent);
+    background: color-mix(in srgb, var(--ted-style-accent, var(--primary-color, #2196f3)) 12%, transparent);
   }
   .ted-btn.primary {
-    background: var(--primary-color, #2196f3);
-    color: var(--text-primary-color, #fff);
+    background: var(--ted-style-accent, var(--primary-color, #2196f3));
+    color: var(--ted-style-on-accent, var(--text-primary-color, #fff));
   }
   .ted-btn.primary:hover {
     filter: brightness(1.06);
-    background: var(--primary-color, #2196f3);
+    background: var(--ted-style-accent, var(--primary-color, #2196f3));
   }
   .ted-btn.danger {
-    color: var(--error-color, #db4437);
+    color: var(--ted-style-danger, var(--error-color, #db4437));
   }
   .ted-btn.danger:hover {
-    background: color-mix(in srgb, var(--error-color, #db4437) 12%, transparent);
+    background: color-mix(in srgb, var(--ted-style-danger, var(--error-color, #db4437)) 12%, transparent);
   }
   .ted-btn[disabled] {
     opacity: 0.4;

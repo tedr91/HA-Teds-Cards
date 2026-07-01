@@ -289,22 +289,26 @@ export class TedTimerCard extends LitElement implements LovelaceCard {
 
   private _renderDialog(): TemplateResult {
     const adding = this._dialog === "add";
+    const theme = this._config?.theme === "ted-style" ? "ted-style" : "ha";
     const total = this._h * 3600 + this._m * 60 + this._s;
     return html`
       <div
-        class="ted-modal"
+        class="ted-modal ${tedCardThemeClass(theme)}"
         @click=${this._closeDialog}
         @keydown=${(e: KeyboardEvent) => e.key === "Escape" && this._closeDialog()}
       >
         <div class="ted-sheet" @click=${(e: Event) => e.stopPropagation()}>
           <div class="ted-sheet-head">${adding ? "New timer" : "Edit timer"}</div>
           <div class="ted-sheet-body">
-            <ha-textfield
-              label="Name"
-              .value=${this._name}
-              @input=${(e: Event) => (this._name = (e.target as HTMLInputElement).value)}
-              @keydown=${(e: KeyboardEvent) => e.key === "Enter" && this._submitDialog()}
-            ></ha-textfield>
+            <label class="ted-field">
+              <span class="ted-field-label">Name</span>
+              <input
+                class="ted-input"
+                .value=${this._name}
+                @input=${(e: Event) => (this._name = (e.target as HTMLInputElement).value)}
+                @keydown=${(e: KeyboardEvent) => e.key === "Enter" && this._submitDialog()}
+              />
+            </label>
             <div class="ted-hms">
               ${this._numField("Hours", this._h, 0, 23, (v) => (this._h = v))}
               ${this._numField("Minutes", this._m, 0, 59, (v) => (this._m = v))}
@@ -332,18 +336,20 @@ export class TedTimerCard extends LitElement implements LovelaceCard {
     max: number,
     set: (v: number) => void,
   ): TemplateResult {
-    return html`<ha-textfield
-      label=${label}
-      type="number"
-      min=${min}
-      max=${max}
-      no-spinner
-      .value=${String(value)}
-      @input=${(e: Event) => {
-        const n = Number((e.target as HTMLInputElement).value);
-        set(Number.isFinite(n) ? Math.max(min, Math.min(max, Math.trunc(n))) : 0);
-      }}
-    ></ha-textfield>`;
+    return html`<label class="ted-field">
+      <span class="ted-field-label">${label}</span>
+      <input
+        class="ted-input"
+        type="number"
+        min=${min}
+        max=${max}
+        .value=${String(value)}
+        @input=${(e: Event) => {
+          const n = Number((e.target as HTMLInputElement).value);
+          set(Number.isFinite(n) ? Math.max(min, Math.min(max, Math.trunc(n))) : 0);
+        }}
+      />
+    </label>`;
   }
 
   /** Seconds → "H:MM:SS" (drops the hours group when zero). */

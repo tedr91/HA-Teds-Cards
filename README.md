@@ -913,6 +913,11 @@ options as the Alarm card apply.
 The newest entry below is used as the GitHub Release notes by the release workflow, so it shows in
 the Home Assistant / HACS **update** dialog when you update. Newest first.
 
+### v1.0.24
+
+- **Timer Card** — **Recent** presets are now compact, fully clickable **`duration (name)`** tiles (no separate play button). Clicking one opens the timer editor pre-filled with its values; pressing the primary button starts the timer.
+- **Alarm Card** — saving edits to a **disabled** alarm now re-enables it (Cancel leaves it unchanged).
+
 ### v1.0.23
 
 - **Alarm & Timer Cards** — when given a fixed height shorter than their content (lots of alarms, or several active/recent timers), the card body now **scrolls** while the header stays put.

@@ -118,6 +118,14 @@ export class TedTimerCard extends LitElement implements LovelaceCard {
     this._dialog = "add";
   }
 
+  private _openRecent(r: RecentTimer): void {
+    this._name = r.name;
+    this._h = r.h;
+    this._m = r.m;
+    this._s = r.s;
+    this._dialog = "add";
+  }
+
   private _openEdit(t: ActiveTimer): void {
     const rem = this._remaining(t);
     this._name = t.name;
@@ -287,20 +295,14 @@ export class TedTimerCard extends LitElement implements LovelaceCard {
   private _renderRecentTile(r: RecentTimer): TemplateResult {
     const total = r.h * 3600 + r.m * 60 + r.s;
     return html`
-      <div class="tile recent">
-        <div class="tile-body">
-          <div class="rem">${this._fmtRemaining(total)}</div>
-          <div class="tname" title=${r.name}>${r.name}</div>
-        </div>
-        <div class="tile-ctrl">
-          <ted-icon-button
-            tone="accent"
-            icon="mdi:play"
-            .label=${`Start ${r.name}`}
-            @click=${() => this._call("start_timer", { name: r.name, hours: r.h, minutes: r.m, seconds: r.s })}
-          ></ted-icon-button>
-        </div>
-      </div>
+      <button
+        class="tile recent"
+        title=${`Start ${r.name}`}
+        @click=${() => this._openRecent(r)}
+      >
+        <span class="rem">${this._fmtRemaining(total)}</span>
+        <span class="tname">(${r.name})</span>
+      </button>
     `;
   }
 
@@ -504,6 +506,28 @@ export class TedTimerCard extends LitElement implements LovelaceCard {
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+      }
+      .tile.recent {
+        appearance: none;
+        font: inherit;
+        cursor: pointer;
+        align-items: baseline;
+        gap: 6px;
+        padding: 10px 12px;
+        text-align: left;
+        width: 100%;
+      }
+      .tile.recent:hover {
+        border-color: var(--ted-style-accent);
+      }
+      .tile.recent .rem {
+        flex: none;
+        font-size: 1.1rem;
+        color: var(--ted-style-muted);
+      }
+      .tile.recent .tname {
+        flex: 1 1 auto;
+        min-width: 0;
       }
       .tile-ctrl {
         flex: none;

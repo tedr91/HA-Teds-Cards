@@ -144,6 +144,7 @@ export class TedAlarmCard extends LitElement implements LovelaceCard {
         label: this._label,
         time: this._time,
         days: this._days,
+        enabled: true,
       });
     } else {
       this._call("add_alarm", { label: this._label, time: this._time, days: this._days });

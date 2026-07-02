@@ -1,6 +1,7 @@
 import { LitElement, css, html, nothing, type TemplateResult } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
+import { repeat } from "lit/directives/repeat.js";
 import { styleMap } from "lit/directives/style-map.js";
 import type { HomeAssistant, LovelaceCard, LovelaceCardEditor } from "custom-card-helpers";
 
@@ -206,7 +207,11 @@ export class TedAlarmCard extends LitElement implements LovelaceCard {
               <div class="list">
                 ${alarms.length === 0
                   ? html`<div class="empty">No alarms yet.</div>`
-                  : alarms.map((a) => this._renderAlarm(a))}
+                  : repeat(
+                      alarms,
+                      (a) => a.id,
+                      (a) => this._renderAlarm(a),
+                    )}
               </div>
             `}
       </ha-card>
@@ -360,6 +365,7 @@ export class TedAlarmCard extends LitElement implements LovelaceCard {
         font-weight: 600;
         font-size: 1.05rem;
         padding: 12px 16px 8px;
+        flex: none;
       }
       .head ha-icon {
         color: var(--ted-style-accent);
@@ -382,6 +388,9 @@ export class TedAlarmCard extends LitElement implements LovelaceCard {
       .list {
         display: flex;
         flex-direction: column;
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-y: auto;
       }
       .row {
         display: flex;

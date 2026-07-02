@@ -1,6 +1,7 @@
 import { LitElement, css, html, nothing, type TemplateResult } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
+import { repeat } from "lit/directives/repeat.js";
 import { styleMap } from "lit/directives/style-map.js";
 import type { HomeAssistant, LovelaceCard, LovelaceCardEditor } from "custom-card-helpers";
 
@@ -204,7 +205,13 @@ export class TedTimerCard extends LitElement implements LovelaceCard {
             <div class="section-label">Active</div>
             ${active.length === 0
               ? html`<div class="empty">No timers running.</div>`
-              : html`<div class="grid grid-active">${active.map((t) => this._renderActiveTile(t))}</div>`}
+              : html`<div class="grid grid-active">
+                  ${repeat(
+                    active,
+                    (t) => t.id,
+                    (t) => this._renderActiveTile(t),
+                  )}
+                </div>`}
           </div>
         `;
       }
@@ -213,7 +220,13 @@ export class TedTimerCard extends LitElement implements LovelaceCard {
         return html`
           <div class="section">
             <div class="section-label">Recent</div>
-            <div class="grid">${recent.map((r) => this._renderRecentTile(r))}</div>
+            <div class="grid">
+              ${repeat(
+                recent,
+                (r) => `${r.name}|${r.h}:${r.m}:${r.s}`,
+                (r) => this._renderRecentTile(r),
+              )}
+            </div>
           </div>
         `;
       }
@@ -237,7 +250,7 @@ export class TedTimerCard extends LitElement implements LovelaceCard {
         </div>
         ${missing
           ? html`<div class="warn">Install the <b>Ted's Cards Backend</b> integration to use timers.</div>`
-          : sections}
+          : html`<div class="body">${sections}</div>`}
       </ha-card>
       ${this._dialog ? this._renderDialog() : nothing}
     `;
@@ -395,6 +408,12 @@ export class TedTimerCard extends LitElement implements LovelaceCard {
         font-weight: 600;
         font-size: 1.05rem;
         padding: 12px 16px 8px;
+        flex: none;
+      }
+      .body {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-y: auto;
       }
       .head ha-icon {
         color: var(--ted-style-accent);

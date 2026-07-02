@@ -913,6 +913,11 @@ options as the Alarm card apply.
 The newest entry below is used as the GitHub Release notes by the release workflow, so it shows in
 the Home Assistant / HACS **update** dialog when you update. Newest first.
 
+### v1.0.23
+
+- **Alarm & Timer Cards** — when given a fixed height shorter than their content (lots of alarms, or several active/recent timers), the card body now **scrolls** while the header stays put.
+- **Alarm Card** — fixed a bug where toggling one alarm off could momentarily show another alarm as off after the list re-sorted (the toggle state no longer bleeds between rows).
+
 ### v1.0.22
 
 - **Timer Card editor** — the **Appearance** section now appears above the elements list, and the **Sections** group is renamed to **Card Elements**.

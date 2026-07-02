@@ -913,6 +913,10 @@ options as the Alarm card apply.
 The newest entry below is used as the GitHub Release notes by the release workflow, so it shows in
 the Home Assistant / HACS **update** dialog when you update. Newest first.
 
+### v1.0.26
+
+- **Light & Cover Cards** — the indicator and hint bars now look the same whether the neumorphic/rocker effect is on or off (previously they were dimmer with the effect off).
+
 ### v1.0.25
 
 - **Alarm & Timer Cards** — the **Appearance** editor now matches the other cards, adding **Background color**, **Show icon** + **Icon size**, **Show name** + **Name size**, and **Card scale**.

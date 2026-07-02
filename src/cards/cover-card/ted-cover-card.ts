@@ -945,23 +945,9 @@ export class TedCoverCard extends LitElement implements LovelaceCard {
       bottom: 0;
       z-index: 0;
       width: var(--ted-indicator-width, 4px);
-      opacity: 0.5;
-      background-color: var(--ted-style-surface-2);
-      pointer-events: none;
-    }
-    /* Option E: with the neumorphic effect the paddles span the full card, so the
-       indicator / hint bars float on top as faint overlays — a barely-there track with
-       the fill (and the up/down hint symbols) kept readable at 90%. */
-    ha-card.neu .position,
-    ha-card.neu .stripe {
       opacity: 1;
       background-color: color-mix(in srgb, var(--ted-style-surface-2) 10%, transparent);
-    }
-    ha-card.neu .position-fill {
-      opacity: 1;
-    }
-    ha-card.neu .stripe-symbol {
-      opacity: 1;
+      pointer-events: none;
     }
     .position-fill {
       position: absolute;
@@ -978,8 +964,8 @@ export class TedCoverCard extends LitElement implements LovelaceCard {
       bottom: 0;
       z-index: 0;
       width: var(--ted-hint-width, 8px);
-      opacity: 0.5;
-      background-color: var(--ted-style-surface-2);
+      opacity: 1;
+      background-color: color-mix(in srgb, var(--ted-style-surface-2) 10%, transparent);
       pointer-events: none;
     }
     .stripe-symbol {
@@ -989,7 +975,7 @@ export class TedCoverCard extends LitElement implements LovelaceCard {
       width: calc(var(--ted-hint-width, 8px) * 2);
       height: calc(var(--ted-hint-width, 8px) * 2);
       fill: var(--ted-style-text);
-      opacity: 0.5;
+      opacity: 1;
       pointer-events: none;
     }
     .stripe-up {

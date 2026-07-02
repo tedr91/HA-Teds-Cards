@@ -9,6 +9,9 @@ import type { AlarmCardConfig } from "./types";
 // mdi:palette — Appearance section
 const APPEARANCE_ICON_PATH =
   "M17.5,12A1.5,1.5 0 0,1 16,10.5A1.5,1.5 0 0,1 17.5,9A1.5,1.5 0 0,1 19,10.5A1.5,1.5 0 0,1 17.5,12M14.5,8A1.5,1.5 0 0,1 13,6.5A1.5,1.5 0 0,1 14.5,5A1.5,1.5 0 0,1 16,6.5A1.5,1.5 0 0,1 14.5,8M9.5,8A1.5,1.5 0 0,1 8,6.5A1.5,1.5 0 0,1 9.5,5A1.5,1.5 0 0,1 11,6.5A1.5,1.5 0 0,1 9.5,8M6.5,12A1.5,1.5 0 0,1 5,10.5A1.5,1.5 0 0,1 6.5,9A1.5,1.5 0 0,1 8,10.5A1.5,1.5 0 0,1 6.5,12M12,3A9,9 0 0,0 3,12A9,9 0 0,0 12,21A1.5,1.5 0 0,0 13.5,19.5C13.5,19.11 13.35,18.76 13.11,18.5C12.88,18.23 12.73,17.88 12.73,17.5A1.5,1.5 0 0,1 14.23,16H16A5,5 0 0,0 21,11C21,6.58 16.97,3 12,3Z";
+// mdi:page-layout-header — Header section
+const HEADER_ICON_PATH =
+  "M21,5V19H3V5H21M21,3H3A2,2 0 0,0 1,5V19A2,2 0 0,0 3,21H21A2,2 0 0,0 23,19V5A2,2 0 0,0 21,3M5,7H19V9H5V7Z";
 
 @customElement(ALARM_CARD_EDITOR_TYPE)
 export class TedAlarmCardEditor extends LitElement implements LovelaceCardEditor {
@@ -28,11 +31,10 @@ export class TedAlarmCardEditor extends LitElement implements LovelaceCardEditor
       transparency: undefined,
       blur: undefined,
       background: undefined,
-      show_icon: true,
-      icon_scale: 100,
-      show_name: true,
-      name_scale: 100,
       scale: 100,
+      show_header_icon: true,
+      show_header_name: true,
+      header_divider: false,
     };
   }
 
@@ -54,11 +56,10 @@ export class TedAlarmCardEditor extends LitElement implements LovelaceCardEditor
     return [
       { name: "title", selector: { text: {} } },
       { name: "entity", selector: { entity: { domain: "sensor" } } },
-      { name: "show_add", selector: { boolean: {} } },
       {
         name: "",
         type: "expandable",
-        title: "Appearance",
+        title: "Appearance (general)",
         iconPath: APPEARANCE_ICON_PATH,
         flatten: true,
         schema: [
@@ -75,44 +76,50 @@ export class TedAlarmCardEditor extends LitElement implements LovelaceCardEditor
             },
           },
           { name: "background", selector: { ui_color: {} } },
+          { name: "brushed", selector: { boolean: {} } },
+          { name: "shadow", selector: { boolean: {} } },
           transparencyBlurSchema(this._config?.transparency),
+          {
+            name: "scale",
+            selector: { number: { min: 50, max: 200, step: 5, mode: "box", unit_of_measurement: "%" } },
+          },
+        ],
+      },
+      {
+        name: "",
+        type: "expandable",
+        title: "Header",
+        iconPath: HEADER_ICON_PATH,
+        flatten: true,
+        schema: [
           {
             type: "grid",
             name: "",
             column_min_width: "100px",
             schema: [
-              { name: "brushed", selector: { boolean: {} } },
-              { name: "shadow", selector: { boolean: {} } },
-            ],
-          },
-          {
-            type: "grid",
-            name: "",
-            schema: [
-              { name: "show_icon", selector: { boolean: {} } },
+              { name: "show_header_icon", selector: { boolean: {} } },
               {
-                name: "icon_scale",
-                disabled: this._config?.show_icon === false,
-                selector: { number: { min: 10, max: 300, step: 5, mode: "box", unit_of_measurement: "%" } },
+                name: "header_icon_size",
+                disabled: this._config?.show_header_icon === false,
+                selector: { number: { min: 10, max: 400, step: 5, mode: "box", unit_of_measurement: "%" } },
               },
             ],
           },
           {
             type: "grid",
             name: "",
+            column_min_width: "100px",
             schema: [
-              { name: "show_name", selector: { boolean: {} } },
+              { name: "show_header_name", selector: { boolean: {} } },
               {
-                name: "name_scale",
-                disabled: this._config?.show_name === false,
-                selector: { number: { min: 10, max: 300, step: 5, mode: "box", unit_of_measurement: "%" } },
+                name: "header_name_size",
+                disabled: this._config?.show_header_name === false,
+                selector: { number: { min: 10, max: 400, step: 5, mode: "box", unit_of_measurement: "%" } },
               },
             ],
           },
-          {
-            name: "scale",
-            selector: { number: { min: 50, max: 200, step: 5, mode: "box", unit_of_measurement: "%" } },
-          },
+          { name: "header_divider", selector: { boolean: {} } },
+          { name: "show_add", selector: { boolean: {} } },
         ],
       },
     ];
@@ -136,18 +143,20 @@ export class TedAlarmCardEditor extends LitElement implements LovelaceCardEditor
         return "Background blur";
       case "brushed":
         return "Brushed effect";
-      case "show_icon":
-        return "Show icon";
-      case "icon_scale":
-        return "Icon size";
-      case "show_name":
-        return "Show name";
-      case "name_scale":
-        return "Name size";
-      case "scale":
-        return "Card scale";
       case "shadow":
         return "Subtle shadow for improved contrast";
+      case "scale":
+        return "Card scale";
+      case "show_header_icon":
+        return "Display icon in header";
+      case "header_icon_size":
+        return "Icon size override";
+      case "show_header_name":
+        return "Display name in header";
+      case "header_name_size":
+        return "Name size override";
+      case "header_divider":
+        return "Display header divider line";
       default:
         return schema.name;
     }

@@ -17,16 +17,20 @@ export interface TimerCardConfig extends LovelaceCardConfig {
   blur?: number;
   brushed?: boolean;
   shadow?: boolean;
-  /** Show the header icon. Defaults to true. */
-  show_icon?: boolean;
-  /** Header icon size, as a percentage (10–300). Defaults to 100. */
-  icon_scale?: number;
-  /** Show the header title. Defaults to true. */
-  show_name?: boolean;
-  /** Header title size, as a percentage (10–300). Defaults to 100. */
-  name_scale?: number;
   /** Overall card scale, as a percentage (50–200). Defaults to 100. */
   scale?: number;
+
+  // Header
+  /** Show the header icon. Defaults to true. */
+  show_header_icon?: boolean;
+  /** Header icon size override, as a percentage (10–400). Blank = 100. */
+  header_icon_size?: number;
+  /** Show the header title. Defaults to true. */
+  show_header_name?: boolean;
+  /** Header title size override, as a percentage (10–400). Blank = 100. */
+  header_name_size?: number;
+  /** Show a divider line under the header. Defaults to false. */
+  header_divider?: boolean;
 
   /** Show the "Current Running" list of active timers. Defaults to true. */
   show_active?: boolean;

@@ -179,11 +179,12 @@ export class TedAlarmCard extends LitElement implements LovelaceCard {
     const missing = !this.hass.states[this._sensor()];
     const alarms = this._sortedAlarms;
     const showAdd = cfg.show_add !== false;
-    const showIcon = cfg.show_icon !== false;
-    const showName = cfg.show_name !== false;
-    const iconScale = typeof cfg.icon_scale === "number" ? cfg.icon_scale : 100;
-    const nameScale = typeof cfg.name_scale === "number" ? cfg.name_scale : 100;
+    const showIcon = cfg.show_header_icon !== false;
+    const showName = cfg.show_header_name !== false;
+    const iconScale = typeof cfg.header_icon_size === "number" ? cfg.header_icon_size : 100;
+    const nameScale = typeof cfg.header_name_size === "number" ? cfg.header_name_size : 100;
     const scale = typeof cfg.scale === "number" ? cfg.scale : 100;
+    const headerDivider = cfg.header_divider === true;
 
     const cardClasses = {
       "ted-card": true,
@@ -200,7 +201,7 @@ export class TedAlarmCard extends LitElement implements LovelaceCard {
     return html`
       <ha-card class=${classMap(cardClasses)} style=${styleMap(cardStyle)}>
         ${brushed ? brushedOverlay : nothing}
-        <div class="head">
+        <div class="head ${headerDivider ? "with-divider" : ""}">
           ${showIcon
             ? html`<ha-icon
                 icon="mdi:alarm"
@@ -387,13 +388,16 @@ export class TedAlarmCard extends LitElement implements LovelaceCard {
         padding: 12px 16px 8px;
         flex: none;
       }
+      .head.with-divider {
+        border-bottom: 1px solid var(--ted-style-divider);
+      }
       .head ha-icon {
-        color: var(--ted-style-accent);
+        color: var(--ted-style-text);
         --mdc-icon-size: 22px;
       }
       .add-hdr {
         margin-left: auto;
-        --ted-ib-color: var(--ted-style-accent);
+        --ted-ib-color: var(--ted-style-text);
         flex: none;
       }
       .warn {

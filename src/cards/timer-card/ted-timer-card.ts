@@ -193,11 +193,12 @@ export class TedTimerCard extends LitElement implements LovelaceCard {
     const showActive = cfg.show_active !== false;
     const showAdd = cfg.show_add !== false;
     const showRecent = cfg.show_recent !== false;
-    const showIcon = cfg.show_icon !== false;
-    const showName = cfg.show_name !== false;
-    const iconScale = typeof cfg.icon_scale === "number" ? cfg.icon_scale : 100;
-    const nameScale = typeof cfg.name_scale === "number" ? cfg.name_scale : 100;
+    const showIcon = cfg.show_header_icon !== false;
+    const showName = cfg.show_header_name !== false;
+    const iconScale = typeof cfg.header_icon_size === "number" ? cfg.header_icon_size : 100;
+    const nameScale = typeof cfg.header_name_size === "number" ? cfg.header_name_size : 100;
     const scale = typeof cfg.scale === "number" ? cfg.scale : 100;
+    const headerDivider = cfg.header_divider === true;
 
     // Keep the countdown live only while a running (non-paused) timer exists.
     if (active.some((t) => !t.paused)) this._startTick();
@@ -254,7 +255,7 @@ export class TedTimerCard extends LitElement implements LovelaceCard {
     return html`
       <ha-card class=${classMap(cardClasses)} style=${styleMap(cardStyle)}>
         ${brushed ? brushedOverlay : nothing}
-        <div class="head">
+        <div class="head ${headerDivider ? "with-divider" : ""}">
           ${showIcon
             ? html`<ha-icon
                 icon="mdi:timer-outline"
@@ -431,18 +432,21 @@ export class TedTimerCard extends LitElement implements LovelaceCard {
         padding: 12px 16px 8px;
         flex: none;
       }
+      .head.with-divider {
+        border-bottom: 1px solid var(--ted-style-divider);
+      }
       .body {
         flex: 1 1 auto;
         min-height: 0;
         overflow-y: auto;
       }
       .head ha-icon {
-        color: var(--ted-style-accent);
+        color: var(--ted-style-text);
         --mdc-icon-size: 22px;
       }
       .add-hdr {
         margin-left: auto;
-        --ted-ib-color: var(--ted-style-accent);
+        --ted-ib-color: var(--ted-style-text);
         flex: none;
       }
       .warn {
@@ -530,7 +534,7 @@ export class TedTimerCard extends LitElement implements LovelaceCard {
         appearance: none;
         font: inherit;
         cursor: pointer;
-        align-items: baseline;
+        align-items: center;
         gap: 6px;
         padding: 6px 12px;
         text-align: left;
@@ -542,11 +546,13 @@ export class TedTimerCard extends LitElement implements LovelaceCard {
       .tile.recent .rem {
         flex: none;
         font-size: 1.1rem;
+        line-height: 1;
         color: var(--ted-style-muted);
       }
       .tile.recent .tname {
         flex: 1 1 auto;
         min-width: 0;
+        line-height: 1;
       }
       .tile-ctrl {
         flex: none;

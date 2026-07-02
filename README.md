@@ -913,6 +913,12 @@ options as the Alarm card apply.
 The newest entry below is used as the GitHub Release notes by the release workflow, so it shows in
 the Home Assistant / HACS **update** dialog when you update. Newest first.
 
+### v1.0.27
+
+- **Alarm & Timer Cards** — the editors are reorganised to match the other cards, with a standard **Appearance (general)** section and a new **Header** section (Display icon / name in header with size overrides, header divider line, and the Show add button toggle).
+- **Alarm & Timer Cards** — the header icon and **+** add button now match the header text colour.
+- **Timer Card** — recent-tile text is vertically centred.
+
 ### v1.0.26
 
 - **Light & Cover Cards** — the indicator and hint bars now look the same whether the neumorphic/rocker effect is on or off (previously they were dimmer with the effect off).

@@ -5,7 +5,7 @@ import { repeat } from "lit/directives/repeat.js";
 import { styleMap } from "lit/directives/style-map.js";
 import type { HomeAssistant, LovelaceCard, LovelaceCardEditor } from "custom-card-helpers";
 
-import { appearanceStyle } from "../../shared/appearance";
+import { appearanceStyle, cssColor } from "../../shared/appearance";
 import { brushedOverlay, tedCardThemeClass, tedStyleTheme } from "../../shared/theme";
 import { registerCustomCard } from "../../shared/register-card";
 import { showConfirmation, modalStyles } from "../../shared/dialogs";
@@ -179,20 +179,39 @@ export class TedAlarmCard extends LitElement implements LovelaceCard {
     const missing = !this.hass.states[this._sensor()];
     const alarms = this._sortedAlarms;
     const showAdd = cfg.show_add !== false;
+    const showIcon = cfg.show_icon !== false;
+    const showName = cfg.show_name !== false;
+    const iconScale = typeof cfg.icon_scale === "number" ? cfg.icon_scale : 100;
+    const nameScale = typeof cfg.name_scale === "number" ? cfg.name_scale : 100;
+    const scale = typeof cfg.scale === "number" ? cfg.scale : 100;
 
     const cardClasses = {
       "ted-card": true,
       [tedCardThemeClass(theme)]: true,
       "no-shadow": !shadow,
     };
-    const cardStyle = appearanceStyle({ transparency: cfg.transparency, blur: cfg.blur });
+    const cardStyle = appearanceStyle({
+      background: cssColor(cfg.background),
+      transparency: cfg.transparency,
+      blur: cfg.blur,
+    });
+    if (scale !== 100) cardStyle.zoom = String(scale / 100);
 
     return html`
       <ha-card class=${classMap(cardClasses)} style=${styleMap(cardStyle)}>
         ${brushed ? brushedOverlay : nothing}
         <div class="head">
-          <ha-icon icon="mdi:alarm"></ha-icon>
-          <span>${cfg.title ?? "Alarms"}</span>
+          ${showIcon
+            ? html`<ha-icon
+                icon="mdi:alarm"
+                style=${styleMap({ "--mdc-icon-size": `calc(22px * ${iconScale / 100})` })}
+              ></ha-icon>`
+            : nothing}
+          ${showName
+            ? html`<span style=${styleMap({ fontSize: `calc(1.05rem * ${nameScale / 100})` })}
+                >${cfg.title ?? "Alarms"}</span
+              >`
+            : nothing}
           ${!missing && showAdd
             ? html`<ted-icon-button
                 class="add-hdr"

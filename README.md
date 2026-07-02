@@ -913,6 +913,11 @@ options as the Alarm card apply.
 The newest entry below is used as the GitHub Release notes by the release workflow, so it shows in
 the Home Assistant / HACS **update** dialog when you update. Newest first.
 
+### v1.0.25
+
+- **Alarm & Timer Cards** — the **Appearance** editor now matches the other cards, adding **Background color**, **Show icon** + **Icon size**, **Show name** + **Name size**, and **Card scale**.
+- **Timer Card** — **Recent** tiles are a bit shorter and their minimum width is smaller, so more fit per row.
+
 ### v1.0.24
 
 - **Timer Card** — **Recent** presets are now compact, fully clickable **`duration (name)`** tiles (no separate play button). Clicking one opens the timer editor pre-filled with its values; pressing the primary button starts the timer.

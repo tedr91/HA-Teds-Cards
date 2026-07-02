@@ -5,7 +5,7 @@ import { repeat } from "lit/directives/repeat.js";
 import { styleMap } from "lit/directives/style-map.js";
 import type { HomeAssistant, LovelaceCard, LovelaceCardEditor } from "custom-card-helpers";
 
-import { appearanceStyle } from "../../shared/appearance";
+import { appearanceStyle, cssColor } from "../../shared/appearance";
 import { brushedOverlay, tedCardThemeClass, tedStyleTheme } from "../../shared/theme";
 import { registerCustomCard } from "../../shared/register-card";
 import { modalStyles } from "../../shared/dialogs";
@@ -193,6 +193,11 @@ export class TedTimerCard extends LitElement implements LovelaceCard {
     const showActive = cfg.show_active !== false;
     const showAdd = cfg.show_add !== false;
     const showRecent = cfg.show_recent !== false;
+    const showIcon = cfg.show_icon !== false;
+    const showName = cfg.show_name !== false;
+    const iconScale = typeof cfg.icon_scale === "number" ? cfg.icon_scale : 100;
+    const nameScale = typeof cfg.name_scale === "number" ? cfg.name_scale : 100;
+    const scale = typeof cfg.scale === "number" ? cfg.scale : 100;
 
     // Keep the countdown live only while a running (non-paused) timer exists.
     if (active.some((t) => !t.paused)) this._startTick();
@@ -203,7 +208,12 @@ export class TedTimerCard extends LitElement implements LovelaceCard {
       [tedCardThemeClass(theme)]: true,
       "no-shadow": !shadow,
     };
-    const cardStyle = appearanceStyle({ transparency: cfg.transparency, blur: cfg.blur });
+    const cardStyle = appearanceStyle({
+      background: cssColor(cfg.background),
+      transparency: cfg.transparency,
+      blur: cfg.blur,
+    });
+    if (scale !== 100) cardStyle.zoom = String(scale / 100);
 
     const sections = resolveTimerSectionOrder(cfg.section_order).map((section) => {
       if (section === "active") {
@@ -245,8 +255,17 @@ export class TedTimerCard extends LitElement implements LovelaceCard {
       <ha-card class=${classMap(cardClasses)} style=${styleMap(cardStyle)}>
         ${brushed ? brushedOverlay : nothing}
         <div class="head">
-          <ha-icon icon="mdi:timer-outline"></ha-icon>
-          <span>${cfg.title ?? "Timers"}</span>
+          ${showIcon
+            ? html`<ha-icon
+                icon="mdi:timer-outline"
+                style=${styleMap({ "--mdc-icon-size": `calc(22px * ${iconScale / 100})` })}
+              ></ha-icon>`
+            : nothing}
+          ${showName
+            ? html`<span style=${styleMap({ fontSize: `calc(1.05rem * ${nameScale / 100})` })}
+                >${cfg.title ?? "Timers"}</span
+              >`
+            : nothing}
           ${!missing && showAdd
             ? html`<ted-icon-button
                 class="add-hdr"
@@ -452,7 +471,7 @@ export class TedTimerCard extends LitElement implements LovelaceCard {
       }
       .grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
         gap: 8px;
       }
       .grid-active {
@@ -513,7 +532,7 @@ export class TedTimerCard extends LitElement implements LovelaceCard {
         cursor: pointer;
         align-items: baseline;
         gap: 6px;
-        padding: 10px 12px;
+        padding: 6px 12px;
         text-align: left;
         width: 100%;
       }

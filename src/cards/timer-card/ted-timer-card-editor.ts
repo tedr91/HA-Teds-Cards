@@ -42,6 +42,12 @@ export class TedTimerCardEditor extends LitElement implements LovelaceCardEditor
       show_recent: true,
       transparency: undefined,
       blur: undefined,
+      background: undefined,
+      show_icon: true,
+      icon_scale: 100,
+      show_name: true,
+      name_scale: 100,
+      scale: 100,
     };
   }
 
@@ -96,6 +102,7 @@ export class TedTimerCardEditor extends LitElement implements LovelaceCardEditor
               },
             },
           },
+          { name: "background", selector: { ui_color: {} } },
           transparencyBlurSchema(this._config?.transparency),
           {
             type: "grid",
@@ -105,6 +112,34 @@ export class TedTimerCardEditor extends LitElement implements LovelaceCardEditor
               { name: "brushed", selector: { boolean: {} } },
               { name: "shadow", selector: { boolean: {} } },
             ],
+          },
+          {
+            type: "grid",
+            name: "",
+            schema: [
+              { name: "show_icon", selector: { boolean: {} } },
+              {
+                name: "icon_scale",
+                disabled: this._config?.show_icon === false,
+                selector: { number: { min: 10, max: 300, step: 5, mode: "box", unit_of_measurement: "%" } },
+              },
+            ],
+          },
+          {
+            type: "grid",
+            name: "",
+            schema: [
+              { name: "show_name", selector: { boolean: {} } },
+              {
+                name: "name_scale",
+                disabled: this._config?.show_name === false,
+                selector: { number: { min: 10, max: 300, step: 5, mode: "box", unit_of_measurement: "%" } },
+              },
+            ],
+          },
+          {
+            name: "scale",
+            selector: { number: { min: 50, max: 200, step: 5, mode: "box", unit_of_measurement: "%" } },
           },
         ],
       },
@@ -177,12 +212,24 @@ export class TedTimerCardEditor extends LitElement implements LovelaceCardEditor
         return "Show add button";
       case "theme":
         return "Visual styling";
+      case "background":
+        return "Background color";
       case "transparency":
         return "Transparency";
       case "blur":
         return "Background blur";
       case "brushed":
         return "Brushed effect";
+      case "show_icon":
+        return "Show icon";
+      case "icon_scale":
+        return "Icon size";
+      case "show_name":
+        return "Show name";
+      case "name_scale":
+        return "Name size";
+      case "scale":
+        return "Card scale";
       case "shadow":
         return "Subtle shadow for improved contrast";
       default:
